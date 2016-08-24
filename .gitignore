@@ -1,0 +1,4 @@
+/build/*
+/test/*
+/todo
+/run.sh
