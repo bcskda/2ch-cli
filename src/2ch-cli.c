@@ -8,5 +8,7 @@
 
 int main (void) {
   getBoardCatalogJSON ("b",true);
+  printf ("\n\n\n");
+  getThreadJSON ("abu",42375,true);
   return 0;
 }
