@@ -181,7 +181,7 @@ int getBoardCatalogJSON (const char* board, const bool v) {
     free (URL);
     free (CURL_BUFF_BODY);
     fprintf (stderr, "] memory free done\n");
-    fprintf (stderr, "]] Exiting getBoardPage\n");
+    fprintf (stderr, "]] Exiting getBoardCatalog\n");
   }
   else {
     fprintf (stderr, "[getBoardCatalog]! Error initializing curl handle\n");
@@ -297,7 +297,7 @@ int getThreadJSON (const char* board, const unsigned threadnum, const bool v) {
     free (postfields);
     free (CURL_BUFF_BODY);
     if (v) fprintf (stderr, "] memory free done\n");
-    fprintf (stderr, "]] Exiting getBoardPage\n");
+    fprintf (stderr, "]] Exiting getThread\n");
   }
   else {
     fprintf (stderr, "[getThread]! Error initializing curl handle\n");
