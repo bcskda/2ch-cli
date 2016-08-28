@@ -1,11 +1,12 @@
 #include "makaba.h"
 
 // ========================================
-// A cli-client for 2ch.hk imageboard
-// written on C with ncurses
+// File: 2ch-cli.c
+// A CLI-client for 2ch.hk imageboard
+// written on C
 // ========================================
 
 int main (void) {
-  getBoardPageJSON ("b",1,true);
+  getBoardCatalogJSON ("b",true);
   return 0;
 }

@@ -1,4 +1,3 @@
 /build/*
 /test/*
-/todo
-/run.sh
+/misc/*
