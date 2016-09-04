@@ -346,7 +346,7 @@ char* unsigned2str (const unsigned val) {
   return res;
 }
 
-int* findPostsJSON (const char* src, int* postcount_res) {
+int* findPostsInJSON (const char* src, int* postcount_res) {
   short srclen = strlen (src);
   int* temp = (int*) calloc (sizeof(int),srclen/8);
 
@@ -365,7 +365,7 @@ int* findPostsJSON (const char* src, int* postcount_res) {
         }
         else { // in: .post.comment
           if (src[i] == '"') {
-            fprintf (stderr, "Exiting comment.");
+            fprintf (stderr, "Exiting comment. ");
             comment_read = true;
             depth -= 1;
           }
@@ -374,7 +374,7 @@ int* findPostsJSON (const char* src, int* postcount_res) {
       case 1: // in: .post 
         if (src[i] == '}') { //@TODO reverse order of ifs in 'case 1'
           fprintf (stderr, "Exiting post.\n");
-          postcount +- 1;
+          postcount += 1;
           depth -= 1;
           comment_read = false;
         }
@@ -392,8 +392,8 @@ int* findPostsJSON (const char* src, int* postcount_res) {
       case 0: // in: .
         if (src[i] == '{') {
           fprintf (stderr, "Entering post #%d ", postcount+1);
-          temp[2*postcount] = i;
-          fprintf (stderr, "(@%d)\n", temp[2*postcount]);
+          temp[postcount] = i;
+          fprintf (stderr, "(@%d)\n", temp[postcount]);
           depth += 1;
         }
         continue;
