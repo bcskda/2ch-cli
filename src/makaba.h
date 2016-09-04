@@ -277,7 +277,6 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
     if (v) fprintf (stderr, "] curl request performed\n");
     if (request_status == CURLE_OK) {
       if (v) fprintf (stderr, "request status: OK\n");
-      printf ("%s\n", CURL_BUFF_BODY);
     }
     else {
       fprintf (stderr, "[getThread]! Error @ curl_easy_perform: %s\n",
