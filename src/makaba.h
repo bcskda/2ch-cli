@@ -19,9 +19,9 @@ size_t CURL_BUFF_POS = 0;
 // @TODO GLOBAL ERROR CODES
 
 int getBoardsList (const char* resFile, const bool v);
-int getBoardPageJSON (const char* board, const unsigned page, bool v);
-int getBoardCatalogJSON (const char* board, const bool v);
-int getThreadJSON (const char* board, const unsigned threadnum, const bool v);
+char* getBoardPageJSON (const char* board, const unsigned page, bool v);
+char* getBoardCatalogJSON (const char* board, const bool v);
+char* getThreadJSON (const char* board, const unsigned threadnum, const bool v);
 
 size_t CURL_writeToBuff (const char* src, const size_t size, const size_t nmemb, void* dest);
 char* unsigned2str (const unsigned val);
@@ -31,7 +31,7 @@ int getBoardsList (const char* resFile, const bool v) {
   return 0;
 }
 
-int getBoardPageJSON (const char* board, const unsigned page, const bool v) {
+char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
   fprintf (stderr, "]] Starting getBoardPage\n");
   if (v) fprintf (stderr, "] initializing curl handle\n");
   CURL* curl_handle = curl_easy_init();
@@ -50,7 +50,7 @@ int getBoardPageJSON (const char* board, const unsigned page, const bool v) {
     else {
       fprintf (stderr, "[getBoardPage]! Error allocating memory (URL)\n");
       curl_easy_cleanup (curl_handle);
-      return 1;
+      return -1;
     }
 
     if (v) fprintf (stderr, "] Forming URL\n");
@@ -76,7 +76,7 @@ int getBoardPageJSON (const char* board, const unsigned page, const bool v) {
       fprintf (stderr, "[getBoardPage]! Error allocating memory (curl body buffer)\n");
       curl_easy_cleanup (curl_handle);
       free (URL);
-      return 1;
+      return -1;
     }
     curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
     if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -96,25 +96,23 @@ int getBoardPageJSON (const char* board, const unsigned page, const bool v) {
       curl_easy_cleanup (curl_handle);
       free (URL);
       free (CURL_BUFF_BODY);
-      return 3;
+      return -3;
     }
 
     curl_easy_cleanup (curl_handle);
     if (v) fprintf (stderr, "] curl cleanup done\n");
     free (URL);
-    free (CURL_BUFF_BODY);
-    fprintf (stderr, "] memory free done\n");
     fprintf (stderr, "]] Exiting getBoardPage\n");
   }
   else {
     fprintf (stderr, "! Error initializing curl handle\n");
-    return 2;
+    return -2;
   }
 
-  return 0;
+  return CURL_BUFF_BODY;
 }
 
-int getBoardCatalogJSON (const char* board, const bool v) {
+char* getBoardCatalogJSON (const char* board, const bool v) {
   fprintf (stderr, "]] Starting getBoardCatalog\n");
   if (v) fprintf (stderr, "] initializing curl handle\n");
   CURL* curl_handle = curl_easy_init();
@@ -131,7 +129,7 @@ int getBoardCatalogJSON (const char* board, const bool v) {
     else {
       fprintf (stderr, "[getBoardCatalog]! Error allocating memory (URL)\n");
       curl_easy_cleanup (curl_handle);
-      return 1;
+      return -1;
     }
 
     if (v) fprintf (stderr, "] Forming URL\n");
@@ -153,7 +151,7 @@ int getBoardCatalogJSON (const char* board, const bool v) {
       fprintf (stderr, "[getBoardCatalog]! Error allocating memory (curl body buffer)\n");
       curl_easy_cleanup (curl_handle);
       free (URL);
-      return 1;
+      return -1;
     }
     curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
     if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -173,25 +171,24 @@ int getBoardCatalogJSON (const char* board, const bool v) {
         curl_easy_cleanup (curl_handle);
       free (URL);
       free (CURL_BUFF_BODY);
-      return 3;
+      return -3;
     }
 
     curl_easy_cleanup (curl_handle);
     if (v) fprintf (stderr, "] curl cleanup done\n");
     free (URL);
-    free (CURL_BUFF_BODY);
     fprintf (stderr, "] memory free done\n");
     fprintf (stderr, "]] Exiting getBoardCatalog\n");
   }
   else {
     fprintf (stderr, "[getBoardCatalog]! Error initializing curl handle\n");
-    return 2;
+    return -2;
   }
 
-  return 0;
+  return CURL_BUFF_BODY;
 }
 
-int getThreadJSON (const char* board, const unsigned threadnum, const bool v) {
+char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) {
   fprintf (stderr, "]] Starting getThread\n");
   if (v) fprintf (stderr, "] initializing curl handle\n");
   CURL* curl_handle = curl_easy_init();
@@ -210,7 +207,7 @@ int getThreadJSON (const char* board, const unsigned threadnum, const bool v) {
     else {
       fprintf (stderr, "[getThread]! Error allocating memory (URL)\n");
       curl_easy_cleanup (curl_handle);
-      return 1;
+      return -1;
     }
 
     curl_easy_setopt (curl_handle, CURLOPT_POST, 1);
@@ -239,7 +236,7 @@ int getThreadJSON (const char* board, const unsigned threadnum, const bool v) {
       fprintf (stderr, "[getThread]! Error allocating memory (POST data)\n");
       curl_easy_cleanup (curl_handle);
       free (URL);
-      return 1;
+      return -1;
     }
     if (v) fprintf (stderr, "] Forming POST data\n");
     postfields = strcpy (postfields, "task=get_thread");
@@ -267,7 +264,7 @@ int getThreadJSON (const char* board, const unsigned threadnum, const bool v) {
       curl_easy_cleanup (curl_handle);
       free (URL);
       free (postfields);
-      return 1;
+      return -1;
     }
     curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
     if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -288,23 +285,22 @@ int getThreadJSON (const char* board, const unsigned threadnum, const bool v) {
       free (URL);
       free (postfields);
       free (CURL_BUFF_BODY);
-      return 3;
+      return -3;
     }
 
     curl_easy_cleanup (curl_handle);
     if (v) fprintf (stderr, "] curl cleanup done\n");
     free (URL);
     free (postfields);
-    free (CURL_BUFF_BODY);
     if (v) fprintf (stderr, "] memory free done\n");
     fprintf (stderr, "]] Exiting getThread\n");
   }
   else {
     fprintf (stderr, "[getThread]! Error initializing curl handle\n");
-    return 2;
+    return -2;
   }
 
-  return 0;
+  return CURL_BUFF_BODY;
 }
 
 // ========================================
