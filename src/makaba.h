@@ -22,6 +22,7 @@ int getBoardsList (const char* resFile, const bool v);
 char* getBoardPageJSON (const char* board, const unsigned page, bool v);
 char* getBoardCatalogJSON (const char* board, const bool v);
 char* getThreadJSON (const char* board, const unsigned threadnum, const bool v);
+int* findPostsInJSON (const char* src);
 
 size_t CURL_writeToBuff (const char* src, const size_t size, const size_t nmemb, void* dest);
 char* unsigned2str (const unsigned val);
@@ -344,4 +345,72 @@ char* unsigned2str (const unsigned val) {
   //fprintf (stderr, "> returning res = %s\n", res);
   //fprintf (stderr, ">> Exiting unsigned2str\n");
   return res;
+}
+
+int* findPostsJSON (const char* src) {
+  short srclen = strlen (src);
+  int* temp = (int*) calloc (sizeof(int),srclen/8);
+
+  short depth = 0;
+  int postcount = 0;
+  bool comment_read = false;
+
+  for (int i = 1; i < srclen; i+=1) {
+    switch (depth) {
+      case 2:
+        if (comment_read) { // in: .post.files
+          if (src[i] == ']') {
+            fprintf (stderr, "Exiting files. ");
+            depth -= 1;
+          }
+        }
+        else { // in: .post.comment
+          if (src[i] == '"') {
+            fprintf (stderr, "Exiting comment.");
+            comment_read = true;
+            depth -= 1;
+          }
+        }
+        continue;
+      case 1: // in: .post 
+        if (src[i] == '}') { //@TODO reverse order of ifs in 'case 1'
+          fprintf (stderr, "Exiting post.\n");
+          postcount +- 1;
+          depth -= 1;
+          comment_read = false;
+        }
+        if ((src[i-2]=='"')&&(src[i-1]=='f')&&(src[i]=='i')&&
+          (src[i+1]=='l')&&(src[i+2]=='e')) {
+          fprintf (stderr, "Entering files. ");
+          depth += 1;
+        }
+        if ((src[i-2]=='"')&&(src[i-1]=='c')&&(src[i]=='o')&&
+          (src[i+1]=='m')&&(src[i+2]=='m')) {
+          fprintf (stderr, "Entering comment. ");
+          depth += 1;
+        }
+        continue;
+      case 0: // in: .
+        if (src[i] == '{') {
+          fprintf (stderr, "Entering post #%d ", postcount+1);
+          temp[2*postcount] = i;
+          fprintf (stderr, "(@%d)\n", temp[2*postcount]);
+          depth += 1;
+        }
+        continue;
+      default:
+        fprintf (stderr, "! Error: Unusual depth (%d)\n", depth);
+        free (temp);
+        return -2;
+    }
+  }
+  if (depth != 0) {
+    fprintf (stderr, "! Error: Non-zero depth (%d) after cycle\n", depth);
+    return -3;
+  }
+
+  int* posts = (int*) calloc (sizeof(int), postcount);
+  posts = memcpy (posts, temp, postcount*sizeof(int));
+  free (temp);
+  return posts;
 }
