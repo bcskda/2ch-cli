@@ -22,7 +22,7 @@ int getBoardsList (const char* resFile, const bool v);
 char* getBoardPageJSON (const char* board, const unsigned page, bool v);
 char* getBoardCatalogJSON (const char* board, const bool v);
 char* getThreadJSON (const char* board, const unsigned threadnum, const bool v);
-int* findPostsInJSON (const char* src);
+int* findPostsInJSON (const char* src, int* postcount_res);
 
 size_t CURL_writeToBuff (const char* src, const size_t size, const size_t nmemb, void* dest);
 char* unsigned2str (const unsigned val);
@@ -346,7 +346,7 @@ char* unsigned2str (const unsigned val) {
   return res;
 }
 
-int* findPostsJSON (const char* src) {
+int* findPostsJSON (const char* src, int* postcount_res) {
   short srclen = strlen (src);
   int* temp = (int*) calloc (sizeof(int),srclen/8);
 
@@ -411,5 +411,7 @@ int* findPostsJSON (const char* src) {
   int* posts = (int*) calloc (sizeof(int), postcount);
   posts = memcpy (posts, temp, postcount*sizeof(int));
   free (temp);
+
+  *postcount_res = postcount;
   return posts;
 }
