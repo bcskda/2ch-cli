@@ -4,12 +4,16 @@
 // File: 2ch-cli.c
 // A CLI-client for 2ch.hk imageboard
 // written on C
+//
+// Release 0.1:
+// - stable makaba.h
+// - test for post-detecting
 // ========================================
 
 int main (void) {
   //getBoardCatalogJSON ("b",true);
   //printf ("\n\n\n");
-  char* thread = getThreadJSON ("abu",42375,true);
+  char* thread = getThreadJSON ("abu",42375,false);
   int postcount = 0;
   int* posts = findPostsInJSON (thread, &postcount);
   for (int i = 0; i < postcount-1; i+=1) {

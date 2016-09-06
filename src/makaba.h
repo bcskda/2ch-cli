@@ -6,6 +6,10 @@
 // ========================================
 // File: makaba.h
 // Header file for Makaba API-related functions
+//
+// Release 0.1:
+// - stable board page, board catalog and thread receiving
+// - stable post detecting in threads
 // ========================================
 
 const char* BASE_URL = "http://2ch.hk/";
