@@ -20,7 +20,11 @@ char* CURL_BUFF_BODY = 0;
 char* CURL_BUFF_HEADER = 0;
 size_t CURL_BUFF_POS = 0;
 
-// @TODO GLOBAL ERROR CODES
+const int ERR_MEMORY_LEAK = -1,
+		  ERR_UNKNOWN = -2,
+		  ERR_CURL_INIT = -3,
+		  ERR_CURL_PERFORM = -4,
+		  ERR_PARTTHREAD_DEPTH = -5;
 
 int getBoardsList (const char* resFile, const bool v);
 char* getBoardPageJSON (const char* board, const unsigned page, bool v);
@@ -55,7 +59,7 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
     else {
       fprintf (stderr, "[getBoardPage]! Error allocating memory (URL)\n");
       curl_easy_cleanup (curl_handle);
-      return -1;
+      return ERR_MEMORY_LEAK;
     }
 
     if (v) fprintf (stderr, "] Forming URL\n");
@@ -81,7 +85,7 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
       fprintf (stderr, "[getBoardPage]! Error allocating memory (curl body buffer)\n");
       curl_easy_cleanup (curl_handle);
       free (URL);
-      return -1;
+      return ERR_MEMORY_LEAK;
     }
     curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
     if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -101,7 +105,7 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
       curl_easy_cleanup (curl_handle);
       free (URL);
       free (CURL_BUFF_BODY);
-      return -3;
+      return ERR_CURL_PERFORM;
     }
 
     curl_easy_cleanup (curl_handle);
@@ -111,7 +115,7 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
   }
   else {
     fprintf (stderr, "! Error initializing curl handle\n");
-    return -2;
+    return ERR_CURL_INIT;
   }
 
   return CURL_BUFF_BODY;
@@ -134,7 +138,7 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
     else {
       fprintf (stderr, "[getBoardCatalog]! Error allocating memory (URL)\n");
       curl_easy_cleanup (curl_handle);
-      return -1;
+      return ERR_MEMORY_LEAK;
     }
 
     if (v) fprintf (stderr, "] Forming URL\n");
@@ -156,7 +160,7 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
       fprintf (stderr, "[getBoardCatalog]! Error allocating memory (curl body buffer)\n");
       curl_easy_cleanup (curl_handle);
       free (URL);
-      return -1;
+      return ERR_MEMORY_LEAK;
     }
     curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
     if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -176,7 +180,7 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
         curl_easy_cleanup (curl_handle);
       free (URL);
       free (CURL_BUFF_BODY);
-      return -3;
+      return ERR_CURL_PERFORM;
     }
 
     curl_easy_cleanup (curl_handle);
@@ -187,7 +191,7 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
   }
   else {
     fprintf (stderr, "[getBoardCatalog]! Error initializing curl handle\n");
-    return -2;
+    return ERR_CURL_INIT;
   }
 
   return CURL_BUFF_BODY;
@@ -212,7 +216,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
     else {
       fprintf (stderr, "[getThread]! Error allocating memory (URL)\n");
       curl_easy_cleanup (curl_handle);
-      return -1;
+      return ERR_MEMORY_LEAK;
     }
 
     curl_easy_setopt (curl_handle, CURLOPT_POST, 1);
@@ -241,7 +245,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
       fprintf (stderr, "[getThread]! Error allocating memory (POST data)\n");
       curl_easy_cleanup (curl_handle);
       free (URL);
-      return -1;
+      return ERR_MEMORY_LEAK;
     }
     if (v) fprintf (stderr, "] Forming POST data\n");
     postfields = strcpy (postfields, "task=get_thread");
@@ -269,7 +273,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
       curl_easy_cleanup (curl_handle);
       free (URL);
       free (postfields);
-      return -1;
+      return ERR_MEMORY_LEAK;
     }
     curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
     if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -289,7 +293,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
       free (URL);
       free (postfields);
       free (CURL_BUFF_BODY);
-      return -3;
+      return ERR_CURL_PERFORM;
     }
 
     curl_easy_cleanup (curl_handle);
@@ -301,7 +305,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
   }
   else {
     fprintf (stderr, "[getThread]! Error initializing curl handle\n");
-    return -2;
+    return ERR_CURL_INIT;
   }
 
   return CURL_BUFF_BODY;
@@ -375,7 +379,7 @@ int* findPostsInJSON (const char* src, int* postcount_res) {
           }
         }
         continue;
-      case 1: // in: .post 
+      case 1: // in: .post
         if (src[i] == '}') { //@TODO reverse order of ifs in 'case 1'
           fprintf (stderr, "Exiting post.\n");
           postcount += 1;
@@ -404,12 +408,12 @@ int* findPostsInJSON (const char* src, int* postcount_res) {
       default:
         fprintf (stderr, "! Error: Unusual depth (%d)\n", depth);
         free (temp);
-        return -2;
+        return ERR_PARTTHREAD_DEPTH;
     }
   }
   if (depth != 0) {
     fprintf (stderr, "! Error: Non-zero depth (%d) after cycle\n", depth);
-    return -3;
+    return ERR_PARTTHREAD_DEPTH;
   }
 
   int* posts = (int*) calloc (sizeof(int), postcount);
