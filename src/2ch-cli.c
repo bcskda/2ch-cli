@@ -1,13 +1,10 @@
 #include "makaba.h"
+#include "ncurses.h"
 
 // ========================================
 // File: 2ch-cli.c
 // A CLI-client for 2ch.hk imageboard
 // written on C
-//
-// Release 0.1:
-// - stable makaba.h
-// - test for post-detecting
 // ========================================
 
 int main (void) {
