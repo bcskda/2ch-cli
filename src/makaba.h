@@ -17,10 +17,10 @@ char* CURL_BUFF_HEADER = 0;
 size_t CURL_BUFF_POS = 0;
 
 const int ERR_MEMORY_LEAK = -1,
-		  ERR_UNKNOWN = -2,
-		  ERR_CURL_INIT = -3,
-		  ERR_CURL_PERFORM = -4,
-		  ERR_PARTTHREAD_DEPTH = -5;
+		  		ERR_UNKNOWN = -2,
+		  		ERR_CURL_INIT = -3,
+		  		ERR_CURL_PERFORM = -4,
+		  		ERR_PARTTHREAD_DEPTH = -5;
 
 int getBoardsList (const char* resFile, const bool v);
 char* getBoardPageJSON (const char* board, const unsigned page, bool v);

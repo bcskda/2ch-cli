@@ -1,5 +1,6 @@
 #include "makaba.h"
 #include "ncurses.h"
+#include "locale.h"
 
 // ========================================
 // File: 2ch-cli.c
@@ -8,25 +9,28 @@
 // ========================================
 
 int main (void) {
-  //getBoardCatalogJSON ("b",true);
-  //printf ("\n\n\n");
+  setlocale (LC_ALL, "");
+
   char* thread = getThreadJSON ("abu",42375,false);
   int postcount = 0;
   int* posts = findPostsInJSON (thread, &postcount);
-  for (int i = 0; i < postcount-1; i+=1) {
-    printf ("%2d ] ", i);
-    int tmpsize = posts[i+1]-posts[i]-1;
-    char* tmp = (char*) calloc (sizeof(char),tmpsize);
-    tmp = memcpy (tmp, thread+posts[i], tmpsize*sizeof(char));
-    printf ("%s\n",tmp);
-    free (tmp);
-  }
-  printf ("%2d ] ", postcount-1);
-  int tmpsize = strlen(thread)-posts[postcount-1]-1;
-  char* tmp = (char*) calloc (sizeof(char),tmpsize);
-  tmp = memcpy (tmp, thread+posts[postcount-1], tmpsize*sizeof(char));
-  printf ("%s\n",tmp);
-  free (tmp);
+
+  initscr ();
+  printw ("Testing ncurses!\nPush a key..");
+  refresh ();
+  getch ();
+
+  short one_post_len = posts[7]-posts[6];
+  char* one_post = (char*) calloc (sizeof(char), one_post_len);
+  one_post = memcpy (one_post, thread+posts[6], sizeof(char)*one_post_len);
+  printw ("%s", one_post);
+  refresh ();
+  getch ();
+  endwin ();
+
+  fprintf (stderr, "%s\n", one_post);
+  free (one_post);
+
   free (posts);
   free (thread);
   return 0;
