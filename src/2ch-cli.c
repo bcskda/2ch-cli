@@ -1,6 +1,6 @@
 #include "makaba.h"
-#include "ncurses.h"
-#include "locale.h"
+#include <ncurses.h>
+#include <locale.h>
 
 // ========================================
 // File: 2ch-cli.c
@@ -11,24 +11,25 @@
 int main (void) {
   setlocale (LC_ALL, "");
 
-  char* thread = getThreadJSON ("abu",42375,false);
+  char* thread = getThreadJSON ("abu", 42375, false);
   int postcount = 0;
-  int* posts = findPostsInJSON (thread, &postcount);
+  int* posts = findPostsInJSON (thread, &postcount, false);
 
-  initscr ();
-  printw ("Testing ncurses!\nPush a key..");
-  refresh ();
-  getch ();
-
-  short one_post_len = posts[7]-posts[6];
+  short one_post_len = strlen(thread)-posts[postcount-1];
   char* one_post = (char*) calloc (sizeof(char), one_post_len);
-  one_post = memcpy (one_post, thread+posts[6], sizeof(char)*one_post_len);
-  printw ("%s", one_post);
-  refresh ();
-  getch ();
-  endwin ();
+  one_post = memcpy (one_post, thread+posts[postcount-1], sizeof(char)*one_post_len);
 
-  fprintf (stderr, "%s\n", one_post);
+  initscr();
+  raw();
+  keypad (stdscr, TRUE);
+  noecho();
+  printw ("Testing ncurses!\nPush a key..\n");
+  refresh();
+  getch();
+  printw ("%s\n", one_post);
+  getch();
+  endwin();
+
   free (one_post);
 
   free (posts);

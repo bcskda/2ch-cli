@@ -20,13 +20,14 @@ const int ERR_MEMORY_LEAK = -1,
 		  		ERR_UNKNOWN = -2,
 		  		ERR_CURL_INIT = -3,
 		  		ERR_CURL_PERFORM = -4,
-		  		ERR_PARTTHREAD_DEPTH = -5;
+		  		ERR_PARTTHREAD_DEPTH = -5,
+					ERR_POST_FORMAT = -6;
 
 int getBoardsList (const char* resFile, const bool v);
 char* getBoardPageJSON (const char* board, const unsigned page, bool v);
 char* getBoardCatalogJSON (const char* board, const bool v);
 char* getThreadJSON (const char* board, const unsigned threadnum, const bool v);
-int* findPostsInJSON (const char* src, int* postcount_res);
+int* findPostsInJSON (const char* src, int* postcount_res, const bool v);
 
 size_t CURL_writeToBuff (const char* src, const size_t size, const size_t nmemb, void* dest);
 char* unsigned2str (const unsigned val);
@@ -350,8 +351,9 @@ char* unsigned2str (const unsigned val) {
   return res;
 }
 
-int* findPostsInJSON (const char* src, int* postcount_res) {
-  short srclen = strlen (src);
+int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
+	fprintf (stderr, "]] Starting findPostsInJSON\n");
+	short srclen = strlen (src);
   int* temp = (int*) calloc (sizeof(int),srclen/8);
 
   short depth = 0;
@@ -363,13 +365,13 @@ int* findPostsInJSON (const char* src, int* postcount_res) {
       case 2:
         if (comment_read) { // in: .post.files
           if (src[i] == ']') {
-            fprintf (stderr, "Exiting files. ");
+            if (v) fprintf (stderr, "Exiting files. ");
             depth -= 1;
           }
         }
         else { // in: .post.comment
           if (src[i] == '"') {
-            fprintf (stderr, "Exiting comment. ");
+            if (v) fprintf (stderr, "Exiting comment. ");
             comment_read = true;
             depth -= 1;
           }
@@ -377,27 +379,27 @@ int* findPostsInJSON (const char* src, int* postcount_res) {
         continue;
       case 1: // in: .post
         if (src[i] == '}') { //@TODO reverse order of ifs in 'case 1'
-          fprintf (stderr, "Exiting post.\n");
+          if (v) fprintf (stderr, "Exiting post (@%d).\n", i);
           postcount += 1;
           depth -= 1;
           comment_read = false;
         }
         if ((src[i-2]=='"')&&(src[i-1]=='f')&&(src[i]=='i')&&
           (src[i+1]=='l')&&(src[i+2]=='e')) {
-          fprintf (stderr, "Entering files. ");
+          if (v) fprintf (stderr, "Entering files. ");
           depth += 1;
         }
         if ((src[i-2]=='"')&&(src[i-1]=='c')&&(src[i]=='o')&&
           (src[i+1]=='m')&&(src[i+2]=='m')) {
-          fprintf (stderr, "Entering comment. ");
+          if (v) fprintf (stderr, "Entering comment. ");
           depth += 1;
         }
         continue;
       case 0: // in: .
         if (src[i] == '{') {
-          fprintf (stderr, "Entering post #%d ", postcount+1);
+          if (v) fprintf (stderr, "Entering post #%d ", postcount+1);
           temp[postcount] = i;
-          fprintf (stderr, "(@%d)\n", temp[postcount]);
+          if (v) fprintf (stderr, "(@%d)\n", temp[postcount]);
           depth += 1;
         }
         continue;
@@ -412,10 +414,16 @@ int* findPostsInJSON (const char* src, int* postcount_res) {
     return ERR_PARTTHREAD_DEPTH;
   }
 
+	if (v) fprintf (stderr, "Total: %d posts found\n", postcount);
+
   int* posts = (int*) calloc (sizeof(int), postcount);
   posts = memcpy (posts, temp, postcount*sizeof(int));
   free (temp);
+	if (v) fprintf (stderr, "Posts begin at:\n");
+	if (v) for (int i = 0; i < postcount; i++)
+		fprintf (stderr, "] %2d: %5d\n", i, posts[i]);
 
   *postcount_res = postcount;
+	fprintf (stderr, "]] Exiting findPostsInJSON\n");
   return posts;
 }
