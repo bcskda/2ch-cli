@@ -38,7 +38,8 @@ int getBoardsList (const char* resFile, const bool v) {
 }
 
 char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
-  fprintf (stderr, "]] Starting getBoardPage\n");
+  fprintf (stderr, "]] Starting getBoardPage");
+	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
   if (v) fprintf (stderr, "] initializing curl handle\n");
   CURL* curl_handle = curl_easy_init();
   CURLcode request_status = 0;
@@ -119,7 +120,8 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 }
 
 char* getBoardCatalogJSON (const char* board, const bool v) {
-  fprintf (stderr, "]] Starting getBoardCatalog\n");
+  fprintf (stderr, "]] Starting getBoardCatalog");
+	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
   if (v) fprintf (stderr, "] initializing curl handle\n");
   CURL* curl_handle = curl_easy_init();
   CURLcode request_status = 0;
@@ -195,7 +197,8 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
 }
 
 char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) {
-  fprintf (stderr, "]] Starting getThread\n");
+  fprintf (stderr, "]] Starting getThread");
+	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
   if (v) fprintf (stderr, "] initializing curl handle\n");
   CURL* curl_handle = curl_easy_init();
   CURLcode request_status = 0;
@@ -352,7 +355,8 @@ char* unsigned2str (const unsigned val) {
 }
 
 int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
-	fprintf (stderr, "]] Starting findPostsInJSON\n");
+	fprintf (stderr, "]] Starting findPostsInJSON");
+	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 	short srclen = strlen (src);
   int* temp = (int*) calloc (sizeof(int),srclen/8);
 
