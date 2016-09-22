@@ -55,6 +55,7 @@ int main (void) {
   printw ("Push a key to exit");
   getch();
   endwin();
+  
   freePost (one_post_struct);
   free (posts);
   free (thread);
@@ -177,17 +178,17 @@ Post* initPost (const char* post_string, const short postlen, const bool v) {
   post->comment = (char*) calloc (sizeof(char), comment_len);
   post->date = (char*) calloc (sizeof(char), date_len);
   post->name = (char*) calloc (sizeof(char), name_len);
-  if (email_len > 0) {
+  if (email_len == 0) {
+    post->email = -1;
+  }
+  else {
     post->email = (char*) calloc (sizeof(char), email_len);
   }
-  else {
-    post->email = 0;
+  if (files_len == 0) {
+    post->files = -1;
   }
-  if (files_len > 0) {
+  else {
     post->files = (char*) calloc (sizeof(char), files_len);
-  }
-  else {
-    post->files = 0;
   }
 
   if (post->comment == NULL) {
@@ -219,7 +220,9 @@ void freePost (Post* post) {
   free (post->comment);
   free (post->date);
   free (post->name);
-  free (post->email);
-  free (post->files);
+  if (post->email != -1)
+    free (post->email);
+  if (post->files != -1)
+    free (post->files);
   free (post);
 }
