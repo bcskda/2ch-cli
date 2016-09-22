@@ -8,6 +8,14 @@
 // written on C
 // ========================================
 
+typedef struct Post {
+  const char* comment;
+  const char* date;
+  const char* name;
+  const char* email;
+  const char* files;
+} Post;
+
 const char* PATTERN_COMMENT = ",\"comment\":\"";
 const char* PATTERN_DATE = ",\"date\":\"";
 const char* PATTERN_SUBJECT = ",\"subject\":\"";
@@ -15,9 +23,8 @@ const char* PATTERN_NAME = ",\"name\":\"";
 const char* PATTERN_EMAIL = ",\"email\":\"";
 const char* PATTERN_FILES = ",\"files\":[{";
 
-int printPost (const char* post, const short postlen, const bool show_email,
- const bool show_files, const bool v);
-char* findPostPart (const char* post, const short offset, const short type);
+void freePost (Post* post);
+Post* initPost (const char* post, const short postlen, const bool v);
 
 int main (void) {
   setlocale (LC_ALL, "");
@@ -38,43 +45,35 @@ int main (void) {
   int* posts = findPostsInJSON (thread, &postcount, false);
 
   short one_post_len = strlen(thread)-posts[postcount-1];
-  char* one_post = (char*) calloc (sizeof(char), one_post_len);
-  one_post = memcpy (one_post, thread+posts[postcount-1], sizeof(char)*one_post_len);
+  Post* one_post_struct = initPost (thread+posts[postcount-1],one_post_len,true);
 
   initscr();
   raw();
   keypad (stdscr, TRUE);
   noecho();
-  printw ("Testing ncurses!\nPush a key..\n");
-  refresh();
-  getch();
-  printw ("%s\n", one_post);
+  printPost (one_post_struct,true,true);
+  printw ("Push a key to exit");
   getch();
   endwin();
-
-  printPost (one_post,one_post_len,true,true,true);
-
-  free (one_post);
-
+  freePost (one_post_struct);
   free (posts);
   free (thread);
   return 0;
 }
 
-int printPost (const char* post, const short postlen, const bool show_email,
- const bool show_files, const bool v) {
-  fprintf (stderr, "]] Starting printPost");
+Post* initPost (const char* post_string, const short postlen, const bool v) {
+  fprintf (stderr, "]] Starting initPost");
   if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 
   // Detecting comment:
-  char* ptr_comment = strstr (post, PATTERN_COMMENT) + strlen (PATTERN_COMMENT);
+  char* ptr_comment = strstr (post_string, PATTERN_COMMENT) + strlen (PATTERN_COMMENT);
   if (ptr_comment == NULL) {
     fprintf (stderr, "! Error: Bad post format: Comment pattern not found\n");
     return ERR_POST_FORMAT;
   }
   short comment_len = 0; bool stop = false;
-  for (int i = ptr_comment-post; !stop && (i < postlen); i++) {
-    if ((post[i] == '\"') && (post[i-1] != '\\')) {
+  for (int i = ptr_comment-post_string; !stop && (i < postlen); i++) {
+    if ((post_string[i] == '\"') && (post_string[i-1] != '\\')) {
       stop = true;
     }
     comment_len++;
@@ -171,7 +170,56 @@ int printPost (const char* post, const short postlen, const bool show_email,
     fprintf (stderr, "%c", ptr_name[i]);
   if (v) fprintf (stderr, "\n");
 
+  if (v) fprintf (stderr, "] = All main fields detected\n");
 
-  fprintf (stderr, "]] Exiting printPost\n");
-  return 0;
+  // Init struct:
+  Post* post = (Post*) calloc (sizeof(Post),1);
+  post->comment = (char*) calloc (sizeof(char), comment_len);
+  post->date = (char*) calloc (sizeof(char), date_len);
+  post->name = (char*) calloc (sizeof(char), name_len);
+  if (email_len > 0) {
+    post->email = (char*) calloc (sizeof(char), email_len);
+  }
+  else {
+    post->email = 0;
+  }
+  if (files_len > 0) {
+    post->files = (char*) calloc (sizeof(char), files_len);
+  }
+  else {
+    post->files = 0;
+  }
+
+  if (post->comment == NULL) {
+    fprintf (stderr, "! Error allocating memory (post.comment)\n");
+    return ERR_MEMORY_LEAK;
+  }
+  if (post->date == NULL) {
+    fprintf (stderr, "! Error allocating memory (post.date)\n");
+    return ERR_MEMORY_LEAK;
+  }
+  if (post->name == NULL) {
+    fprintf (stderr, "! Error allocating memory (post.name)\n");
+    return ERR_MEMORY_LEAK;
+  }
+  if (post->email == NULL) {
+    fprintf (stderr, "! Error allocating memory (post.email)\n");
+    return ERR_MEMORY_LEAK;
+  }
+  if (post->files == NULL) {
+    fprintf (stderr, "! Error allocating memory (post.files)\n");
+    return ERR_MEMORY_LEAK;
+  }
+  if (v) fprintf (stderr, "] = Init struct done\n");
+  fprintf (stderr, "]] Exiting initPost\n");
+  return post;
+}
+
+void freePost (Post* post) {
+  free (post->comment);
+  free (post->date);
+  free (post->name);
+  free (post->email);
+  free (post->files);
+  free (post);
 }
