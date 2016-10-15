@@ -8,13 +8,13 @@
 // written on C
 // ========================================
 
-typedef struct Post {
+struct post {
   const char* comment;
   const char* date;
   const char* name;
   const char* email;
   const char* files;
-} Post;
+};
 
 const char* PATTERN_COMMENT = ",\"comment\":\"";
 const char* PATTERN_DATE = ",\"date\":\"";
@@ -23,8 +23,9 @@ const char* PATTERN_NAME = ",\"name\":\"";
 const char* PATTERN_EMAIL = ",\"email\":\"";
 const char* PATTERN_FILES = ",\"files\":[{";
 
-void freePost (Post* post);
-Post* initPost (const char* post, const short postlen, const bool v);
+void freePost (struct post* post);
+struct post* initPost (const char* post, const short postlen, const bool v);
+int printPost (const struct post* post,const bool show_email,const bool show_files);
 
 int main (void) {
   setlocale (LC_ALL, "");
@@ -45,24 +46,25 @@ int main (void) {
   int* posts = findPostsInJSON (thread, &postcount, false);
 
   short one_post_len = strlen(thread)-posts[postcount-1];
-  Post* one_post_struct = initPost (thread+posts[postcount-1],one_post_len,true);
+  struct post* one_post_struct = initPost (thread+posts[postcount-1],one_post_len,true);
 
   initscr();
   raw();
   keypad (stdscr, TRUE);
   noecho();
   printPost (one_post_struct,true,true);
-  printw ("Push a key to exit");
+  refresh();
+  printw ("\nPush a key to exit\n");
   getch();
   endwin();
-  
+
   freePost (one_post_struct);
   free (posts);
   free (thread);
   return 0;
 }
 
-Post* initPost (const char* post_string, const short postlen, const bool v) {
+struct post* initPost (const char* post_string, const short postlen, const bool v) {
   fprintf (stderr, "]] Starting initPost");
   if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 
@@ -116,8 +118,7 @@ Post* initPost (const char* post_string, const short postlen, const bool v) {
   short email_len = strstr (ptr_email, "\"")-ptr_email;
   if (v) if (email_len == 0) {
     fprintf (stderr, "] Email not specified\n");
-  }
-  else {
+  } else {
     fprintf (stderr, "] Email length: %d\n", email_len);
     fprintf (stderr, "] Email: ");
     for (int i = 0; i < email_len; i++)
@@ -131,14 +132,12 @@ Post* initPost (const char* post_string, const short postlen, const bool v) {
   // If NULL, simply no files in post
   if (ptr_files-strlen(PATTERN_FILES) == NULL) {
     if (v) fprintf (stderr, "] Files not specified\n");
-  }
-  else {
+  } else {
     files_len = strstr (ptr_files, "}]")-ptr_files;
     if (files_len == 0) {
       fprintf (stderr, "! Error: Bad post format: Files field specified but null\n");
       return ERR_POST_FORMAT;
-    }
-    else
+    } else
       if (v) {
         fprintf(stderr, "] Files length: %d\n", files_len);
         fprintf (stderr, "] Files: \n");
@@ -154,10 +153,9 @@ Post* initPost (const char* post_string, const short postlen, const bool v) {
   if (ptr_files-strlen(PATTERN_FILES) == NULL) {
     ptr_name_diff = ptr_email; // Files field may include "\"name\":" substring,
     name_diff_len = email_len; // so we must ignore the files field, if it exists.
-  }                            // However, if it is not specified, we cannot use
-  else {                       // ptr_files. So we split into 2 cases and use
-    ptr_name_diff = ptr_files; // 2 variants of values for 2 new pointers.
-    name_diff_len = files_len;
+  } else {                     // However, if it is not specified, we cannot use
+    ptr_name_diff = ptr_files; // ptr_files. So we split into 2 cases and use
+    name_diff_len = files_len; // 2 variants of values for 2 new pointers.
   }
   ptr_name = strstr (ptr_name_diff+name_diff_len, PATTERN_NAME)+strlen(PATTERN_NAME);
   if (ptr_name == NULL) {
@@ -174,21 +172,25 @@ Post* initPost (const char* post_string, const short postlen, const bool v) {
   if (v) fprintf (stderr, "] = All main fields detected\n");
 
   // Init struct:
-  Post* post = (Post*) calloc (sizeof(Post),1);
-  post->comment = (char*) calloc (sizeof(char), comment_len);
-  post->date = (char*) calloc (sizeof(char), date_len);
-  post->name = (char*) calloc (sizeof(char), name_len);
+  struct post* post = (struct post*) calloc (sizeof(struct post),1);
+
+  post->comment = (char*) calloc (sizeof(char), comment_len+1);
+  memcpy (post->comment, ptr_comment, sizeof(char)*comment_len);
+  post->date = (char*) calloc (sizeof(char), date_len+1);
+  memcpy (post->date, ptr_date, sizeof(char)*date_len);
+  post->name = (char*) calloc (sizeof(char), name_len+1);
+  memcpy (post->name, ptr_name, sizeof(char)*name_len);
   if (email_len == 0) {
     post->email = -1;
-  }
-  else {
-    post->email = (char*) calloc (sizeof(char), email_len);
+  } else {
+    post->email = (char*) calloc (sizeof(char), email_len+1);
+    memcpy (post->email, ptr_email, sizeof(char)*email_len);
   }
   if (files_len == 0) {
     post->files = -1;
-  }
-  else {
-    post->files = (char*) calloc (sizeof(char), files_len);
+  } else {
+    post->files = (char*) calloc (sizeof(char), files_len+1);
+    memcpy (post->files, ptr_files, sizeof(char)*files_len);
   }
 
   if (post->comment == NULL) {
@@ -216,7 +218,16 @@ Post* initPost (const char* post_string, const short postlen, const bool v) {
   return post;
 }
 
-void freePost (Post* post) {
+int printPost (const struct post* post,const bool show_email,const bool show_files) {
+  if (show_email && (post->email != -1)) {
+    printw ("[=== %s (%s)   %s ===]\n%s\n", post->name, post->email, post->date, post->comment);
+  } else {
+    printw ("[=== %s   %s ===]\n%s\n", post->name, post->date, post->comment);
+  }
+  return 0;
+}
+
+void freePost (struct post* post) {
   free (post->comment);
   free (post->date);
   free (post->name);
