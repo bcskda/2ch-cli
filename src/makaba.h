@@ -8,7 +8,7 @@
 // Header file for Makaba API-related functions
 // ========================================
 
-const char* BASE_URL = "http://2ch.hk/";
+const char* BASE_URL = "https://2ch.hk/";
 const char* MOBILE_API = "makaba/mobile.fcgi";
 const size_t CURL_BUFF_BODY_SIZE = 5000000;
 const size_t CURL_BUFF_HEADER_SIZE = 2000;
