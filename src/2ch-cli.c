@@ -54,13 +54,14 @@ const char* PATTERN_HREF_CLOSE = "\\u003c/a\\u003e";
 const char* PATTERN_REPLY_CLASS = "class=\\\"post-reply-link\\\"";
 const char* PATTERN_REPLY_THREAD = "data-thread=\\\"";
 const char* PATTERN_REPLY_NUM = "data-num=\\\"";
-const char* PATTERN_COMMENT_BODY = "span class=\\\"unkfunc\\\"";
+const char* PATTERN_GREEN = "span class=\\\"unkfunc\\\"";
+const char* PATTERN_NEWLINE = "\\u003cbr\\u003e";
 
 void freePost (struct post* post);
 struct post* initPost (const char* post, const short postlen, const bool v);
 struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const bool v);
 struct comment* parseComment (char* comment, const bool v);
-char* cleanupComment (const char* comment_src, const bool v);
+char* cleanupComment (const char* src, const unsigned src_len, const bool v);
 int printPost (struct post* post,const bool show_email,const bool show_files);
 
 int main (void) {
@@ -321,6 +322,11 @@ struct comment* parseComment (char* comment, const bool v) {
 				if (v) fprintf (stderr, "]]]] Type: reply\n");
 				nrefs++;
 				cref = parseRef_Reply (cinst, cinst_end-cinst, true);
+				memcpy (clean_comment+clean_len, ">>", sizeof(char)*2);
+				clean_len += 2;
+				short csize = strlen (unsigned2str(cref->num));
+				memcpy (clean_comment+clean_len, unsigned2str(cref->num), sizeof(char)*csize);
+				clean_len += csize;
 				if (v) fprintf (stderr, "]]]] Init done:\n");
 				if (v) fprintf (stderr, "]]]]] link=\"%s\"\n]]]]] thread=%d\n]]]]] num=%d\n",
 												cref->link, cref->thread, cref->num);
@@ -363,10 +369,11 @@ struct comment* parseComment (char* comment, const bool v) {
 		memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
 		clean_len += csize;
 	}
+	char* finally_clean_comment = cleanupComment (clean_comment, clean_len, true);
 	if (v) fprintf(stderr, "]]] Total: %d refs\n", nrefs);
 	struct comment* parsed = (struct comment*) calloc (1, sizeof(struct comment));
 	parsed->text = (char*) calloc (comment_len, sizeof(char));
-	memcpy (parsed->text, clean_comment, sizeof(char)*clean_len);
+	memcpy (parsed->text, finally_clean_comment, sizeof(char)*strlen(finally_clean_comment));
 	free (clean_comment);
 	fprintf(stderr, "text ok: %s\n", parsed->text);
 	memcpy (&parsed->nrefs, &nrefs, sizeof(unsigned));
@@ -423,4 +430,41 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const b
 	fprintf (stderr, "-]] Exiting parseRef_Reply\n");
 
 	return ref_parsed;
+}
+
+char* cleanupComment (const char* src, const unsigned src_len, const bool v) {
+	fprintf(stderr, "]] Started cleanupComment\n");
+	char* buf = (char*) calloc (src_len, sizeof(char));
+	unsigned pos = 0, len = 0;
+	for ( ; pos < src_len; ) {
+		if ((src[pos] == '\\')   && (src[pos+1] == 'u') && (src[pos+2] == '0') && (src[pos+3] == '0')
+			&& (src[pos+4] == '3') && (src[pos+5] == 'c') && (src[pos+6] == 'b') && (src[pos+7] == 'r')) {
+			pos += 14;
+			buf[len] = '\n';
+			len++;
+		} else if ((src[pos   ] == '\\') && (src[pos+1 ] == 'u' ) && (src[pos+2 ] == '0' ) && (src[pos+3 ] == '0')
+				    && (src[pos+4 ] == '3' ) && (src[pos+5 ] == 'c' ) && (src[pos+6 ] == 's' ) && (src[pos+7 ] == 'p')
+					  && (src[pos+8 ] == 'a' ) && (src[pos+9 ] == 'n' ) && (src[pos+10] == ' ' ) && (src[pos+11] == 'c')
+					  && (src[pos+12] == 'l' ) && (src[pos+13] == 'a' ) && (src[pos+14] == 's' ) && (src[pos+15] == 's')
+					  && (src[pos+16] == '=' ) && (src[pos+17] == '\\') && (src[pos+18] == '"' ) && (src[pos+19] == 'u')
+					  && (src[pos+20] == 'n' ) && (src[pos+21] == 'k' ) && (src[pos+22] == 'f' ) && (src[pos+23] == 'u')
+					  && (src[pos+24] == 'n' ) && (src[pos+25] == 'c' ) && (src[pos+26] == '\\') && (src[pos+27] == '"')) {
+				pos += 38;
+				// Color: green
+		} else if ((src[pos   ] == '\\') && (src[pos+1 ] == 'u' ) && (src[pos+2 ] == '0' ) && (src[pos+3 ] == '0')
+				    && (src[pos+4 ] == '3' ) && (src[pos+5 ] == 'c' ) && (src[pos+6 ] == '/' ) && (src[pos+7 ] == 's')
+					  && (src[pos+8 ] == 'p' ) && (src[pos+9 ] == 'a' ) && (src[pos+10] == 'n' )) {
+				pos += 17;
+		} else {
+			buf[len] = src[pos];
+			len++;
+			pos++;
+		}
+	}
+
+	char* clean = (char*) calloc (len, sizeof(char));
+	memcpy(clean, buf, sizeof(char)*len);
+	free (buf);
+	fprintf(stderr, "]] Exiting cleanupComment\n");
+	return clean;
 }
