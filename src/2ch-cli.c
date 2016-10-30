@@ -11,8 +11,8 @@
 //[ ] freeRefReply
 //[ ] freeComment
 //[x] parseRef_Reply
-//[?] init struct comment in commentParse
-//[?] init comment in initPost
+//[x] init struct comment in commentParse
+//[x] init comment in initPost
 //[ ] FREEING struct ref_reply AFTER INIT @ parseComment()
 // ========================================
 
@@ -60,6 +60,7 @@ void freePost (struct post* post);
 struct post* initPost (const char* post, const short postlen, const bool v);
 struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const bool v);
 struct comment* parseComment (char* comment, const bool v);
+char* cleanupComment (const char* comment_src, const bool v);
 int printPost (struct post* post,const bool show_email,const bool show_files);
 
 int main (void) {
@@ -297,12 +298,14 @@ struct comment* parseComment (char* comment, const bool v) {
 	unsigned comment_len = strlen (comment);
 	int nrefs = 0;
 	char* cinst = strstr(comment,PATTERN_HREF_OPEN);
-	int pos = 0;
+	size_t pos = 0;
 	struct list* refs = calloc (1, sizeof(struct list));
 	refs->first = refs;
 	refs->data = 0;
 	refs->next = 0;
 	struct ref_reply* cref = 0;
+	unsigned clean_len = 0;
+	char* clean_comment = (char*) calloc (comment_len, sizeof(char));
 	for ( ; cinst != NULL; cinst = strstr(pos+comment,PATTERN_HREF_OPEN)) {
 		if (v) fprintf (stderr, "]]] New ref\n]]]] Opened @ [%d]\n", cinst-comment);
 		pos = cinst-comment;
@@ -341,13 +344,30 @@ struct comment* parseComment (char* comment, const bool v) {
 				fprintf (stderr, "! Error: unknown ref type\n");
 				return ERR_COMMENT_FORMAT;
 			}
+			short csize = cinst-(comment+pos);
+			fprintf(stderr, "[!] From #%d: %s\n", pos, comment+pos);
+			fprintf(stderr, "[!] To: %p+%d\n", clean_comment, clean_len);
+			fprintf(stderr, "[!] Size: %d\n", csize);
+			if (csize > 0) {
+				memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
+				clean_len += csize;
+			}
 			pos = cinst_end-comment+strlen(PATTERN_HREF_CLOSE);
 			free (cref);
+	}
+	short csize = comment_len-pos;
+	fprintf(stderr, "[!] From #%d: %s\n", pos, comment+pos);
+	fprintf(stderr, "[!] To: %p+%d\n", clean_comment, clean_len);
+	fprintf(stderr, "[!] Size: %d\n", csize);
+	if (csize > 0) {
+		memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
+		clean_len += csize;
 	}
 	if (v) fprintf(stderr, "]]] Total: %d refs\n", nrefs);
 	struct comment* parsed = (struct comment*) calloc (1, sizeof(struct comment));
 	parsed->text = (char*) calloc (comment_len, sizeof(char));
-	memcpy (parsed->text, comment, sizeof(char)*comment_len); // Get clean text?
+	memcpy (parsed->text, clean_comment, sizeof(char)*clean_len);
+	free (clean_comment);
 	fprintf(stderr, "text ok: %s\n", parsed->text);
 	memcpy (&parsed->nrefs, &nrefs, sizeof(unsigned));
 	fprintf(stderr, "nrefs ok: %d\n", parsed->nrefs);
@@ -404,4 +424,3 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const b
 
 	return ref_parsed;
 }
-
