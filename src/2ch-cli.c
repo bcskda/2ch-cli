@@ -8,12 +8,12 @@
 // written on C
 // ========================================
 // TODO:
-//[ ] freeRefReply
-//[ ] freeComment
+//[x] freeRefReply
+//[x] freeComment
 //[x] parseRef_Reply
 //[x] init struct comment in commentParse
 //[x] init comment in initPost
-//[ ] FREEING struct ref_reply AFTER INIT @ parseComment()
+//[x] FREEING struct ref_reply AFTER INIT @ parseComment()
 // ========================================
 
 struct list {
@@ -22,24 +22,24 @@ struct list {
 	struct list* next;
 };
 
-struct ref_reply { // freeRefReply() !!!
-	const char* link;
+struct ref_reply {
+	char* link;
 	unsigned thread;
-	unsigned num; // make ref_reply const again!
+	unsigned num;
 };
 
 struct comment {
-	const char* text;
-	const struct ref_reply* refs;
-	const unsigned nrefs;
+	char* text;
+	struct ref_reply* refs;
+	unsigned nrefs;
 };
 
 struct post {
-	const struct comment* comment;
-	const char* date;
-	const char* name;
-	const char* email;
-	const char* files;
+	struct comment* comment;
+	char* date;
+	char* name;
+	char* email;
+	char* files;
 };
 
 const char* PATTERN_COMMENT = ",\"comment\":\"";
@@ -57,12 +57,17 @@ const char* PATTERN_REPLY_NUM = "data-num=\\\"";
 const char* PATTERN_GREEN = "span class=\\\"unkfunc\\\"";
 const char* PATTERN_NEWLINE = "\\u003cbr\\u003e";
 
-void freePost (struct post* post);
-struct post* initPost (const char* post, const short postlen, const bool v);
+
+struct post* initPost (const char* post_string, const short postlen, const bool v);
 struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const bool v);
 struct comment* parseComment (char* comment, const bool v);
 char* cleanupComment (const char* src, const unsigned src_len, const bool v);
+
 int printPost (struct post* post,const bool show_email,const bool show_files);
+
+void freeRefReply (struct ref_reply* ref);
+void freePost (struct post* post);
+void freeComment (struct comment* arg);
 
 int main (void) {
 	setlocale (LC_ALL, "");
@@ -280,18 +285,6 @@ int printPost (struct post* post,const bool show_email,const bool show_files) {
 	return 0;
 }
 
-void freePost (struct post* post) {
-	free (post->comment->text); //
-	free (post->comment->refs); // Should replace these two with freeComment
-	free (post->date);
-	free (post->name);
-	if (post->email != -1)
-		free (post->email);
-	if (post->files != -1)
-		free (post->files);
-	free (post);
-}
-
 struct comment* parseComment (char* comment, const bool v) {
 	fprintf (stderr, "]] Started parseComment");
 	if (v) fprintf (stderr, " (verbose)");
@@ -376,7 +369,7 @@ struct comment* parseComment (char* comment, const bool v) {
 	memcpy (parsed->text, finally_clean_comment, sizeof(char)*strlen(finally_clean_comment));
 	free (clean_comment);
 	fprintf(stderr, "text ok: %s\n", parsed->text);
-	memcpy (&parsed->nrefs, &nrefs, sizeof(unsigned));
+	parsed->nrefs = nrefs;
 	fprintf(stderr, "nrefs ok: %d\n", parsed->nrefs);
 	parsed->refs = (struct ref_reply*) calloc (nrefs, sizeof(struct ref_reply));
 	refs = refs->first;
@@ -467,4 +460,24 @@ char* cleanupComment (const char* src, const unsigned src_len, const bool v) {
 	free (buf);
 	fprintf(stderr, "]] Exiting cleanupComment\n");
 	return clean;
+}
+
+void freeRefReply (struct ref_reply* ref) {
+	free (ref->link);
+}
+
+void freeComment (struct comment* arg) {
+	free (arg->text);
+	free (arg->refs);
+}
+
+void freePost (struct post* post) {
+	freeComment (post->comment);
+	free (post->date);
+	free (post->name);
+	if (post->email != -1)
+		free (post->email);
+	if (post->files != -1)
+		free (post->files);
+	free (post);
 }
