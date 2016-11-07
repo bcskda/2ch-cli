@@ -87,28 +87,63 @@ int main (void) {
 	int postcount = 0;
 	int* posts = findPostsInJSON (thread, &postcount, false);
 
-	short one_post_len = strlen(thread)-posts[postcount-1];
-	struct post* one_post_struct = initPost (thread+posts[postcount-1],one_post_len,true);
-	fprintf(stderr, "[!] Back in main after init\n");
+	struct post** thread_parsed = (struct post**) calloc (postcount-1, sizeof(struct post*));
+	short clen = posts[0];
+	
+	//thread_parsed[0] = initPost(thread+posts[0],clen,true);
+	//fprintf(stderr, "[!] Back in main after init (first)\n");
+	
+	for (int i = 1; i < postcount-1; i++) {
+		fprintf(stderr, "[%d] = %d; \n", i, posts[i]);
+		clen = posts[i]-posts[i-1];
+		thread_parsed[i] = initPost(thread+posts[i],clen,true);
+		fprintf(stderr, "[!] Back in main after init #%d\n", i);
+	}
+	clen = strlen(thread)-posts[postcount-1];
+	thread_parsed[postcount-1] = initPost(thread+posts[postcount-1],clen,true);
+	fprintf(stderr, "[!] Back in main after init (last)\n");
+	/*
 	fprintf(stderr, "Comment.text = %s\n", one_post_struct->comment->text);
 	fprintf(stderr, "Name = %s\n", one_post_struct->name);
 	if (one_post_struct->email != -1) fprintf(stderr, "Email = %s\n", one_post_struct->email);
 	fprintf(stderr, "Date = %s\n", one_post_struct->date);
+	*/
 	
 	initscr();
 	raw();
 	keypad (stdscr, TRUE);
 	noecho();
-	printPost (one_post_struct,true,true);
-	refresh();
+	printw ("Push [c] to clear screen, anything else to print another post\n");
+	for (int i = 1; i < postcount-1; i++) {
+		bool done = 0;
+		while (! done)
+			switch (getch()) { 
+				case 'C': case 'c':
+					fprintf(stderr, "Clearing screen at #&d\n", i);
+					clear();
+					printw ("Push [c] to clear screen, anything else to print another post\n");
+					break;
+				default:
+					fprintf(stderr, "Printing post #%d\n", i);
+					printPost (thread_parsed[i],true,true);
+					refresh();
+					done = 1;
+					break;
+			}
+	}
 	printw ("\nPush a key to exit\n");
 	getch();
 	endwin();
 	
-	printPost (one_post_struct, true, true);
-	fprintf(stderr, "[!] Back in main after print\n");
+	for (int i = 1; i < postcount; i++) {
+		printPost (thread_parsed[i], true, true);
+		fprintf(stderr, "[!] Back in main after printing #%d\n", i);
+	}
 	
-	freePost (one_post_struct);
+	for (int i = 1; i < postcount; i++) {
+		freePost (thread_parsed[i]);
+	}
+	free (thread_parsed);
 	free (posts);
 	free (thread);
 	return 0;
@@ -340,8 +375,7 @@ struct comment* parseComment (char* comment, const bool v) {
  					if (v) fprintf(stderr, "List member state: 1st = %p, cur = %p, next = %p\n", refs->first, refs, refs->next);
 				}
 			} else {
-				fprintf (stderr, "! Error: unknown ref type\n");
-				return ERR_COMMENT_FORMAT;
+				fprintf (stderr, "]]]] Unknown ref type, treat as text\n");
 			}
 			short csize = cinst-(comment+pos);
 			fprintf(stderr, "[!] From #%d: %s\n", pos, comment+pos);
