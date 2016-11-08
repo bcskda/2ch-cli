@@ -7,14 +7,6 @@
 // A CLI-client for 2ch.hk imageboard
 // written on C
 // ========================================
-// TODO:
-//[x] freeRefReply
-//[x] freeComment
-//[x] parseRef_Reply
-//[x] init struct comment in commentParse
-//[x] init comment in initPost
-//[x] FREEING struct ref_reply AFTER INIT @ parseComment()
-// ========================================
 
 struct list {
 	void* data;
@@ -72,9 +64,9 @@ void freeComment (struct comment* arg);
 int main (void) {
 	setlocale (LC_ALL, "");
 
-	//char* thread = getThreadJSON ("abu", 42375, false);
+	char* thread = getThreadJSON ("abu", 42375, false);
 
-	///*
+	/*
 	FILE* src = fopen ("thread.json", "r");
 	fseek (src, 0, SEEK_END);
 	const long src_size = ftell (src);
@@ -82,7 +74,7 @@ int main (void) {
 	char* thread = (char*) calloc (sizeof(char), src_size);
 	fread (thread, sizeof(char), src_size, src);
 	fclose (src);
-	//*/
+	*/
 	
 	int postcount = 0;
 	int* posts = findPostsInJSON (thread, &postcount, false);

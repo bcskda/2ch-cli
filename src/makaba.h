@@ -7,6 +7,10 @@
 // File: makaba.h
 // Header file for Makaba API-related functions
 // ========================================
+// TODO:
+//[ ] captcha
+//[ ] fix ^J in comment.text
+// ========================================
 
 const char* BASE_URL = "https://2ch.hk/";
 const char* MOBILE_API = "makaba/mobile.fcgi";
