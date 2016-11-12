@@ -25,13 +25,14 @@ int main (void) {
 	int* posts = findPostsInJSON (thread, &postcount, false);
 
 	struct post** thread_parsed = (struct post**) calloc (postcount-1, sizeof(struct post*));
-	short clen = posts[0];
+	short clen = posts[1]-posts[0];
 	
-	//thread_parsed[0] = initPost(thread+posts[0],clen,true);
-	//fprintf(stderr, "[!] Back in main after init (first)\n");
+	fprintf(stderr, "[0] = %d\n", posts[0]);
+	thread_parsed[0] = initPost(thread+posts[0],clen,true);
+	fprintf(stderr, "[!] Back in main after init (first)\n");
 	
 	for (int i = 1; i < postcount-1; i++) {
-		fprintf(stderr, "[%d] = %d; \n", i, posts[i]);
+		fprintf(stderr, "[%d] = %d\n", i, posts[i]);
 		clen = posts[i]-posts[i-1];
 		thread_parsed[i] = initPost(thread+posts[i],clen,true);
 		fprintf(stderr, "[!] Back in main after init #%d\n", i);
@@ -51,7 +52,7 @@ int main (void) {
 	keypad (stdscr, TRUE);
 	noecho();
 	printw ("Push [c] to clear screen, anything else to print another post\n");
-	for (int i = 1; i < postcount-1; i++) {
+	for (int i = 0; i < postcount-1; i++) {
 		bool done = 0;
 		while (! done)
 			switch (getch()) { 
@@ -88,10 +89,12 @@ int main (void) {
 
 
 int printPost (struct post* post,const bool show_email,const bool show_files) {
-	if (show_email && (post->email != -1)) {
-		printw ("[=== %s (%s)   %s ===]\n%s\n", post->name, post->email, post->date, post->comment->text);
+	if (show_email && (post->email != NULL)) {
+		printw ("[=== %s (%s) #%d %s ===]\n%s\n",
+			post->name, post->email, post->num, post->date, post->comment->text);
 	} else {
-		printw ("[=== %s   %s ===]\n%s\n", post->name, post->date, post->comment->text);
+		printw ("[=== %s #%d %s ===]\n%s\n",
+			post->name, post->num, post->date, post->comment->text);
 	}
 	return 0;
 }
