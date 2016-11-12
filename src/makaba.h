@@ -27,6 +27,7 @@ struct comment {
 	unsigned nrefs;};
 
 struct post {
+	short num;
 	struct comment* comment;
 	char* date;
 	char* name;
@@ -48,6 +49,7 @@ const char* PATTERN_SUBJECT = ",\"subject\":\"";
 const char* PATTERN_NAME = ",\"name\":\"";
 const char* PATTERN_EMAIL = ",\"email\":\"";
 const char* PATTERN_FILES = ",\"files\":[{";
+const char* PATTERN_NUM = ",\"num\":";
 
 const char* PATTERN_HREF_OPEN = "\\u003ca href=\\\"";
 const char* PATTERN_HREF_CLOSE = "\\u003c/a\\u003e";

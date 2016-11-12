@@ -4,6 +4,7 @@
 // (Implementation)
 // ========================================
 // TODO:
+//[ ] struct post -> num
 //[ ] captcha
 //[ ] fix ^J in comment.text
 // ========================================
@@ -479,11 +480,26 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 	if (v) for (int i = 0; i < name_len; i++)
 		fprintf (stderr, "%c", ptr_name[i]);
 	if (v) fprintf (stderr, "\n");
+  
+	// Detect postnum
+	char* ptr_num = strstr (ptr_name+name_len,PATTERN_NUM) + strlen(PATTERN_NUM);
+	if (ptr_num == NULL) {
+		fprintf (stderr, "! Error: Bad post format: Num pattern not found\n");
+		return ERR_POST_FORMAT;
+	}
+	short num_len = strstr (ptr_num, ",")-ptr_num;
+	if (v) fprintf (stderr, "] Num length: %d\n", num_len);
+	if (v) fprintf (stderr, "] Num: ");
+	if (v) for (int i = 0; i < num_len; i++)
+		fprintf (stderr, "%c", ptr_num[i]);
+	if (v) fprintf (stderr, "\n");
 
 	if (v) fprintf (stderr, "] = All main fields detected\n");
 
 	// Init struct:
 	struct post* post = (struct post*) calloc (1,sizeof(struct post));
+
+	post->num = str2unsigned(ptr_num, num_len);
 
 	char* comment_str = (char*) calloc (comment_len, sizeof(char));
 	memcpy(comment_str, ptr_comment, comment_len);
@@ -787,4 +803,3 @@ unsigned str2unsigned (const char* str, const unsigned len) {
 	}
 	return res;
 }
-
