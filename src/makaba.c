@@ -4,9 +4,9 @@
 // (Implementation)
 // ========================================
 // TODO:
-//[ ] struct post -> num
+//[x] struct post -> num
 //[ ] captcha
-//[ ] fix ^J in comment.text
+//[x] fix ^J in comment.text
 // ========================================
 
 #include "makaba.h"
@@ -300,7 +300,13 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 
 int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
 	fprintf (stderr, "]] Starting findPostsInJSON");
-	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
+	FILE* LOCAL_LOG = NULL;
+	if (v) fprintf (stderr, " (verbose, log in ./log/findPostsInJSON)"); fprintf (stderr, "\n");
+	if (v) fprintf(stderr, "OPENING\n");
+	if (v) LOCAL_LOG = fopen("log/findPostsInJSON", "a");
+	if (v) fprintf(stderr, "OPENED\n");
+	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n");
+
 	short srclen = strlen (src);
 	int* temp = (int*) calloc (sizeof(int),srclen/8);
 
@@ -309,17 +315,18 @@ int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
 	bool comment_read = false;
 
 	for (int i = 1; i < srclen; i+=1) {
+		if (v) fprintf(LOCAL_LOG, "|%c|", src[i]);
 		switch (depth) {
 			case 2:
 				if (comment_read) { // in: .post.files
 					if (src[i] == ']') {
-						if (v) fprintf (stderr, "Exiting files. ");
+						if (v) fprintf (LOCAL_LOG, "Exiting files. ");
 						depth -= 1;
 					}
 				}
 				else { // in: .post.comment
-					if (src[i] == '"') {
-						if (v) fprintf (stderr, "Exiting comment. ");
+					if ((src[i-1] != '\\') && (src[i] == '"')) {
+						if (v) fprintf (LOCAL_LOG, "Exiting comment. ");
 						comment_read = true;
 						depth -= 1;
 					}
@@ -327,27 +334,27 @@ int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
 				continue;
 			case 1: // in: .post
 				if (src[i] == '}') { //@TODO reverse order of ifs in 'case 1'
-					if (v) fprintf (stderr, "Exiting post (@%d).\n", i);
+					if (v) fprintf (LOCAL_LOG, "Exiting post (@%d).\n", i);
 					postcount += 1;
 					depth -= 1;
 					comment_read = false;
 				}
 				if ((src[i-2]=='"')&&(src[i-1]=='f')&&(src[i]=='i')&&
 					(src[i+1]=='l')&&(src[i+2]=='e')) {
-					if (v) fprintf (stderr, "Entering files. ");
+					if (v) fprintf (LOCAL_LOG, "Entering files. ");
 					depth += 1;
 				}
 				if ((src[i-2]=='"')&&(src[i-1]=='c')&&(src[i]=='o')&&
 					(src[i+1]=='m')&&(src[i+2]=='m')) {
-					if (v) fprintf (stderr, "Entering comment. ");
+					if (v) fprintf (LOCAL_LOG, "Entering comment. ");
 					depth += 1;
 				}
 				continue;
 			case 0: // in: .
 				if (src[i] == '{') {
-					if (v) fprintf (stderr, "Entering post #%d ", postcount+1);
+					if (v) fprintf (LOCAL_LOG, "Entering post #%d ", postcount+1);
 					temp[postcount] = i;
-					if (v) fprintf (stderr, "(@%d)\n", temp[postcount]);
+					if (v) fprintf (LOCAL_LOG, "(@%d)\n", temp[postcount]);
 					depth += 1;
 				}
 				continue;
@@ -362,17 +369,20 @@ int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
 		return ERR_PARTTHREAD_DEPTH;
 	}
 
-	if (v) fprintf (stderr, "Total: %d posts found\n", postcount);
+	if (v) fprintf (LOCAL_LOG, "%d posts found\n", postcount);
 
 	int* posts = (int*) calloc (sizeof(int), postcount);
 	posts = memcpy (posts, temp, postcount*sizeof(int));
 	free (temp);
-	if (v) fprintf (stderr, "Posts begin at:\n");
+	if (v) fprintf (LOCAL_LOG, "Posts begin at:\n");
 	if (v) for (int i = 0; i < postcount; i++)
-		fprintf (stderr, "] %2d: %5d\n", i, posts[i]);
+		fprintf (LOCAL_LOG, "] %2d: %5d\n", i, posts[i]);
 
 	*postcount_res = postcount;
-	fprintf (stderr, "]] Exiting findPostsInJSON\n");
+
+	if (v) fprintf(LOCAL_LOG, "<< End of Thread >>\n");
+	if (v) fclose(LOCAL_LOG);
+	fprintf(stderr, "]] Exiting findPostsInJSON\n");
 	return posts;
 }
 
@@ -381,7 +391,7 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 	FILE* LOCAL_LOG = NULL;
 	if (v) LOCAL_LOG = fopen("log/initPost", "a");
 	if (v) fprintf(stderr, " (verbose, log in ./log/initPost)"); fprintf (stderr, "\n");
-	if (v) fprintf(LOCAL_LOG, "]] Args:\n== | post_string = ");
+	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n]] Args:\n== | post_string = ");
 	if (v) for (int i = 0; i < 100; i++)
 		fprintf(LOCAL_LOG, "%c", post_string[i]);
 	if (v) fprintf(LOCAL_LOG, "\n| postlen = %d\n", postlen);
@@ -560,9 +570,10 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 		memcpy (post->files, ptr_files, sizeof(char)*files_len);
 	}
 	
-	if (v) fprintf (LOCAL_LOG, "] = Init struct done\n");
+	if (v) fprintf(LOCAL_LOG, "] = Init struct done\n");
+	if (v) fprintf(LOCAL_LOG, "<< End of Thread >>\n");
+	if (v) fclose(LOCAL_LOG);
 	fprintf (stderr, "]] Exiting initPost\n");
-	fclose(LOCAL_LOG);
 	return post;
 }
 
@@ -571,7 +582,9 @@ struct comment* parseComment (char* comment, const bool v) {
 	FILE* LOCAL_LOG = NULL;
 	if (v) LOCAL_LOG = fopen("log/parseComment", "a");
 	if (v) fprintf (stderr, " (verbose, log in ./log/parseComment)"); fprintf(LOCAL_LOG, "\n");
-	fprintf (LOCAL_LOG, "\n");
+	fprintf (stderr, "\n");
+
+	if (v) fprintf(LOCAL_LOG, "\n\n << New Thread >>\n");
 	if (v) fprintf(LOCAL_LOG, "]] Args:\n]]| %s\n", comment);
 	
 	unsigned comment_len = strlen (comment);
@@ -628,9 +641,9 @@ struct comment* parseComment (char* comment, const bool v) {
 				fprintf (LOCAL_LOG, "]]]] Unknown ref type, treat as text\n");
 			}
 			short csize = cinst-(comment+pos);
-			fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
-			fprintf(LOCAL_LOG, "[!] To: %p+%d\n", clean_comment, clean_len);
-			fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
+			if (v) fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
+			if (v) fprintf(LOCAL_LOG, "[!] To: %p+%d\n", clean_comment, clean_len);
+			if (v) fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
 			if (csize > 0) {
 				memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
 				clean_len += csize;
@@ -639,9 +652,9 @@ struct comment* parseComment (char* comment, const bool v) {
 			free (cref);
 	}
 	short csize = comment_len-pos;
-	fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
-	fprintf(LOCAL_LOG, "[!] To: %p+%d\n", clean_comment, clean_len);
-	fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
+	if (v) fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
+	if (v) fprintf(LOCAL_LOG, "[!] To: %p+%d\n", clean_comment, clean_len);
+	if (v) fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
 	if (csize > 0) {
 		memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
 		clean_len += csize;
@@ -652,16 +665,19 @@ struct comment* parseComment (char* comment, const bool v) {
 	parsed->text = (char*) calloc (comment_len, sizeof(char));
 	memcpy (parsed->text, finally_clean_comment, sizeof(char)*strlen(finally_clean_comment));
 	free (clean_comment);
-	fprintf(LOCAL_LOG, "text ok: %s\n", parsed->text);
+	if (v) fprintf(LOCAL_LOG, "text ok: %s\n", parsed->text);
 	parsed->nrefs = nrefs;
-	fprintf(LOCAL_LOG, "nrefs ok: %d\n", parsed->nrefs);
+	if (v) fprintf(LOCAL_LOG, "nrefs ok: %d\n", parsed->nrefs);
 	parsed->refs = (struct ref_reply*) calloc (nrefs, sizeof(struct ref_reply));
 	refs = refs->first;
 	for (int i = 0; i < nrefs; i++) {
 		if (v) fprintf(LOCAL_LOG, "Copy ref #%d, first = %p, current = %p, next = %p\n", i+1, refs->first, refs, refs->next);
-		memcpy (parsed->refs+i*sizeof(struct ref_reply), (void*) refs->data, sizeof(struct ref_reply));
+		memcpy(parsed->refs+i*sizeof(struct ref_reply), (void*) refs->data, sizeof(struct ref_reply));
 	}
-	fprintf (stderr, "]] Exiting parseComment\n");
+
+	if (v) fprintf(LOCAL_LOG, "<< End of Thread >>\n");
+	if (v) fclose(LOCAL_LOG);
+	fprintf(stderr, "]] Exiting parseComment\n");
 	return parsed;
 }
 
