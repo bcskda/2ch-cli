@@ -58,6 +58,7 @@ const char* PATTERN_REPLY_THREAD = "data-thread=\\\"";
 const char* PATTERN_REPLY_NUM = "data-num=\\\"";
 const char* PATTERN_GREEN = "span class=\\\"unkfunc\\\"";
 const char* PATTERN_NEWLINE = "\\u003cbr\\u003e";
+
 const int ERR_MEMORY_LEAK = -1,
 					ERR_UNKNOWN = -2,
 					ERR_CURL_INIT = -3,
@@ -66,6 +67,7 @@ const int ERR_MEMORY_LEAK = -1,
 					ERR_POST_FORMAT = -6,
 					ERR_COMMENT_FORMAT = -7,
 					ERR_REF_FORMAT = -8;
+					ERR_COMMENT_PARSING = -9;
 
 int getBoardsList (const char* resFile, const bool v);
 char* getBoardPageJSON (const char* board, const unsigned page, bool v);

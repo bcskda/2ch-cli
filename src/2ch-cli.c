@@ -33,7 +33,7 @@ int main (void) {
 	
 	for (int i = 1; i < postcount-1; i++) {
 		fprintf(stderr, "[%d] = %d\n", i, posts[i]);
-		clen = posts[i]-posts[i-1];
+		clen = posts[i+1]-posts[i];
 		thread_parsed[i] = initPost(thread+posts[i],clen,true);
 		fprintf(stderr, "[!] Back in main after init #%d\n", i);
 	}
