@@ -381,7 +381,10 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 	FILE* LOCAL_LOG = NULL;
 	if (v) LOCAL_LOG = fopen("log/initPost", "a");
 	if (v) fprintf(stderr, " (verbose, log in ./log/initPost)"); fprintf (stderr, "\n");
-	if (v) fprintf(LOCAL_LOG, "]] Args:\n]]| %s\n]]| %d\n", post_string, postlen);
+	if (v) fprintf(LOCAL_LOG, "]] Args:\n== | post_string = ");
+	if (v) for (int i = 0; i < 100; i++)
+		fprintf(LOCAL_LOG, "%c", post_string[i]);
+	if (v) fprintf(LOCAL_LOG, "\n| postlen = %d\n", postlen);
 
 	// Detecting comment:
 	char* ptr_comment = strstr (post_string, PATTERN_COMMENT) + strlen (PATTERN_COMMENT);
@@ -390,38 +393,28 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 		return ERR_POST_FORMAT;
 	}
 
-	
-	fprintf(LOCAL_LOG, "\nptr_comment: \n");
-	for (int i = 0; i < 25; i++)  {
-		fprintf(LOCAL_LOG, "%c", post_string[ptr_comment-post_string+i]);
-	}
-	fprintf(LOCAL_LOG, "\n");
-
-
 	short comment_len = 0; bool stop = false;
-	fprintf(LOCAL_LOG, "i: [%d;%d]\n", ptr_comment-post_string, postlen);
 	for (int i = ptr_comment-post_string; !stop && (i < postlen); i++) {
-		fprintf(LOCAL_LOG, "%c", post_string[i]);
 		if ((post_string[i-1] != '\\') && (post_string[i] == '\"') && (post_string[i+1] != 'u')) {
 			stop = true;
-			fprintf(LOCAL_LOG, "\nStop @ i=%d\n", i);
 		}
 		comment_len++;
 	}
 	if (!stop) {
 		fprintf(LOCAL_LOG, "\n=== ! Range violation! ===\n");
+		fprintf(stderr, "! Error: Comment starts but not ends in post-length range\n");
+		return ERR_COMMENT_FORMAT;
 	}
-	fprintf(LOCAL_LOG, "\nEND\n\n");
 	comment_len--;
 	if (comment_len <= 0) {
 		fprintf (stderr, "! Error: Bad post format: Null comment\n");
 		return ERR_POST_FORMAT;
 	}
 	if (v) fprintf (LOCAL_LOG, "] Comment length: %d\n", comment_len);
-	if (v) fprintf (LOCAL_LOG, "] Comment: \n");
+	if (v) fprintf (LOCAL_LOG, "] Comment: \n== Start comment ==\n");
 	if (v) for (int i = 0; i < comment_len; i++)
 		fprintf (LOCAL_LOG, "%c", ptr_comment[i]);
-	if (v) fprintf (LOCAL_LOG, "\n] End of comment\n");
+	if (v) fprintf (LOCAL_LOG, "\n== End of comment ==\n");
 
 	// Detect date:
 
@@ -506,12 +499,12 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 		fprintf (stderr, "! Error: Bad post format: Num pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
-	short num_len = strstr (ptr_num, ",")-ptr_num;
+	short num_len = strstr (ptr_num, ",")-ptr_num-1; // Exclude ending '"'
 	if (v) fprintf (LOCAL_LOG, "] Num length: %d\n", num_len);
-	if (v) fprintf (LOCAL_LOG, "] Num: ");
+	if (v) fprintf (LOCAL_LOG, "] Num: |");
 	if (v) for (int i = 0; i < num_len; i++)
 		fprintf (LOCAL_LOG, "%c", ptr_num[i]);
-	if (v) fprintf (LOCAL_LOG, "\n");
+	if (v) fprintf (LOCAL_LOG, "|\n");
 
 	if (v) fprintf (LOCAL_LOG, "] = All main fields detected\n");
 
