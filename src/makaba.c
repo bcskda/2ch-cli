@@ -7,6 +7,7 @@
 //[x] struct post -> num
 //[ ] captcha
 //[x] fix ^J in comment.text
+//[x] fix broken comments
 // ========================================
 
 #include "makaba.h"
@@ -301,10 +302,9 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
 	fprintf (stderr, "]] Starting findPostsInJSON");
 	FILE* LOCAL_LOG = NULL;
+
 	if (v) fprintf (stderr, " (verbose, log in ./log/findPostsInJSON)"); fprintf (stderr, "\n");
-	if (v) fprintf(stderr, "OPENING\n");
 	if (v) LOCAL_LOG = fopen("log/findPostsInJSON", "a");
-	if (v) fprintf(stderr, "OPENED\n");
 	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n");
 
 	short srclen = strlen (src);
@@ -315,7 +315,7 @@ int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
 	bool comment_read = false;
 
 	for (int i = 1; i < srclen; i+=1) {
-		if (v) fprintf(LOCAL_LOG, "|%c|", src[i]);
+		if (v) fprintf(LOCAL_LOG, "%c", src[i]);
 		switch (depth) {
 			case 2:
 				if (comment_read) { // in: .post.files
@@ -589,7 +589,6 @@ struct comment* parseComment (char* comment, const bool v) {
 	
 	unsigned comment_len = strlen (comment);
 	int nrefs = 0;
-	char* cinst = strstr(comment,PATTERN_HREF_OPEN);
 	size_t pos = 0;
 	struct list* refs = calloc (1, sizeof(struct list));
 	refs->first = refs;
@@ -598,6 +597,26 @@ struct comment* parseComment (char* comment, const bool v) {
 	struct ref_reply* cref = 0;
 	unsigned clean_len = 0;
 	char* clean_comment = (char*) calloc (comment_len, sizeof(char));
+	char* previnst = NULL;
+	
+	char* cinst = strstr(comment,PATTERN_HREF_OPEN);
+	if ((cinst != NULL) && (cinst != comment)) {
+		fprintf(LOCAL_LOG, "]] Starts with text: clean_len = %d\n",
+			comment, cinst, cinst-comment);
+		memcpy(clean_comment,comment,cinst-comment);
+		fprintf(LOCAL_LOG, "]]]] preCopied\n");
+		/*
+		for (int i = 0; i < cinst; i++) {
+			fprintf(LOCAL_LOG, "%c", comment[i]);
+		fprintf(LOCAL_LOG, "\n");
+		*/
+		clean_len += cinst-comment;
+	} else {
+		fprintf(LOCAL_LOG, "[!!] Doesnt start with text: comment = %p, cinst = %p, clen = %d\n",
+			comment, cinst, cinst-comment);
+	}
+	fprintf(LOCAL_LOG, "clean_len = %d\n", clean_len);
+
 	for ( ; cinst != NULL; cinst = strstr(pos+comment,PATTERN_HREF_OPEN)) {
 		if (v) fprintf (LOCAL_LOG, "]]] New ref\n]]]] Opened @ [%d]\n", cinst-comment);
 		pos = cinst-comment;
@@ -616,7 +635,15 @@ struct comment* parseComment (char* comment, const bool v) {
 				memcpy (clean_comment+clean_len, ">>", sizeof(char)*2);
 				clean_len += 2;
 				short csize = strlen (unsigned2str(cref->num));
+				//fprintf(LOCAL_LOG, "Num as string: |%s|\n", unsigned2str(cref->num));
 				memcpy (clean_comment+clean_len, unsigned2str(cref->num), sizeof(char)*csize);
+				if (v) fprintf(LOCAL_LOG, "]]]] replyCopied\n");
+				/*
+				if (v) for (int j = 0; j < csize; j++) {
+					fprintf(LOCAL_LOG, "%c", clean_comment[clean_len+j]);
+				}
+				if (v) fprintf(LOCAL_LOG, "\n");
+				*/
 				clean_len += csize;
 				if (v) fprintf (LOCAL_LOG, "]]]] Init done:\n");
 				if (v) fprintf (LOCAL_LOG, "]]]]] link=\"%s\"\n]]]]] thread=%d\n]]]]] num=%d\n",
@@ -629,27 +656,42 @@ struct comment* parseComment (char* comment, const bool v) {
 					refs->next->data = calloc (1, sizeof(struct ref_reply));
 					memcpy (refs->next->data, (void*) cref, sizeof(struct ref_reply));
 					refs = refs->next;
-					if (v) fprintf(LOCAL_LOG, "List member state: 1st = %p, cur = %p, next = %p\n", refs->first, refs, refs->next);
+					//if (v) fprintf(LOCAL_LOG, "List member state: 1st = %p, cur = %p, next = %p\n", refs->first, refs, refs->next);
 				} else {
 					refs->next = 0;
 					refs->data = calloc (1, sizeof(struct ref_reply));
 					memcpy (refs->data, (void*) cref, sizeof(struct ref_reply));
-					if (v) fprintf(LOCAL_LOG, "Filling 1st list member\n");
- 					if (v) fprintf(LOCAL_LOG, "List member state: 1st = %p, cur = %p, next = %p\n", refs->first, refs, refs->next);
+					//if (v) fprintf(LOCAL_LOG, "Filling 1st list member\n");
+ 					//if (v) fprintf(LOCAL_LOG, "List member state: 1st = %p, cur = %p, next = %p\n", refs->first, refs, refs->next);
 				}
 			} else {
 				fprintf (LOCAL_LOG, "]]]] Unknown ref type, treat as text\n");
+				short csize = 0;
+				if (previnst != NULL) {
+					csize = cinst-previnst;
+				} else {
+					csize = cinst-comment;
+				}
+				if (v) fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
+				if (v) fprintf(LOCAL_LOG, "[!] To: %p+%d\n", clean_comment, clean_len);
+				if (v) fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
+				if (csize > 0) {
+					memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
+					if (v) fprintf(LOCAL_LOG, "]]]] otherCopied\n");
+					/*
+					if (v) for (int j = 0; j < csize; j++) {
+						fprintf(LOCAL_LOG, "%c", clean_comment[clean_len+j]);
+					}
+					if (v) fprintf(LOCAL_LOG, "\n");
+					*/
+					clean_len += csize;
+				}
 			}
-			short csize = cinst-(comment+pos);
-			if (v) fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
-			if (v) fprintf(LOCAL_LOG, "[!] To: %p+%d\n", clean_comment, clean_len);
-			if (v) fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
-			if (csize > 0) {
-				memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
-				clean_len += csize;
-			}
+
+
 			pos = cinst_end-comment+strlen(PATTERN_HREF_CLOSE);
 			free (cref);
+			previnst = cinst;
 	}
 	short csize = comment_len-pos;
 	if (v) fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
@@ -657,6 +699,13 @@ struct comment* parseComment (char* comment, const bool v) {
 	if (v) fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
 	if (csize > 0) {
 		memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
+		if (v) fprintf(LOCAL_LOG, "]] afterCopied\n");
+		/*
+		if (v) for (int j = 0; j < csize; j++) {
+			fprintf(LOCAL_LOG, "%c", clean_comment[clean_len+j]);
+		}
+		if (v) fprintf(LOCAL_LOG, "\n");
+		*/
 		clean_len += csize;
 	}
 	char* finally_clean_comment = cleanupComment (clean_comment, clean_len, true);
@@ -665,13 +714,13 @@ struct comment* parseComment (char* comment, const bool v) {
 	parsed->text = (char*) calloc (comment_len, sizeof(char));
 	memcpy (parsed->text, finally_clean_comment, sizeof(char)*strlen(finally_clean_comment));
 	free (clean_comment);
-	if (v) fprintf(LOCAL_LOG, "text ok: %s\n", parsed->text);
+	if (v) fprintf(LOCAL_LOG, "Final text: %s\n", parsed->text);
 	parsed->nrefs = nrefs;
-	if (v) fprintf(LOCAL_LOG, "nrefs ok: %d\n", parsed->nrefs);
+	if (v) fprintf(LOCAL_LOG, "Final number of refs: %d\n", parsed->nrefs);
 	parsed->refs = (struct ref_reply*) calloc (nrefs, sizeof(struct ref_reply));
 	refs = refs->first;
 	for (int i = 0; i < nrefs; i++) {
-		if (v) fprintf(LOCAL_LOG, "Copy ref #%d, first = %p, current = %p, next = %p\n", i+1, refs->first, refs, refs->next);
+		//if (v) fprintf(LOCAL_LOG, "Copy ref #%d, first = %p, current = %p, next = %p\n", i+1, refs->first, refs, refs->next);
 		memcpy(parsed->refs+i*sizeof(struct ref_reply), (void*) refs->data, sizeof(struct ref_reply));
 	}
 
@@ -682,7 +731,13 @@ struct comment* parseComment (char* comment, const bool v) {
 }
 
 char* cleanupComment (const char* src, const unsigned src_len, const bool v) {
-	fprintf(stderr, "]] Started cleanupComment\n");
+	fprintf(stderr, "]] Started cleanupComment");
+	FILE* LOCAL_LOG = NULL;
+	if (v) LOCAL_LOG = fopen("log/cleanupComment", "a");
+	if (v) fprintf(stderr, " (verbose, log in ./log/cleanupComment");
+	fprintf(stderr, "\n");
+	if (v) fprintf(LOCAL_LOG, "\n\n=== New Thread ===\nArgs:\n| src = %s\n| src_len = %d\n", src, src_len);
+
 	char* buf = (char*) calloc (src_len, sizeof(char));
 	unsigned pos = 0, len = 0;
 	for ( ; pos < src_len; ) {
@@ -698,7 +753,7 @@ char* cleanupComment (const char* src, const unsigned src_len, const bool v) {
 					  && (src[pos+16] == '=' ) && (src[pos+17] == '\\') && (src[pos+18] == '"' ) && (src[pos+19] == 'u')
 					  && (src[pos+20] == 'n' ) && (src[pos+21] == 'k' ) && (src[pos+22] == 'f' ) && (src[pos+23] == 'u')
 					  && (src[pos+24] == 'n' ) && (src[pos+25] == 'c' ) && (src[pos+26] == '\\') && (src[pos+27] == '"')) {
-				pos += 38;
+				pos += 36; // TEST!
 				// Color: green
 		} else if ((src[pos   ] == '\\') && (src[pos+1 ] == 'u' ) && (src[pos+2 ] == '0' ) && (src[pos+3 ] == '0')
 				    && (src[pos+4 ] == '3' ) && (src[pos+5 ] == 'c' ) && (src[pos+6 ] == '/' ) && (src[pos+7 ] == 's')
@@ -719,12 +774,21 @@ char* cleanupComment (const char* src, const unsigned src_len, const bool v) {
 	char* clean = (char*) calloc (len, sizeof(char));
 	memcpy(clean, buf, sizeof(char)*len);
 	free (buf);
+	if (v) fprintf(LOCAL_LOG, "=== End of Thread ===\n");
+	if (v) fclose(LOCAL_LOG);
 	fprintf(stderr, "]] Exiting cleanupComment\n");
 	return clean;
 }
 
 struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const bool v) {
-	if (v) fprintf (stderr, "-]] Started parseRef_Reply (verbose)\n");
+	fprintf (stderr, "-]] Started parseRef_Reply");
+	FILE* LOCAL_LOG = NULL;
+	if (v) LOCAL_LOG = fopen("log/parseRef_Reply", "a");
+	if (v) fprintf(stderr, " (verbose, log in ./log/parseRef_Reply)"); fprintf (stderr, "\n");
+	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n]] Args:\n== | ch_ref = ");
+	if (v) for (int i = 0; i < 100; i++)
+		fprintf(LOCAL_LOG, "%c", ch_ref[i]);
+	if (v) fprintf(LOCAL_LOG, "\n| ref_len = %d\n", ref_len);
 
 	char* link_start = ch_ref + strlen (PATTERN_HREF_OPEN);
 	short link_len = strstr (ch_ref, PATTERN_REPLY_CLASS) - 3 - link_start;
@@ -741,7 +805,7 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const b
 		return ERR_REF_FORMAT;
 	}
 	unsigned data_thread = str2unsigned (data_thread_start, data_thread_end-data_thread_start+1);
-	if (v) fprintf (stderr, "-]]] Thread: %d\n", data_thread);
+	if (v) fprintf (LOCAL_LOG, "-]]] Thread: %d\n", data_thread);
 
 	char* data_num_start = strstr (ch_ref, PATTERN_REPLY_NUM) + strlen(PATTERN_REPLY_NUM);
 	if (data_num_start == NULL) { // '+ strlen' to exclude opening string
@@ -754,7 +818,7 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const b
 		return ERR_REF_FORMAT;
 	}
 	unsigned data_num = str2unsigned (data_num_start, data_num_end-data_num_start+1);
-	if (v) fprintf (stderr, "-]]] Postnum: %d\n", data_num);
+	if (v) fprintf (LOCAL_LOG, "-]]] Postnum: %d\n", data_num);
 
 	struct ref_reply* ref_parsed = (struct ref_reply*) calloc (1, sizeof(struct ref_reply));
 	ref_parsed->link = (char*) calloc (link_len, sizeof(char) + 1);
@@ -762,6 +826,8 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const b
 	ref_parsed->thread = data_thread;
 	ref_parsed->num = data_num;
 
+	if (v) fprintf(LOCAL_LOG, "<< End of Thread >>\n");
+	fclose(LOCAL_LOG);
 	fprintf (stderr, "-]] Exiting parseRef_Reply\n");
 
 	return ref_parsed;

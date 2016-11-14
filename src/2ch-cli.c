@@ -22,7 +22,7 @@ int main (void) {
 	*/
 	
 	int postcount = 0;
-	int* posts = findPostsInJSON (thread, &postcount, false);
+	int* posts = findPostsInJSON (thread, &postcount, true);
 
 	struct post** thread_parsed = (struct post**) calloc (postcount-1, sizeof(struct post*));
 	short clen = posts[1]-posts[0];
@@ -90,10 +90,10 @@ int main (void) {
 
 int printPost (struct post* post,const bool show_email,const bool show_files) {
 	if (show_email && (post->email != NULL)) {
-		printw ("[=== %s (%s) #%d %s ===]\n%s\n",
+		printw ("[=== %s (%s) #%d %s ===]\n%s\n\n",
 			post->name, post->email, post->num, post->date, post->comment->text);
 	} else {
-		printw ("[=== %s #%d %s ===]\n%s\n",
+		printw ("[=== %s #%d %s ===]\n%s\n\n",
 			post->name, post->num, post->date, post->comment->text);
 	}
 	return 0;
