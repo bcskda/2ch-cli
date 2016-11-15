@@ -3,6 +3,10 @@
 // A CLI-client for 2ch.hk imageboard written on C
 // (Implementation)
 // ========================================
+// Release 0.2:
+// - stable thread receiving and parsing
+// - experimental thread printing
+// ========================================
 
 #include "2ch-cli.h"
 
@@ -22,7 +26,7 @@ int main (void) {
 	*/
 	
 	int postcount = 0;
-	int* posts = findPostsInJSON (thread, &postcount, true);
+	int* posts = findPostsInJSON (thread, &postcount, false);
 
 	struct post** thread_parsed = (struct post**) calloc (postcount-1, sizeof(struct post*));
 	short clen = posts[1]-posts[0];
