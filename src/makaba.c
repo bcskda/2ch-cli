@@ -4,10 +4,7 @@
 // (Implementation)
 // ========================================
 // TODO:
-//[x] struct post -> num
 //[ ] captcha
-//[x] fix ^J in comment.text
-//[x] fix broken comments
 // ========================================
 
 #include "makaba.h"
@@ -299,7 +296,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 // Info parsing
 // ========================================
 
-int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
+unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool v) {
 	fprintf (stderr, "]] Starting findPostsInJSON");
 	FILE* LOCAL_LOG = NULL;
 
@@ -311,7 +308,7 @@ int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
 	int* temp = (int*) calloc (sizeof(int),srclen/8);
 
 	short depth = 0;
-	int postcount = 0;
+	unsigned postcount = 0;
 	bool comment_read = false;
 
 	for (int i = 1; i < srclen; i+=1) {
@@ -371,7 +368,7 @@ int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
 
 	if (v) fprintf (LOCAL_LOG, "%d posts found\n", postcount);
 
-	int* posts = (int*) calloc (sizeof(int), postcount);
+	unsigned* posts = (int*) calloc (sizeof(int), postcount);
 	posts = memcpy (posts, temp, postcount*sizeof(int));
 	free (temp);
 	if (v) fprintf (LOCAL_LOG, "Posts begin at:\n");
@@ -386,7 +383,7 @@ int* findPostsInJSON (const char* src, int* postcount_res, const bool v) {
 	return posts;
 }
 
-struct post* initPost (const char* post_string, const short postlen, const bool v) {
+struct post* initPost (const char* post_string, const unsigned postlen, const bool v) {
 	fprintf(stderr, "]] Starting initPost");
 	FILE* LOCAL_LOG = NULL;
 	if (v) LOCAL_LOG = fopen("log/initPost", "a");
@@ -411,7 +408,7 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 		comment_len++;
 	}
 	if (!stop) {
-		fprintf(LOCAL_LOG, "\n=== ! Range violation! ===\n");
+		if (v) fprintf(LOCAL_LOG, "\n=== ! Range violation! ===\n");
 		fprintf(stderr, "! Error: Comment starts but not ends in post-length range\n");
 		return ERR_COMMENT_FORMAT;
 	}
@@ -427,7 +424,6 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 	if (v) fprintf (LOCAL_LOG, "\n== End of comment ==\n");
 
 	// Detect date:
-
 	char* ptr_date = strstr (ptr_comment+comment_len, PATTERN_DATE)+strlen(PATTERN_DATE);
 	if (ptr_date == NULL) {
 		fprintf (stderr, "! Error: Bad post format: Date pattern not found\n");
@@ -450,14 +446,16 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 		return ERR_POST_FORMAT;
 	}
 	short email_len = strstr (ptr_email, "\"")-ptr_email;
-	if (v) if (email_len == 0) {
-		fprintf (LOCAL_LOG, "] Email not specified\n");
-	} else {
-		fprintf (LOCAL_LOG, "] Email length: %d\n", email_len);
-		fprintf (LOCAL_LOG, "] Email: ");
-		for (int i = 0; i < email_len; i++)
-			fprintf (LOCAL_LOG, "%c", ptr_email[i]);
-		fprintf (LOCAL_LOG, "\n");
+	if (v) {
+		if (email_len == 0) {
+			fprintf (LOCAL_LOG, "] Email not specified\n");
+		} else {
+			fprintf (LOCAL_LOG, "] Email length: %d\n", email_len);
+			fprintf (LOCAL_LOG, "] Email: ");
+			for (int i = 0; i < email_len; i++)
+				fprintf (LOCAL_LOG, "%c", ptr_email[i]);
+			fprintf (LOCAL_LOG, "\n");
+		}
 	}
 
 	// Detect files:
@@ -502,7 +500,7 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 	if (v) for (int i = 0; i < name_len; i++)
 		fprintf (LOCAL_LOG, "%c", ptr_name[i]);
 	if (v) fprintf (LOCAL_LOG, "\n");
-  
+
 	// Detect postnum
 	char* ptr_num = strstr (ptr_name+name_len,PATTERN_NUM) + strlen(PATTERN_NUM);
 	if (ptr_num == NULL) {
@@ -510,11 +508,13 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 		return ERR_POST_FORMAT;
 	}
 	short num_len = strstr (ptr_num, ",")-ptr_num-1; // Exclude ending '"'
-	if (v) fprintf (LOCAL_LOG, "] Num length: %d\n", num_len);
-	if (v) fprintf (LOCAL_LOG, "] Num: |");
-	if (v) for (int i = 0; i < num_len; i++)
-		fprintf (LOCAL_LOG, "%c", ptr_num[i]);
-	if (v) fprintf (LOCAL_LOG, "|\n");
+	if (v) {
+		fprintf (LOCAL_LOG, "] Num length: %d\n", num_len);
+		fprintf (LOCAL_LOG, "] Num: |");
+		for (int i = 0; i < num_len; i++)
+			fprintf (LOCAL_LOG, "%c", ptr_num[i]);
+		fprintf (LOCAL_LOG, "|\n");
+	}
 
 	if (v) fprintf (LOCAL_LOG, "] = All main fields detected\n");
 
@@ -526,15 +526,17 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 	char* comment_str = (char*) calloc (comment_len, sizeof(char));
 	memcpy(comment_str, ptr_comment, comment_len);
 
-	post->comment = parseComment (comment_str, true);
+	post->comment = parseComment (comment_str,true);
 	if (post->comment == NULL) {
 		fprintf (stderr, "! Error parsing comment\n");
 		return ERR_COMMENT_PARSING;
 	}
 	free (comment_str);
-	fprintf (LOCAL_LOG, "!! post.comment.nrefs = %d\n", post->comment->nrefs);
-	fprintf (LOCAL_LOG, "!! post.comment.refs[0].link = %s\n", post->comment->refs[0].link);
-	fprintf (LOCAL_LOG, "!! post.comment.text = %s\n", post->comment->text);
+	if (v) {
+		fprintf (LOCAL_LOG, "!! post.comment.nrefs = %d\n", post->comment->nrefs);
+		fprintf (LOCAL_LOG, "!! post.comment.refs[0].link = %s\n", post->comment->refs[0].link);
+		fprintf (LOCAL_LOG, "!! post.comment.text = %s\n", post->comment->text);
+	}
 
 	post->date = (char*) calloc (sizeof(char), date_len+1);
 	if (post->date == NULL) {
@@ -570,9 +572,11 @@ struct post* initPost (const char* post_string, const short postlen, const bool 
 		memcpy (post->files, ptr_files, sizeof(char)*files_len);
 	}
 	
-	if (v) fprintf(LOCAL_LOG, "] = Init struct done\n");
-	if (v) fprintf(LOCAL_LOG, "<< End of Thread >>\n");
-	if (v) fclose(LOCAL_LOG);
+	if (v) {
+		fprintf(LOCAL_LOG, "] = Init struct done\n");
+		fprintf(LOCAL_LOG, "<< End of Thread >>\n");
+		fclose(LOCAL_LOG);
+	}
 	fprintf (stderr, "]] Exiting initPost\n");
 	return post;
 }
@@ -631,7 +635,7 @@ struct comment* parseComment (char* comment, const bool v) {
 			if (class != NULL) {
 				if (v) fprintf (LOCAL_LOG, "]]]] Type: reply\n");
 				nrefs++;
-				cref = parseRef_Reply (cinst, cinst_end-cinst, true);
+				cref = parseRef_Reply (cinst, cinst_end-cinst, false);
 				memcpy (clean_comment+clean_len, ">>", sizeof(char)*2);
 				clean_len += 2;
 				short csize = strlen (unsigned2str(cref->num));
@@ -708,7 +712,7 @@ struct comment* parseComment (char* comment, const bool v) {
 		*/
 		clean_len += csize;
 	}
-	char* finally_clean_comment = cleanupComment (clean_comment, clean_len, true);
+	char* finally_clean_comment = cleanupComment (clean_comment,clean_len,false);
 	if (v) fprintf(LOCAL_LOG, "]]] Total: %d refs\n", nrefs);
 	struct comment* parsed = (struct comment*) calloc (1, sizeof(struct comment));
 	parsed->text = (char*) calloc (comment_len, sizeof(char));
@@ -780,15 +784,17 @@ char* cleanupComment (const char* src, const unsigned src_len, const bool v) {
 	return clean;
 }
 
-struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const bool v) {
+struct ref_reply* parseRef_Reply (const char* ch_ref, const unsigned ref_len, const bool v) {
 	fprintf (stderr, "-]] Started parseRef_Reply");
 	FILE* LOCAL_LOG = NULL;
-	if (v) LOCAL_LOG = fopen("log/parseRef_Reply", "a");
-	if (v) fprintf(stderr, " (verbose, log in ./log/parseRef_Reply)"); fprintf (stderr, "\n");
-	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n]] Args:\n== | ch_ref = ");
-	if (v) for (int i = 0; i < 100; i++)
-		fprintf(LOCAL_LOG, "%c", ch_ref[i]);
-	if (v) fprintf(LOCAL_LOG, "\n| ref_len = %d\n", ref_len);
+	if (v) {
+		LOCAL_LOG = fopen("log/parseRef_Reply", "a");
+		fprintf(stderr, " (verbose, log in ./log/parseRef_Reply)"); fprintf (stderr, "\n");
+		fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n]] Args:\n== | ch_ref = ");
+		for (int i = 0; i < 100; i++)
+			fprintf(LOCAL_LOG, "%c", ch_ref[i]);
+		fprintf(LOCAL_LOG, "\n| ref_len = %d\n", ref_len);
+	}
 
 	char* link_start = ch_ref + strlen (PATTERN_HREF_OPEN);
 	short link_len = strstr (ch_ref, PATTERN_REPLY_CLASS) - 3 - link_start;
@@ -826,11 +832,51 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const b
 	ref_parsed->thread = data_thread;
 	ref_parsed->num = data_num;
 
-	if (v) fprintf(LOCAL_LOG, "<< End of Thread >>\n");
-	fclose(LOCAL_LOG);
+	if (v) {
+		fprintf(LOCAL_LOG, "<< End of Thread >>\n");
+		fclose(LOCAL_LOG);
+	}
 	fprintf (stderr, "-]] Exiting parseRef_Reply\n");
 
 	return ref_parsed;
+}
+
+struct thread* initThread (const char* thread_string, const unsigned thread_len, const bool v) {
+	fprintf(stderr, "]] Started initThread ");
+	FILE* LOCAL_LOG = NULL;
+	if (v) {
+		LOCAL_LOG = fopen("log/initThread", "a");
+		fprintf(stderr, " (verbose, log in ./log/initThread)\n");
+		fprintf(LOCAL_LOG, "\n\n== New Thread ==\n]] Args:\n| thread_string = %p\n| thread_len = %d\n",
+			thread_string, thread_len);
+	}
+
+	unsigned nposts = 0;
+	unsigned* post_diffs = findPostsInJSON(thread_string,&nposts,false);
+	if (v) fprintf(LOCAL_LOG, "] nposts = %d\n", nposts);
+
+	// Falls from here
+	struct post** posts = (struct post**) calloc(nposts,sizeof(struct post*));
+	for (int i = 0; i < nposts-1; i++) {
+		if (v) fprintf(LOCAL_LOG, "] Calling initPost #%d\n", i);
+		posts[i] = initPost(thread_string+post_diffs[i],post_diffs[i+1]-post_diffs[i],false);
+	}
+	// To here
+
+	struct thread* thread = (struct thread*) calloc (1, sizeof(struct thread));
+	thread->num = posts[0]->num;
+	thread->nposts = nposts;
+	thread->posts = posts;
+
+	if (v) {
+		fprintf(LOCAL_LOG, "] Struct init done:\n| num = %d\n| nposts = %d\n| posts = %p",
+			thread->num, thread->nposts, thread->posts);
+		fprintf(LOCAL_LOG, "== End of Thread ==\n");
+		fclose(LOCAL_LOG);
+	}
+	fprintf(stderr, "]] Exiting initThread\n");
+
+	return thread;
 }
 
 // ========================================

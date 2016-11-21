@@ -35,6 +35,12 @@ struct post {
 	char* files;
 };
 
+struct thread {
+	unsigned num;
+	unsigned nposts;
+	struct post** posts;
+};
+
 const char* BASE_URL = "https://2ch.hk/";
 const char* MOBILE_API = "makaba/mobile.fcgi";
 const size_t CURL_BUFF_BODY_SIZE = 5000000;
@@ -74,11 +80,12 @@ char* getBoardPageJSON (const char* board, const unsigned page, bool v);
 char* getBoardCatalogJSON (const char* board, const bool v);
 char* getThreadJSON (const char* board, const unsigned threadnum, const bool v);
 
-int* findPostsInJSON (const char* src, int* postcount_res, const bool v);
-struct post* initPost (const char* post_string, const short postlen, const bool v);
+struct thread* initThread (const char* thread_string, const unsigned thread_len, const bool v);
+unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool v);
+struct post* initPost (const char* post_string, const unsigned postlen, const bool v);
 struct comment* parseComment (char* comment, const bool v);
+struct ref_reply* parseRef_Reply (const char* ch_ref, const unsigned ref_len, const bool v);
 char* cleanupComment (const char* src, const unsigned src_len, const bool v);
-struct ref_reply* parseRef_Reply (const char* ch_ref, const int ref_len, const bool v);
 
 void freeRefReply (struct ref_reply* ref);
 void freePost (struct post* post);

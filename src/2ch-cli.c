@@ -3,10 +3,7 @@
 // A CLI-client for 2ch.hk imageboard written on C
 // (Implementation)
 // ========================================
-// Release 0.2:
-// - stable thread receiving and parsing
-// - experimental thread printing
-// ========================================
+
 
 #include "2ch-cli.h"
 
@@ -25,6 +22,7 @@ int main (void) {
 	fclose (src);
 	*/
 	
+	/* STABLE INIT
 	int postcount = 0;
 	int* posts = findPostsInJSON (thread, &postcount, false);
 
@@ -49,45 +47,50 @@ int main (void) {
 	fprintf(stderr, "Name = %s\n", one_post_struct->name);
 	if (one_post_struct->email != -1) fprintf(stderr, "Email = %s\n", one_post_struct->email);
 	fprintf(stderr, "Date = %s\n", one_post_struct->date);
+	END OF STABLE INIT
 	*/
 	
+	// TESTING INIT
+	struct thread* thread_parsed = initThread(thread, strlen(thread), true);
+
 	initscr();
 	raw();
 	keypad (stdscr, TRUE);
 	noecho();
 	printw ("Push [c] to clear screen, anything else to print another post\n");
-	for (int i = 0; i < postcount-1; i++) {
+	for (int i = 0; i < thread_parsed->nposts-1; i++) {
 		bool done = 0;
 		while (! done)
 			switch (getch()) { 
 				case 'C': case 'c':
-					fprintf(stderr, "Clearing screen at #&d\n", i);
 					clear();
 					printw ("Push [c] to clear screen, anything else to print another post\n");
 					break;
 				default:
 					fprintf(stderr, "Printing post #%d\n", i);
-					printPost (thread_parsed[i],true,true);
+					printPost(thread_parsed->posts[i], true, true);
 					refresh();
 					done = 1;
 					break;
 			}
 	}
-	printw ("\nPush a key to exit\n");
+	printw("\nPush a key to exit\n");
 	getch();
 	endwin();
 	
-	for (int i = 1; i < postcount; i++) {
-		printPost (thread_parsed[i], true, true);
+	/*
+	for (int i = 1; i < thread_parsed->nposts; i++) {
+		printPost(thread_parsed[i], true, true);
 		fprintf(stderr, "[!] Back in main after printing #%d\n", i);
 	}
+	*/
 	
-	for (int i = 1; i < postcount; i++) {
-		freePost (thread_parsed[i]);
+	for (int i = 1; i < thread_parsed->nposts; i++) {
+		freePost (thread_parsed->posts[i]);
 	}
-	free (thread_parsed);
-	free (posts);
-	free (thread);
+	free(thread_parsed);
+	free(thread_parsed->posts);
+	free(thread);
 	return 0;
 }
 
