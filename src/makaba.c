@@ -5,12 +5,13 @@
 // ========================================
 // TODO:
 //[ ] captcha
+//[ ] makabaSetup()
 // ========================================
 
 #include "makaba.h"
 
 // ========================================
-// Info getting
+// General info getting
 // ========================================
 
 int getBoardsList (const char* resFile, const bool v) {
@@ -38,7 +39,7 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 		else {
 			fprintf (stderr, "[getBoardPage]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-			return ERR_MEMORY_LEAK;
+			return ERR_MEMORY;
 		}
 
 		if (v) fprintf (stderr, "] Forming URL\n");
@@ -56,7 +57,8 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 		if (v) fprintf (stderr, "] option URL set\n");
 
-		CURL_BUFF_BODY = (char*) calloc (sizeof(char), CURL_BUFF_BODY_SIZE);
+		if (CURL_BUFF_BODY == NULL)
+			CURL_BUFF_BODY = (char*) calloc (sizeof(char), CURL_BUFF_BODY_SIZE);
 		if (CURL_BUFF_BODY != NULL) {
 			if (v) fprintf (stderr, "memory allocated (curl body buffer)\n");
 		}
@@ -64,7 +66,7 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 			fprintf (stderr, "[getBoardPage]! Error allocating memory (curl body buffer)\n");
 			curl_easy_cleanup (curl_handle);
 			free (URL);
-			return ERR_MEMORY_LEAK;
+			return ERR_MEMORY;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -83,7 +85,6 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 				curl_easy_strerror(request_status));
 			curl_easy_cleanup (curl_handle);
 			free (URL);
-			free (CURL_BUFF_BODY);
 			return ERR_CURL_PERFORM;
 		}
 
@@ -118,7 +119,7 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
 		else {
 			fprintf (stderr, "[getBoardCatalog]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-			return ERR_MEMORY_LEAK;
+			return ERR_MEMORY;
 		}
 
 		if (v) fprintf (stderr, "] Forming URL\n");
@@ -132,7 +133,8 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 		if (v) fprintf (stderr, "] option URL set\n");
 
-		CURL_BUFF_BODY = (char*) calloc (sizeof(char), CURL_BUFF_BODY_SIZE);
+		if (CURL_BUFF_BODY == NULL)
+			CURL_BUFF_BODY = (char*) calloc (sizeof(char), CURL_BUFF_BODY_SIZE);
 		if (CURL_BUFF_BODY != NULL) {
 			if (v) fprintf (stderr, "memory allocated (curl body buffer)\n");
 		}
@@ -140,7 +142,7 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
 			fprintf (stderr, "[getBoardCatalog]! Error allocating memory (curl body buffer)\n");
 			curl_easy_cleanup (curl_handle);
 			free (URL);
-			return ERR_MEMORY_LEAK;
+			return ERR_MEMORY;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -159,7 +161,6 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
 				curl_easy_strerror(request_status));
 				curl_easy_cleanup (curl_handle);
 			free (URL);
-			free (CURL_BUFF_BODY);
 			return ERR_CURL_PERFORM;
 		}
 
@@ -197,7 +198,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 		else {
 			fprintf (stderr, "[getThread]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-			return ERR_MEMORY_LEAK;
+			return ERR_MEMORY;
 		}
 
 		curl_easy_setopt (curl_handle, CURLOPT_POST, 1);
@@ -226,7 +227,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 			fprintf (stderr, "[getThread]! Error allocating memory (POST data)\n");
 			curl_easy_cleanup (curl_handle);
 			free (URL);
-			return ERR_MEMORY_LEAK;
+			return ERR_MEMORY;
 		}
 		if (v) fprintf (stderr, "] Forming POST data\n");
 		postfields = strcpy (postfields, "task=get_thread");
@@ -245,7 +246,8 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDS, postfields);
 		if (v) fprintf (stderr, "] Option POSTFIELDS set\n");
 
-		CURL_BUFF_BODY = (char*) calloc (sizeof(char), CURL_BUFF_BODY_SIZE);
+		if (CURL_BUFF_BODY == NULL)
+			CURL_BUFF_BODY = (char*) calloc (sizeof(char), CURL_BUFF_BODY_SIZE);
 		if (CURL_BUFF_BODY != NULL) {
 			if (v) fprintf (stderr, "memory allocated (curl body buffer)\n");
 		}
@@ -254,7 +256,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 			curl_easy_cleanup (curl_handle);
 			free (URL);
 			free (postfields);
-			return ERR_MEMORY_LEAK;
+			return ERR_MEMORY;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -273,7 +275,6 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 			curl_easy_cleanup (curl_handle);
 			free (URL);
 			free (postfields);
-			free (CURL_BUFF_BODY);
 			return ERR_CURL_PERFORM;
 		}
 
@@ -293,7 +294,84 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 }
 
 // ========================================
-// Info parsing
+// Captcha
+// ========================================
+
+char* getCaptchaSettings (const char* board, const bool v) {
+	fprintf (stderr, "]] Starting getCaptchaSettings");
+	FILE* LOCAL_LOG = NULL;
+	if (v) {
+		LOCAL_LOG = fopen ("log/getCaptchaSettings.log", "a");
+		fprintf(stderr, " (verbose, log in log/initThread.log)\n");
+		fprintf (LOCAL_LOG, "] initializing curl handle\n");
+	}
+	else {
+		puts("");
+	}
+
+	CURL* curl_handle = curl_easy_init();
+	CURLcode request_status = 0;
+	if (curl_handle) {
+		if (v) fprintf (LOCAL_LOG, "] curl handle initialized\n");
+
+		const short URL_length = strlen(BASE_URL)+strlen(CAPTCHA_API)+strlen(board)+9+1; // 'settings/'
+		char* URL = (char*) calloc (URL_length, sizeof(char));
+		if (v) fprintf (LOCAL_LOG, "] Forming URL\n");
+		URL = strcpy (URL, BASE_URL);
+		URL = strcat (URL, CAPTCHA_API);
+		URL = strcat (URL, "settings/");
+		URL = strcat (URL, board);
+		if (v) fprintf(LOCAL_LOG, "] URL: %s\n", URL);
+		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
+		if (v) fprintf (LOCAL_LOG, "] option URL set\n");
+
+		if (CURL_BUFF_BODY == NULL)
+			CURL_BUFF_BODY = (char*) calloc (CURL_BUFF_BODY_SIZE, sizeof(char));
+		if (CURL_BUFF_BODY == NULL) {
+			fprintf (stderr, "[getCaptchaSettings]! Error allocating memory (CURL_BUFF_BODY)\n");
+			curl_easy_cleanup (curl_handle);
+			return ERR_MEMORY;
+		}
+		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
+		if (v) fprintf (LOCAL_LOG, "] option WRITEDATA set\n");
+
+		curl_easy_setopt (curl_handle, CURLOPT_WRITEFUNCTION, CURL_writeToBuff);
+		if (v) fprintf (LOCAL_LOG, "] option WRITEFUNCTION set\n");
+
+		request_status = curl_easy_perform (curl_handle);
+		if (v) fprintf (LOCAL_LOG, "] curl request performed\n");
+		if (request_status == CURLE_OK) {
+			if (v) fprintf (LOCAL_LOG, "] request status: OK\n");
+		}
+		else {
+			fprintf (stderr, "[getCaptchaSettings]! Error @ curl_easy_perform: %s\n",
+				curl_easy_strerror(request_status));
+			curl_easy_cleanup (curl_handle);
+			free (URL);
+			return ERR_CURL_PERFORM;
+		}		
+
+		curl_easy_cleanup (curl_handle);
+		if (v) fprintf (LOCAL_LOG, "] curl cleanup done\n");
+		free (URL);
+		fprintf(stderr, "]] Exiting getCaptchaSettings\n");
+	}
+	else {
+		fprintf (stderr, "[getCaptchaSettings]! Error initializing curl handle\n");
+		return ERR_CURL_INIT;
+	}
+
+	return CURL_BUFF_BODY;
+}
+
+int getCaptchaID (const char* board, const unsigned threadnum, const bool v) {
+
+
+	//return captcha_id;
+}
+
+// ========================================
+// General parsing
 // ========================================
 
 unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool v) {
@@ -301,7 +379,7 @@ unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool 
 	FILE* LOCAL_LOG = NULL;
 
 	if (v) fprintf (stderr, " (verbose, log in ./log/findPostsInJSON)"); fprintf (stderr, "\n");
-	if (v) LOCAL_LOG = fopen("log/findPostsInJSON", "a");
+	if (v) LOCAL_LOG = fopen("log/findPostsInJSON.log", "a");
 	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n");
 
 	short srclen = strlen (src);
@@ -386,8 +464,8 @@ unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool 
 struct post* initPost (const char* post_string, const unsigned postlen, const bool v) {
 	fprintf(stderr, "]] Starting initPost");
 	FILE* LOCAL_LOG = NULL;
-	if (v) LOCAL_LOG = fopen("log/initPost", "a");
-	if (v) fprintf(stderr, " (verbose, log in ./log/initPost)"); fprintf (stderr, "\n");
+	if (v) LOCAL_LOG = fopen("log/initPost.log", "a");
+	if (v) fprintf(stderr, " (verbose, log in log/initPost.log)"); fprintf (stderr, "\n");
 	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n]] Args:\n== | post_string = ");
 	if (v) for (int i = 0; i < 100; i++)
 		fprintf(LOCAL_LOG, "%c", post_string[i]);
@@ -541,14 +619,14 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 	post->date = (char*) calloc (sizeof(char), date_len+1);
 	if (post->date == NULL) {
 		fprintf (stderr, "! Error allocating memory (post.date)\n");
-		return ERR_MEMORY_LEAK;
+		return ERR_MEMORY;
 	}
 	memcpy (post->date, ptr_date, sizeof(char)*date_len);
 
 	post->name = (char*) calloc (sizeof(char), name_len+1);
 	if (post->name == NULL) {
 		fprintf (stderr, "! Error allocating memory (post.name)\n");
-		return ERR_MEMORY_LEAK;
+		return ERR_MEMORY;
 	}
 	memcpy (post->name, ptr_name, sizeof(char)*name_len);
 	if (email_len == 0) {
@@ -557,7 +635,7 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 		post->email = (char*) calloc (sizeof(char), email_len+1);
 		if (post->email == NULL) {
 		fprintf (stderr, "! Error allocating memory (post.email)\n");
-		return ERR_MEMORY_LEAK;
+		return ERR_MEMORY;
 	}
 		memcpy (post->email, ptr_email, sizeof(char)*email_len);
 	}
@@ -567,7 +645,7 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 		post->files = (char*) calloc (sizeof(char), files_len+1);
 		if (post->files == NULL) {
 		fprintf (stderr, "! Error allocating memory (post.files)\n");
-		return ERR_MEMORY_LEAK;
+		return ERR_MEMORY;
 	}
 		memcpy (post->files, ptr_files, sizeof(char)*files_len);
 	}
@@ -584,8 +662,8 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 struct comment* parseComment (char* comment, const bool v) {
 	fprintf (stderr, "]] Started parseComment");
 	FILE* LOCAL_LOG = NULL;
-	if (v) LOCAL_LOG = fopen("log/parseComment", "a");
-	if (v) fprintf (stderr, " (verbose, log in ./log/parseComment)"); fprintf(LOCAL_LOG, "\n");
+	if (v) LOCAL_LOG = fopen("log/parseComment.log", "a");
+	if (v) fprintf (stderr, " (verbose, log in log/parseComment.log)"); fprintf(LOCAL_LOG, "\n");
 	fprintf (stderr, "\n");
 
 	if (v) fprintf(LOCAL_LOG, "\n\n << New Thread >>\n");
@@ -737,8 +815,8 @@ struct comment* parseComment (char* comment, const bool v) {
 char* cleanupComment (const char* src, const unsigned src_len, const bool v) {
 	fprintf(stderr, "]] Started cleanupComment");
 	FILE* LOCAL_LOG = NULL;
-	if (v) LOCAL_LOG = fopen("log/cleanupComment", "a");
-	if (v) fprintf(stderr, " (verbose, log in ./log/cleanupComment");
+	if (v) LOCAL_LOG = fopen("log/cleanupComment.log", "a");
+	if (v) fprintf(stderr, " (verbose, log in log/cleanupComment.log");
 	fprintf(stderr, "\n");
 	if (v) fprintf(LOCAL_LOG, "\n\n=== New Thread ===\nArgs:\n| src = %s\n| src_len = %d\n", src, src_len);
 
@@ -788,8 +866,8 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const unsigned ref_len, co
 	fprintf (stderr, "-]] Started parseRef_Reply");
 	FILE* LOCAL_LOG = NULL;
 	if (v) {
-		LOCAL_LOG = fopen("log/parseRef_Reply", "a");
-		fprintf(stderr, " (verbose, log in ./log/parseRef_Reply)"); fprintf (stderr, "\n");
+		LOCAL_LOG = fopen("log/parseRef_Reply.log", "a");
+		fprintf(stderr, " (verbose, log in log/parseRef_Reply.log)"); fprintf (stderr, "\n");
 		fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n]] Args:\n== | ch_ref = ");
 		for (int i = 0; i < 100; i++)
 			fprintf(LOCAL_LOG, "%c", ch_ref[i]);
@@ -845,8 +923,8 @@ struct thread* initThread (const char* thread_string, const unsigned thread_len,
 	fprintf(stderr, "]] Started initThread ");
 	FILE* LOCAL_LOG = NULL;
 	if (v) {
-		LOCAL_LOG = fopen("log/initThread", "a");
-		fprintf(stderr, " (verbose, log in ./log/initThread)\n");
+		LOCAL_LOG = fopen("log/initThread.log", "a");
+		fprintf(stderr, " (verbose, log in log/initThread.log)\n");
 		fprintf(LOCAL_LOG, "\n\n== New Thread ==\n]] Args:\n| thread_string = %p\n| thread_len = %d\n",
 			thread_string, thread_len);
 	}
@@ -855,13 +933,20 @@ struct thread* initThread (const char* thread_string, const unsigned thread_len,
 	unsigned* post_diffs = findPostsInJSON(thread_string,&nposts,false);
 	if (v) fprintf(LOCAL_LOG, "] nposts = %d\n", nposts);
 
-	// Falls from here
 	struct post** posts = (struct post**) calloc(nposts,sizeof(struct post*));
 	for (int i = 0; i < nposts-1; i++) {
 		if (v) fprintf(LOCAL_LOG, "] Calling initPost #%d\n", i);
-		posts[i] = initPost(thread_string+post_diffs[i],post_diffs[i+1]-post_diffs[i],false);
+		posts[i] = initPost( 
+							thread_string + post_diffs[i],
+							post_diffs[i+1] - post_diffs[i],
+							false
+							);
 	}
-	// To here
+	posts[nposts-1] = initPost( 
+							   thread_string + post_diffs[nposts-1],
+							   strlen(thread_string) - post_diffs[nposts-1],
+							   false
+							   );
 
 	struct thread* thread = (struct thread*) calloc (1, sizeof(struct thread));
 	thread->num = posts[0]->num;
@@ -869,7 +954,7 @@ struct thread* initThread (const char* thread_string, const unsigned thread_len,
 	thread->posts = posts;
 
 	if (v) {
-		fprintf(LOCAL_LOG, "] Struct init done:\n| num = %d\n| nposts = %d\n| posts = %p",
+		fprintf(LOCAL_LOG, "] Struct init done:\n| num = %d\n| nposts = %d\n| posts = %p\n",
 			thread->num, thread->nposts, thread->posts);
 		fprintf(LOCAL_LOG, "== End of Thread ==\n");
 		fclose(LOCAL_LOG);
@@ -903,9 +988,25 @@ void freePost (struct post* post) {
 	free (post);
 }
 
+void freeThread (struct thread* thread) {
+	for (int i = 1; i < thread->nposts; i++) {
+		freePost (thread->posts[i]);
+	}
+	free(thread->posts);
+	free(thread);
+}
+
 // ========================================
 // Misc utility functions
 // ========================================
+
+void makabaSetup() {
+
+}
+
+void makabaCleanup() {
+
+}
 
 size_t CURL_writeToBuff (const char* src, const size_t block_size, const size_t nmemb, void* dest) {
 	if (src==NULL || CURL_BUFF_POS+block_size*nmemb > CURL_BUFF_BODY_SIZE) {

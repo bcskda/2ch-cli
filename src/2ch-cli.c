@@ -10,55 +10,25 @@
 int main (void) {
 	setlocale (LC_ALL, "");
 
-	char* thread = getThreadJSON ("abu", 42375, false);
-
-	/*
-	FILE* src = fopen ("thread.json", "r");
-	fseek (src, 0, SEEK_END);
-	const long src_size = ftell (src);
-	fseek (src, 0, SEEK_SET);
-	char* thread = (char*) calloc (sizeof(char), src_size);
-	fread (thread, sizeof(char), src_size, src);
-	fclose (src);
-	*/
-	
-	/* STABLE INIT
-	int postcount = 0;
-	int* posts = findPostsInJSON (thread, &postcount, false);
-
-	struct post** thread_parsed = (struct post**) calloc (postcount-1, sizeof(struct post*));
-	short clen = posts[1]-posts[0];
-	
-	fprintf(stderr, "[0] = %d\n", posts[0]);
-	thread_parsed[0] = initPost(thread+posts[0],clen,true);
-	fprintf(stderr, "[!] Back in main after init (first)\n");
-	
-	for (int i = 1; i < postcount-1; i++) {
-		fprintf(stderr, "[%d] = %d\n", i, posts[i]);
-		clen = posts[i+1]-posts[i];
-		thread_parsed[i] = initPost(thread+posts[i],clen,true);
-		fprintf(stderr, "[!] Back in main after init #%d\n", i);
+	char* thread_ch = (char*) calloc (Thread_size, sizeof(char));
+	if (thread_ch == NULL) {
+		fprintf(stderr, "[main]! Error: 'thread_ch' memory allocation\n");
+		return ERR_MEMORY;
 	}
-	clen = strlen(thread)-posts[postcount-1];
-	thread_parsed[postcount-1] = initPost(thread+posts[postcount-1],clen,true);
-	fprintf(stderr, "[!] Back in main after init (last)\n");
-	/*
-	fprintf(stderr, "Comment.text = %s\n", one_post_struct->comment->text);
-	fprintf(stderr, "Name = %s\n", one_post_struct->name);
-	if (one_post_struct->email != -1) fprintf(stderr, "Email = %s\n", one_post_struct->email);
-	fprintf(stderr, "Date = %s\n", one_post_struct->date);
-	END OF STABLE INIT
-	*/
+	thread_ch = memcpy(
+					thread_ch,
+					getThreadJSON ("abu", 42375, false),
+					Thread_size
+					);
 	
-	// TESTING INIT
-	struct thread* thread_parsed = initThread(thread, strlen(thread), true);
+	struct thread* thread = initThread(thread_ch, strlen(thread), true);
 
 	initscr();
 	raw();
 	keypad (stdscr, TRUE);
 	noecho();
 	printw ("Push [c] to clear screen, anything else to print another post\n");
-	for (int i = 0; i < thread_parsed->nposts-1; i++) {
+	for (int i = 0; i < thread->nposts; i++) {
 		bool done = 0;
 		while (! done)
 			switch (getch()) { 
@@ -68,7 +38,7 @@ int main (void) {
 					break;
 				default:
 					fprintf(stderr, "Printing post #%d\n", i);
-					printPost(thread_parsed->posts[i], true, true);
+					printPost(thread->posts[i], true, true);
 					refresh();
 					done = 1;
 					break;
@@ -78,19 +48,12 @@ int main (void) {
 	getch();
 	endwin();
 	
-	/*
-	for (int i = 1; i < thread_parsed->nposts; i++) {
-		printPost(thread_parsed[i], true, true);
-		fprintf(stderr, "[!] Back in main after printing #%d\n", i);
-	}
-	*/
-	
-	for (int i = 1; i < thread_parsed->nposts; i++) {
-		freePost (thread_parsed->posts[i]);
-	}
-	free(thread_parsed);
-	free(thread_parsed->posts);
-	free(thread);
+	freeThread(thread);
+	fprintf(stderr, "free thread(struct) done\n");
+	free(thread_ch);
+	fprintf(stderr, "free thread(char)\n");
+	fprintf(stderr, "Exiting normally\n");
+
 	return 0;
 }
 

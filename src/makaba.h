@@ -43,10 +43,11 @@ struct thread {
 
 const char* BASE_URL = "https://2ch.hk/";
 const char* MOBILE_API = "makaba/mobile.fcgi";
+const char* CAPTCHA_API = "api/captcha/";
 const size_t CURL_BUFF_BODY_SIZE = 5000000;
 const size_t CURL_BUFF_HEADER_SIZE = 2000;
-char* CURL_BUFF_BODY = 0;
-char* CURL_BUFF_HEADER = 0;
+char* CURL_BUFF_BODY = NULL;
+char* CURL_BUFF_HEADER = NULL;
 size_t CURL_BUFF_POS = 0;
 
 const char* PATTERN_COMMENT = ",\"comment\":\"";
@@ -65,20 +66,26 @@ const char* PATTERN_REPLY_NUM = "data-num=\\\"";
 const char* PATTERN_GREEN = "span class=\\\"unkfunc\\\"";
 const char* PATTERN_NEWLINE = "\\u003cbr\\u003e";
 
-const int ERR_MEMORY_LEAK = -1,
-					ERR_UNKNOWN = -2,
-					ERR_CURL_INIT = -3,
-					ERR_CURL_PERFORM = -4,
-					ERR_PARTTHREAD_DEPTH = -5,
-					ERR_POST_FORMAT = -6,
-					ERR_COMMENT_FORMAT = -7,
-					ERR_REF_FORMAT = -8;
-					ERR_COMMENT_PARSING = -9;
+const int ERR_MEMORY = -1,
+		  ERR_UNKNOWN = -2,
+		  ERR_CURL_INIT = -3,
+		  ERR_CURL_PERFORM = -4,
+		  ERR_PARTTHREAD_DEPTH = -5,
+		  ERR_POST_FORMAT = -6,
+		  ERR_COMMENT_FORMAT = -7,
+		  ERR_REF_FORMAT = -8;
+		  ERR_COMMENT_PARSING = -9;
+
+void makabaSetup();
+void makabaCleanup();
 
 int getBoardsList (const char* resFile, const bool v);
 char* getBoardPageJSON (const char* board, const unsigned page, bool v);
 char* getBoardCatalogJSON (const char* board, const bool v);
 char* getThreadJSON (const char* board, const unsigned threadnum, const bool v);
+
+char* getCaptchaSettings (const char* board, const bool v);
+int getCaptchaID (const char* board, const unsigned threadnum, const bool v);
 
 struct thread* initThread (const char* thread_string, const unsigned thread_len, const bool v);
 unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool v);
@@ -90,6 +97,7 @@ char* cleanupComment (const char* src, const unsigned src_len, const bool v);
 void freeRefReply (struct ref_reply* ref);
 void freePost (struct post* post);
 void freeComment (struct comment* arg);
+void freeThread (struct thread* thread);
 
 size_t CURL_writeToBuff (const char* src, const size_t size, const size_t nmemb, void* dest);
 char* unsigned2str (const unsigned val);
