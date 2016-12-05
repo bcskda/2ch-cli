@@ -9,6 +9,7 @@
 int main (void) {
 	setlocale (LC_ALL, "");
 
+	makabaSetup();
 	char* thread_ch = (char*) calloc (Thread_size, sizeof(char));
 	if (thread_ch == NULL) {
 		fprintf(stderr, "[main]! Error: 'thread_ch' memory allocation\n");
@@ -19,7 +20,6 @@ int main (void) {
 					getThreadJSON ("abu", 42375, false),
 					Thread_size
 					);
-	
 	struct thread* thread = initThread(thread_ch, strlen(thread), true);
 
 	initscr();
@@ -48,10 +48,9 @@ int main (void) {
 	endwin();
 	
 	freeThread(thread);
-	fprintf(stderr, "free thread(struct) done\n");
 	free(thread_ch);
-	fprintf(stderr, "free thread(char)\n");
-	fprintf(stderr, "Exiting normally\n");
+	makabaCleanup();
+	fprintf(stderr, "Cleanup done, exiting\n");
 
 	return 0;
 }

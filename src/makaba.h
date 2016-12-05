@@ -22,7 +22,8 @@ size_t CURL_BUFF_POS = 0;
 const int ERR_MEMORY = -1,
 		  ERR_UNKNOWN = -2,
 		  ERR_CURL_INIT = -3,
-		  ERR_CURL_PERFORM = -4;
+		  ERR_CURL_PERFORM = -4,
+		  ERR_MAKABA_SETUP = -5;
 
 void makabaSetup();
 void makabaCleanup();

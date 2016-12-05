@@ -58,16 +58,9 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 		if (v) fprintf (stderr, "] option URL set\n");
 
-		if (CURL_BUFF_BODY == NULL)
-			CURL_BUFF_BODY = (char*) calloc (sizeof(char), CURL_BUFF_BODY_SIZE);
-		if (CURL_BUFF_BODY != NULL) {
-			if (v) fprintf (stderr, "memory allocated (curl body buffer)\n");
-		}
-		else {
-			fprintf (stderr, "[getBoardPage]! Error allocating memory (curl body buffer)\n");
-			curl_easy_cleanup (curl_handle);
-			free (URL);
-			return ERR_MEMORY;
+		if (CURL_BUFF_BODY == NULL) {
+			fprintf(stderr, "[getBoardPage]! Error: curl body buffer not allocated\n");
+			return ERR_MAKABA_SETUP;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -77,6 +70,8 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 
 		request_status = curl_easy_perform (curl_handle);
 		if (v) fprintf (stderr, "] curl request performed\n");
+		CURL_BUFF_POS = 0;
+		if (v) fprintf (stderr, "] buffer pos set to 0\n");
 		if (request_status == CURLE_OK) {
 			if (v) fprintf (stderr, "request status: OK\n");
 			printf ("%s\n", CURL_BUFF_BODY);
@@ -134,16 +129,9 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 		if (v) fprintf (stderr, "] option URL set\n");
 
-		if (CURL_BUFF_BODY == NULL)
-			CURL_BUFF_BODY = (char*) calloc (sizeof(char), CURL_BUFF_BODY_SIZE);
-		if (CURL_BUFF_BODY != NULL) {
-			if (v) fprintf (stderr, "memory allocated (curl body buffer)\n");
-		}
-		else {
-			fprintf (stderr, "[getBoardCatalog]! Error allocating memory (curl body buffer)\n");
-			curl_easy_cleanup (curl_handle);
-			free (URL);
-			return ERR_MEMORY;
+		if (CURL_BUFF_BODY == NULL) {
+			fprintf(stderr, "[getBoardCatalog]! Error: curl body buffer not allocated\n");
+			return ERR_MAKABA_SETUP;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -247,17 +235,9 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDS, postfields);
 		if (v) fprintf (stderr, "] Option POSTFIELDS set\n");
 
-		if (CURL_BUFF_BODY == NULL)
-			CURL_BUFF_BODY = (char*) calloc (sizeof(char), CURL_BUFF_BODY_SIZE);
-		if (CURL_BUFF_BODY != NULL) {
-			if (v) fprintf (stderr, "memory allocated (curl body buffer)\n");
-		}
-		else {
-			fprintf (stderr, "[getThread]! Error allocating memory (curl body buffer)\n");
-			curl_easy_cleanup (curl_handle);
-			free (URL);
-			free (postfields);
-			return ERR_MEMORY;
+		if (CURL_BUFF_BODY == NULL) {
+			fprintf(stderr, "[getThread]! Error: curl body buffer not allocated\n");
+			return ERR_MAKABA_SETUP;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -267,6 +247,8 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 
 		request_status = curl_easy_perform (curl_handle);
 		if (v) fprintf (stderr, "] curl request performed\n");
+		CURL_BUFF_POS = 0;
+		if (v) fprintf (stderr, "] buffer pos set to 0\n");
 		if (request_status == CURLE_OK) {
 			if (v) fprintf (stderr, "request status: OK\n");
 		}
@@ -326,12 +308,9 @@ char* getCaptchaSettings (const char* board, const bool v) {
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 		if (v) fprintf (LOCAL_LOG, "] option URL set\n");
 
-		if (CURL_BUFF_BODY == NULL)
-			CURL_BUFF_BODY = (char*) calloc (CURL_BUFF_BODY_SIZE, sizeof(char));
 		if (CURL_BUFF_BODY == NULL) {
-			fprintf (stderr, "[getCaptchaSettings]! Error allocating memory (CURL_BUFF_BODY)\n");
-			curl_easy_cleanup (curl_handle);
-			return ERR_MEMORY;
+			fprintf(stderr, "[getCaptchaSettings]! Error: curl body buffer not allocated\n");
+			return ERR_MAKABA_SETUP;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (LOCAL_LOG, "] option WRITEDATA set\n");
@@ -341,6 +320,8 @@ char* getCaptchaSettings (const char* board, const bool v) {
 
 		request_status = curl_easy_perform (curl_handle);
 		if (v) fprintf (LOCAL_LOG, "] curl request performed\n");
+		CURL_BUFF_POS = 0;
+		if (v) fprintf (LOCAL_LOG, "] buffer pos set to 0\n");
 		if (request_status == CURLE_OK) {
 			if (v) fprintf (LOCAL_LOG, "] request status: OK\n");
 		}
@@ -376,11 +357,13 @@ int getCaptchaID (const char* board, const unsigned threadnum, const bool v) {
 // ========================================
 
 void makabaSetup() {
-
+	if (CURL_BUFF_BODY == NULL)
+		CURL_BUFF_BODY = (char*) calloc (CURL_BUFF_BODY_SIZE, sizeof(char));
 }
 
 void makabaCleanup() {
-
+	if (CURL_BUFF_BODY != NULL)
+		free(CURL_BUFF_BODY);
 }
 
 size_t CURL_writeToBuff (const char* src, const size_t block_size, const size_t nmemb, void* dest) {

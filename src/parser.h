@@ -57,11 +57,11 @@ const char* PATTERN_REPLY_NUM = "data-num=\\\"";
 const char* PATTERN_GREEN = "span class=\\\"unkfunc\\\"";
 const char* PATTERN_NEWLINE = "\\u003cbr\\u003e";
 
-const int ERR_PARTTHREAD_DEPTH = -5,
-		  ERR_POST_FORMAT = -6,
-		  ERR_COMMENT_FORMAT = -7,
-		  ERR_REF_FORMAT = -8;
-		  ERR_COMMENT_PARSING = -9;
+const int ERR_PARTTHREAD_DEPTH = -1,
+		  ERR_POST_FORMAT = -2,
+		  ERR_COMMENT_FORMAT = -3,
+		  ERR_REF_FORMAT = -4;
+		  ERR_COMMENT_PARSING = -5;
 
 struct thread* initThread (const char* thread_string, const unsigned thread_len, const bool v);
 unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool v);
