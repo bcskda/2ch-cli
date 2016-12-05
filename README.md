@@ -3,7 +3,7 @@ C-written console client for 2ch.hk
 ## Dependencies
 ```
 libcurl
-libncurses
+libncursesw
 ```
 ## Starting
 ```
@@ -14,5 +14,5 @@ make
 ```
 ## Launching
 ```
-./build/2ch-cli
+./run.sh
 ```
