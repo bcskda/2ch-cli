@@ -4,9 +4,11 @@
 // (Headers)
 // ========================================
 
-#include "makaba.c"
+#pragma once
 #include <ncurses.h>
 #include <locale.h>
+#include "makaba.c"
+#include "parser.c"
 
 const size_t Thread_size = 1000000;
 
