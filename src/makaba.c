@@ -71,6 +71,7 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 
 		request_status = curl_easy_perform (curl_handle);
 		if (v) fprintf (stderr, "] curl request performed\n");
+		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
 		CURL_BUFF_POS = 0;
 		if (v) fprintf (stderr, "] buffer pos set to 0\n");
 		if (request_status == CURLE_OK) {
@@ -248,6 +249,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 
 		request_status = curl_easy_perform (curl_handle);
 		if (v) fprintf (stderr, "] curl request performed\n");
+		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
 		CURL_BUFF_POS = 0;
 		if (v) fprintf (stderr, "] buffer pos set to 0\n");
 		if (request_status == CURLE_OK) {
@@ -325,6 +327,7 @@ char* getCaptchaSettingsJSON (const char* board, const bool v) {
 
 		request_status = curl_easy_perform (curl_handle);
 		if (v) fprintf (LOCAL_LOG, "] curl request performed\n");
+		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
 		CURL_BUFF_POS = 0;
 		if (v) fprintf (LOCAL_LOG, "] buffer pos set to 0\n");
 		if (request_status == CURLE_OK) {
@@ -419,6 +422,7 @@ char* get2chaptchaIdJSON (const char* board, const char* thread, const bool v) {
 
 		request_status = curl_easy_perform (curl_handle);
 		if (v) fprintf (LOCAL_LOG, "] curl request performed\n");
+		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
 		CURL_BUFF_POS = 0;
 		if (v) fprintf (LOCAL_LOG, "] buffer pos set to 0\n");
 		if (request_status == CURLE_OK) {
