@@ -6,6 +6,7 @@
 // TODO:
 //[ ] captcha
 //[x] makabaSetup()
+//[ ] FIX CURL BUFF ZERO-END
 // ========================================
 
 #pragma once
@@ -280,12 +281,12 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 // Captcha
 // ========================================
 
-char* getCaptchaSettings (const char* board, const bool v) {
+char* getCaptchaSettingsJSON (const char* board, const bool v) {
 	fprintf (stderr, "]] Starting getCaptchaSettings");
 	FILE* LOCAL_LOG = NULL;
 	if (v) {
 		LOCAL_LOG = fopen ("log/getCaptchaSettings.log", "a");
-		fprintf(stderr, " (verbose, log in log/initThread.log)\n");
+		fprintf(stderr, " (verbose, log in log/getCaptchaSettings.log)\n");
 		fprintf (LOCAL_LOG, "] initializing curl handle\n");
 	}
 	else {
@@ -297,12 +298,16 @@ char* getCaptchaSettings (const char* board, const bool v) {
 	if (curl_handle) {
 		if (v) fprintf (LOCAL_LOG, "] curl handle initialized\n");
 
-		const short URL_length = strlen(BASE_URL)+strlen(CAPTCHA_API)+strlen(board)+9+1; // 'settings/'
+		const short URL_length = strlen(BASE_URL)+strlen(CAPTCHA_SETTINGS)+strlen(board)+1;
 		char* URL = (char*) calloc (URL_length, sizeof(char));
+		if (URL == NULL) {
+			fprintf (stderr, "[getCaptchaSettings]! Error allocating memory (URL)\n");
+			curl_easy_cleanup (curl_handle);
+			return ERR_MEMORY;
+		}
 		if (v) fprintf (LOCAL_LOG, "] Forming URL\n");
 		URL = strcpy (URL, BASE_URL);
-		URL = strcat (URL, CAPTCHA_API);
-		URL = strcat (URL, "settings/");
+		URL = strcat (URL, CAPTCHA_SETTINGS);
 		URL = strcat (URL, board);
 		if (v) fprintf(LOCAL_LOG, "] URL: %s\n", URL);
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
@@ -336,20 +341,120 @@ char* getCaptchaSettings (const char* board, const bool v) {
 		curl_easy_cleanup (curl_handle);
 		if (v) fprintf (LOCAL_LOG, "] curl cleanup done\n");
 		free (URL);
-		fprintf(stderr, "]] Exiting getCaptchaSettings\n");
 	}
 	else {
 		fprintf (stderr, "[getCaptchaSettings]! Error initializing curl handle\n");
 		return ERR_CURL_INIT;
 	}
 
+	if (v) {
+		fprintf(LOCAL_LOG, "]] Exiting\n");
+		fclose (LOCAL_LOG);
+	}
+	fprintf(stderr, "]] Exiting getCaptchaSettings\n");
+
 	return CURL_BUFF_BODY;
 }
 
-int getCaptchaID (const char* board, const unsigned threadnum, const bool v) {
 
+char* get2chaptchaIdJSON (const char* board, const char* thread, const bool v) {
+	fprintf (stderr, "]] Starting get2chaptchaID");
+	FILE* LOCAL_LOG = NULL;
+	if (v) {
+		LOCAL_LOG = fopen ("log/get2chaptchaID.log", "a");
+		fprintf(stderr, " (verbose, log in log/get2chaptchaID.log)\n");
+		fprintf (LOCAL_LOG, "\n]] New thread\n] initializing curl handle\n");
+	}
+	else {
+		puts("");
+	}
 
-	//return captcha_id;
+	CURL* curl_handle = curl_easy_init();
+	CURLcode request_status = 0;
+	if (curl_handle) {
+		if (v) fprintf (LOCAL_LOG, "] curl handle initialized\n");
+
+		const short URL_length = strlen(BASE_URL)+strlen(CAPTCHA_2CHAPTCHA)+2+1;
+		char* URL = (char*) calloc (sizeof(char), URL_length);
+		if (URL == NULL) {
+			fprintf (stderr, "[get2chaptchaID]! Error allocating memory (URL)\n");
+			curl_easy_cleanup (curl_handle);
+			return ERR_MEMORY;
+		}
+		if (v) fprintf (LOCAL_LOG, "] Forming URL\n");
+		URL = strcpy (URL, BASE_URL);
+		URL = strcat (URL, CAPTCHA_2CHAPTCHA);
+		URL = strcat (URL, "id");
+		if (v) fprintf(LOCAL_LOG, "] URL: %s\n", URL);
+		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
+		if (v) fprintf (LOCAL_LOG, "] option URL set\n");
+
+		const short postfields_length = 6+strlen(board)+8+strlen(thread)+1;
+		char* postfields = (char*) calloc (sizeof(char), postfields_length);
+		if (postfields == NULL) {
+			fprintf (stderr, "[get2chaptchaID]! Error allocating memory (POST data)\n");
+			curl_easy_cleanup (curl_handle);
+			free (URL);
+			return ERR_MEMORY;
+		}
+		postfields = strcpy (postfields, "board=");
+		postfields = strcat (postfields, board);
+		if (thread != NULL) {
+			postfields = strcat (postfields, "&thread=");
+			postfields = strcat (postfields, thread);
+		}
+		if (v) fprintf (LOCAL_LOG, "POST data: %s\n", postfields);
+		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDS, postfields);
+		if (v) fprintf (LOCAL_LOG, "] Option POSTFIELDS set\n");
+
+		if (CURL_BUFF_BODY == NULL) {
+			fprintf(stderr, "[get2chaptchaID]! Error: curl body buffer not allocated\n");
+			return ERR_MAKABA_SETUP;
+		}
+		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
+		if (v) fprintf (LOCAL_LOG, "] option WRITEDATA set\n");
+
+		curl_easy_setopt (curl_handle, CURLOPT_WRITEFUNCTION, CURL_writeToBuff);
+		if (v) fprintf (LOCAL_LOG, "] option WRITEFUNCTION set\n");
+
+		request_status = curl_easy_perform (curl_handle);
+		if (v) fprintf (LOCAL_LOG, "] curl request performed\n");
+		CURL_BUFF_POS = 0;
+		if (v) fprintf (LOCAL_LOG, "] buffer pos set to 0\n");
+		if (request_status == CURLE_OK) {
+			if (v) fprintf (LOCAL_LOG, "] request status: OK\n");
+		}
+		else {
+			fprintf (stderr, "[get2chaptchaID]! Error @ curl_easy_perform: %s\n",
+				curl_easy_strerror(request_status));
+			curl_easy_cleanup (curl_handle);
+			free (URL);
+			free (postfields);
+			return ERR_CURL_PERFORM;
+		}		
+
+		curl_easy_cleanup (curl_handle);
+		if (v) fprintf (LOCAL_LOG, "] curl cleanup done, freeing..\n");
+		free (URL);
+		free (postfields);
+	}
+	else {
+		fprintf (stderr, "[get2chaptchaID]! Error initializing curl handle\n");
+		return ERR_CURL_INIT;
+	}
+
+	if (v) {
+		fprintf(LOCAL_LOG, "]] Exiting\n");
+		fclose (LOCAL_LOG);
+	}
+	fprintf(stderr, "]] Exiting get2chaptchaID\n");
+
+	return CURL_BUFF_BODY;
+}
+
+char* get2chaptchaImage (const char* id, const bool v) {
+
+	//return CURL_BUFF_BODY;
 }
 
 // ========================================

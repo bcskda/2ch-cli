@@ -12,7 +12,8 @@
 
 const char* BASE_URL = "https://2ch.hk/";
 const char* MOBILE_API = "makaba/mobile.fcgi";
-const char* CAPTCHA_API = "api/captcha/";
+const char* CAPTCHA_SETTINGS = "api/captcha/settings/";
+const char* CAPTCHA_2CHAPTCHA = "api/captcha/2chaptcha/";
 const size_t CURL_BUFF_BODY_SIZE = 5000000;
 const size_t CURL_BUFF_HEADER_SIZE = 2000;
 char* CURL_BUFF_BODY = NULL;
@@ -33,8 +34,8 @@ char* getBoardPageJSON (const char* board, const unsigned page, bool v);
 char* getBoardCatalogJSON (const char* board, const bool v);
 char* getThreadJSON (const char* board, const unsigned threadnum, const bool v);
 
-char* getCaptchaSettings (const char* board, const bool v);
-int getCaptchaID (const char* board, const unsigned threadnum, const bool v);
+char* getCaptchaSettingsJSON (const char* board, const bool v);
+char* get2chaptchaIdJSON (const char* board, const char* thread, const bool v);
 
 size_t CURL_writeToBuff (const char* src, const size_t size, const size_t nmemb, void* dest);
 char* unsigned2str (const unsigned val);
