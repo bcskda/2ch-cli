@@ -570,6 +570,42 @@ struct thread* initThread (const char* thread_string, const unsigned thread_len,
 }
 
 // ========================================
+// Captcha
+// ========================================
+
+char* parse2chaptchaId (const char* capId_string, const bool v) {
+	fprintf (stderr, "]] Starting parse2chaptchaId");
+	FILE* LOCAL_LOG = NULL;
+	if (v) {
+		LOCAL_LOG = fopen ("log/parse2chaptchaId.log", "a");
+		fprintf(stderr, " (verbose, log in log/parse2chaptchaId.log)\n");
+		fprintf(LOCAL_LOG, "\n]] New thread\nJSON: %s", capId_string);
+	}
+	else {
+		puts("");
+	}
+
+	char* captcha_start = strstr (capId_string, PATTERN_CAPID);
+	if (captcha_start == NULL) {
+		fprintf(stderr, "[parse2chaptchaId]! Error: Bad captcha-JSON format\n");
+		return ERR_CAPTCHA_FORMAT;
+	}
+	captcha_start += strlen(PATTERN_CAPID);
+	short captcha_len = strstr(captcha_start,"\"") - captcha_start;
+	char* captcha_id = (char*) calloc (sizeof(char), captcha_len);
+	captcha_id = memcpy (captcha_id, captcha_start, captcha_len);
+
+	if (v) {
+		fprintf(LOCAL_LOG, "ID: %s\n", captcha_id);
+		fprintf(LOCAL_LOG, "]] Exiting\n");
+		fclose(LOCAL_LOG);
+	}
+	fprintf(stderr, "]] Exiting parse2chaptchaId\n");
+
+	return captcha_id;
+}
+
+// ========================================
 // Freeing functions
 // ========================================
 

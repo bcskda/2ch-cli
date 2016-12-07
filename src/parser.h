@@ -57,11 +57,14 @@ const char* PATTERN_REPLY_NUM = "data-num=\\\"";
 const char* PATTERN_GREEN = "span class=\\\"unkfunc\\\"";
 const char* PATTERN_NEWLINE = "\\u003cbr\\u003e";
 
+const char* PATTERN_CAPID = "\"id\":\"";
+
 const int ERR_PARTTHREAD_DEPTH = -1,
 		  ERR_POST_FORMAT = -2,
 		  ERR_COMMENT_FORMAT = -3,
 		  ERR_REF_FORMAT = -4;
-		  ERR_COMMENT_PARSING = -5;
+		  ERR_COMMENT_PARSING = -5,
+		  ERR_CAPTCHA_FORMAT = -6;
 
 struct thread* initThread (const char* thread_string, const unsigned thread_len, const bool v);
 unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool v);
@@ -69,6 +72,8 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 struct comment* parseComment (char* comment, const bool v);
 struct ref_reply* parseRef_Reply (const char* ch_ref, const unsigned ref_len, const bool v);
 char* cleanupComment (const char* src, const unsigned src_len, const bool v);
+
+char* parse2chaptchaId (const char* capid_string, const bool v);
 
 void freeRefReply (struct ref_reply* ref);
 void freePost (struct post* post);
