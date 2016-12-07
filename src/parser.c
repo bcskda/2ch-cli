@@ -196,7 +196,7 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 	if (ptr_files-strlen(PATTERN_FILES) == NULL) {
 		ptr_name_diff = ptr_email; // Files field may include "\"name\":" substring,
 		name_diff_len = email_len; // so we must ignore the files field, if it exists.
-	} else {                     // However, if it is not specified, we cannot use
+	} else {                       // However, if it is not specified, we cannot use
 		ptr_name_diff = ptr_files; // ptr_files. So we split into 2 cases and use
 		name_diff_len = files_len; // 2 variants of values for 2 new pointers.
 	}
@@ -320,11 +320,6 @@ struct comment* parseComment (char* comment, const bool v) {
 			comment, cinst, cinst-comment);
 		memcpy(clean_comment,comment,cinst-comment);
 		fprintf(LOCAL_LOG, "]]]] preCopied\n");
-		/*
-		for (int i = 0; i < cinst; i++) {
-			fprintf(LOCAL_LOG, "%c", comment[i]);
-		fprintf(LOCAL_LOG, "\n");
-		*/
 		clean_len += cinst-comment;
 	} else {
 		fprintf(LOCAL_LOG, "[!!] Doesnt start with text: comment = %p, cinst = %p, clen = %d\n",
@@ -350,15 +345,8 @@ struct comment* parseComment (char* comment, const bool v) {
 				memcpy (clean_comment+clean_len, ">>", sizeof(char)*2);
 				clean_len += 2;
 				short csize = strlen (unsigned2str(cref->num));
-				//fprintf(LOCAL_LOG, "Num as string: |%s|\n", unsigned2str(cref->num));
 				memcpy (clean_comment+clean_len, unsigned2str(cref->num), sizeof(char)*csize);
 				if (v) fprintf(LOCAL_LOG, "]]]] replyCopied\n");
-				/*
-				if (v) for (int j = 0; j < csize; j++) {
-					fprintf(LOCAL_LOG, "%c", clean_comment[clean_len+j]);
-				}
-				if (v) fprintf(LOCAL_LOG, "\n");
-				*/
 				clean_len += csize;
 				if (v) fprintf (LOCAL_LOG, "]]]] Init done:\n");
 				if (v) fprintf (LOCAL_LOG, "]]]]] link=\"%s\"\n]]]]] thread=%d\n]]]]] num=%d\n",
@@ -371,13 +359,10 @@ struct comment* parseComment (char* comment, const bool v) {
 					refs->next->data = calloc (1, sizeof(struct ref_reply));
 					memcpy (refs->next->data, (void*) cref, sizeof(struct ref_reply));
 					refs = refs->next;
-					//if (v) fprintf(LOCAL_LOG, "List member state: 1st = %p, cur = %p, next = %p\n", refs->first, refs, refs->next);
 				} else {
 					refs->next = 0;
 					refs->data = calloc (1, sizeof(struct ref_reply));
 					memcpy (refs->data, (void*) cref, sizeof(struct ref_reply));
-					//if (v) fprintf(LOCAL_LOG, "Filling 1st list member\n");
- 					//if (v) fprintf(LOCAL_LOG, "List member state: 1st = %p, cur = %p, next = %p\n", refs->first, refs, refs->next);
 				}
 			} else {
 				fprintf (LOCAL_LOG, "]]]] Unknown ref type, treat as text\n");
@@ -393,12 +378,6 @@ struct comment* parseComment (char* comment, const bool v) {
 				if (csize > 0) {
 					memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
 					if (v) fprintf(LOCAL_LOG, "]]]] otherCopied\n");
-					/*
-					if (v) for (int j = 0; j < csize; j++) {
-						fprintf(LOCAL_LOG, "%c", clean_comment[clean_len+j]);
-					}
-					if (v) fprintf(LOCAL_LOG, "\n");
-					*/
 					clean_len += csize;
 				}
 			}
@@ -415,12 +394,6 @@ struct comment* parseComment (char* comment, const bool v) {
 	if (csize > 0) {
 		memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
 		if (v) fprintf(LOCAL_LOG, "]] afterCopied\n");
-		/*
-		if (v) for (int j = 0; j < csize; j++) {
-			fprintf(LOCAL_LOG, "%c", clean_comment[clean_len+j]);
-		}
-		if (v) fprintf(LOCAL_LOG, "\n");
-		*/
 		clean_len += csize;
 	}
 	char* finally_clean_comment = cleanupComment (clean_comment,clean_len,false);
@@ -435,7 +408,6 @@ struct comment* parseComment (char* comment, const bool v) {
 	parsed->refs = (struct ref_reply*) calloc (nrefs, sizeof(struct ref_reply));
 	refs = refs->first;
 	for (int i = 0; i < nrefs; i++) {
-		//if (v) fprintf(LOCAL_LOG, "Copy ref #%d, first = %p, current = %p, next = %p\n", i+1, refs->first, refs, refs->next);
 		memcpy(parsed->refs+i*sizeof(struct ref_reply), (void*) refs->data, sizeof(struct ref_reply));
 	}
 
@@ -553,7 +525,7 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const unsigned ref_len, co
 }
 
 struct thread* initThread (const char* thread_string, const unsigned thread_len, const bool v) {
-	fprintf(stderr, "]] Started initThread ");
+	fprintf(stderr, "\n]] Started initThread ");
 	FILE* LOCAL_LOG = NULL;
 	if (v) {
 		LOCAL_LOG = fopen("log/initThread.log", "a");

@@ -5,7 +5,7 @@
 // ========================================
 // TODO:
 //[ ] captcha
-//[ ] makabaSetup()
+//[x] makabaSetup()
 // ========================================
 
 #pragma once
@@ -371,37 +371,27 @@ size_t CURL_writeToBuff (const char* src, const size_t block_size, const size_t 
 		return 0;
 	}
 	else {
-		//fprintf (stderr, "writing to buffer (src):\n%s\n", src);
 		memcpy (dest+CURL_BUFF_POS, src, block_size*nmemb);
-		//fprintf (stderr, "written to buffer (res):\n%s\n", dest);
 		CURL_BUFF_POS += block_size*nmemb;
 		return block_size*nmemb;
 	}
 }
 
 char* unsigned2str (const unsigned val) {
-	//fprintf (stderr, ">> Entered unsigned2str\n");
 	short length = 0;
 	for (int k = 1; k <= val; k*=10) {
 		length += 1;
 	}
-	//fprintf (stderr, "> length = %d\n", length);
 	char* res = (char*) calloc (sizeof(char), length+1);
 	if (res != NULL) {
-		//fprintf (stderr, "memory allocated (res)\n");
 	}
 	else {
 		fprintf (stderr, "[unsigned2str]! Error allocating memory (res)\n");
 		return NULL;
 	}
 	for (int i = 1, k = 1; i <= length; i+=1, k*=10) {
-		//fprintf (stderr, "i = %d, k = %d\n", i, k);
-		//fprintf (stderr, "val %% k = %d\n", (val/k)%10);
 		res[length-i] = '0' + ((val/k)%10);
-		//fprintf (stderr, "written char: %c\n", res[length-i]);
 	}
-	//fprintf (stderr, "> returning res = %s\n", res);
-	//fprintf (stderr, ">> Exiting unsigned2str\n");
 	return res;
 }
 
