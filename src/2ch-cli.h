@@ -8,9 +8,14 @@
 
 #include <ncurses.h>
 #include <locale.h>
+#include <unistd.h>
+#include <string.h>
 #include "makaba.c"
 #include "parser.c"
 
 const size_t Thread_size = 1000000;
 
 int printPost (struct post* post,	const bool show_email, const bool show_files);
+
+//для двачей
+char passcode[32];

@@ -5,10 +5,43 @@
 // ========================================
 
 #include "2ch-cli.h"
+	//инклады в хедере
+void pomogite()
+{
+        printf("2ch-cli v0.3 - консольный клиент двача\n");
+        printf("Использование:\n");
+        printf(" -h - помощь\n");
+        printf(" -s - запуск\n");
+        printf(" -p - задать пасскод\n");
+}
 
-int main (void)
+int main (int argc, char **argv)
 {
 	setlocale (LC_ALL, "");
+
+	//getopt
+	int opt; //man 3 getopt
+	char *optarg;
+
+	while (( opt = getopt(argc, argv, "hp:s") ) != -1) //пока то что в скобках не равно -1
+	{
+		switch (opt)
+		{
+			case 'p':
+				strcpy(passcode, optarg);
+				printf("Разраб хуй, ещё не запилил\n");
+				return 0;
+			case 's':
+				break;
+			default:
+				pomogite();
+				return 0;
+		}
+	}
+	if (opt == -1) {
+		pomogite(); //если анон запустил прогу без аргументов, то пишет помощь.
+		return -1;
+	}
 
 	makabaSetup();
 	char* thread_ch = (char*) calloc (Thread_size, sizeof(char));
