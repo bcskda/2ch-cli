@@ -6,7 +6,8 @@
 
 #include "2ch-cli.h"
 
-int main (void) {
+int main (void)
+{
 	setlocale (LC_ALL, "");
 
 	makabaSetup();

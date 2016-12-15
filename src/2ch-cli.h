@@ -5,6 +5,7 @@
 // ========================================
 
 #pragma once
+
 #include <ncurses.h>
 #include <locale.h>
 #include "makaba.c"
@@ -12,4 +13,4 @@
 
 const size_t Thread_size = 1000000;
 
-int printPost (struct post* post,const bool show_email,const bool show_files);
+int printPost (struct post* post,	const bool show_email, const bool show_files);
