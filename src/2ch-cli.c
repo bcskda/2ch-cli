@@ -5,43 +5,64 @@
 // ========================================
 
 #include "2ch-cli.h"
-	//инклады в хедере
-void pomogite()
+
+void pomogite() //помощь
 {
-        printf("2ch-cli v0.3 - консольный клиент двача\n");
-        printf("Использование:\n");
-        printf(" -h - помощь\n");
-        printf(" -s - запуск\n");
-        printf(" -p - задать пасскод\n");
+    printf("2ch-cli "VERSION" - консольный клиент двача\n");
+    printf("Использование:\n");
+    printf(" -h - помощь\n");
+    printf(" -s - запуск\n");
+    printf(" -p - задать пасскод\n");
+    printf(" -b - задать борду\n");
+    printf(" -n - заранее задать номер поста\n");
 }
 
 int main (int argc, char **argv)
 {
-	setlocale (LC_ALL, "");
+    //всё это по идее должно быть в хедере, но почему-то там оно не работает
+    //для двачей
+    char passcode[64] = "пасскода нет нихуя :("; //храним пасскод
+    char board_name[10] = "b"; //имя нужной борды
+    long long int post_number = 0; //номер поста в борде
 
 	//getopt
-	int opt; //man 3 getopt
-	char *optarg;
+    int opt;
+    //char *optarg;//man 3 getopt
+    bool start_or_not = false; //понадобится при 's', чтобы после была проверка запускать или нет.
 
-	while (( opt = getopt(argc, argv, "hp:s") ) != -1) //пока то что в скобках не равно -1
+    if (argc == 1) /* Если аргументов нет, вывод помощи */ {
+        pomogite(); //если анон запустил прогу без аргументов, то пишет помощь.
+        return -1;
+    }
+    while (( opt = getopt(argc, argv, "hp:b:n:s") ) != -1) //пока то что в скобках не равно -1
 	{
 		switch (opt)
 		{
 			case 'p':
-				strcpy(passcode, optarg);
+                memset(passcode, '\0', sizeof(passcode)); //Почистим наш буфер
+                strcat(passcode, optarg);
 				printf("Разраб хуй, ещё не запилил\n");
-				return 0;
-			case 's':
-				break;
+                printf("Уже что-то могу: %s!\n", passcode);
+                break;
+            case 'b':
+                memset(board_name, '\0', sizeof(board_name));
+                strcpy(board_name, optarg);
+                break;
+            case 'n':
+                post_number = atoi(optarg);
+                break;
+            case 's':
+                start_or_not = true;
+                break;
 			default:
 				pomogite();
 				return 0;
 		}
 	}
-	if (opt == -1) {
-		pomogite(); //если анон запустил прогу без аргументов, то пишет помощь.
-		return -1;
-	}
+
+    if (start_or_not == false) return 0; //проверка запускать или нет
+
+    //setlocale (LC_ALL, ""); //с этой штукой падает неясная ошибка Аварийный останов, аж в трейс впадает.
 
 	makabaSetup();
 	char* thread_ch = (char*) calloc (Thread_size, sizeof(char));
@@ -51,7 +72,7 @@ int main (int argc, char **argv)
 	}
 	thread_ch = memcpy(
 					thread_ch,
-					getThreadJSON ("abu", 42375, false),
+                    getThreadJSON (board_name, post_number, false),
 					Thread_size
 					);
 	struct thread* thread = initThread(thread_ch, strlen(thread), true);

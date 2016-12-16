@@ -210,7 +210,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDSIZE, postfields_length);
 		if (v) fprintf (stderr, "] Option POSTFIELDSIZE set\n");
 
-		const char* postfields = (char*) calloc (sizeof(char),postfields_length);
+        char* postfields = (char*) calloc (sizeof(char),postfields_length);
 		if (postfields != NULL) {
 			if (v) fprintf (stderr, "memory allocated (POST data)\n");
 		}

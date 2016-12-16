@@ -1,5 +1,9 @@
+CC = cc
+
+all: default
+
 default:
 	mkdir -p log/
-	gcc src/2ch-cli.c -std=gnu99 -d -fdump-rtl -fPIC -lcurl -lncursesw -o 2ch-cli 
+	$(CC) src/2ch-cli.c -d -std=c99 -fPIC -lcurl -lncursesw -o 2ch-cli
 clean:
-	rm -rf log/ 2ch-cli
+	rm -rf log/ 2ch-cli src/*.o
