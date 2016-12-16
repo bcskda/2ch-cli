@@ -41,7 +41,7 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 		else {
 			fprintf (stderr, "[getBoardPage]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-			return ERR_MEMORY;
+            return ERR_MEMORY;
 		}
 
 		if (v) fprintf (stderr, "] Forming URL\n");

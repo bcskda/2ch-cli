@@ -20,14 +20,13 @@ void pomogite() //помощь
 int main (int argc, char **argv)
 {
     //всё это по идее должно быть в хедере, но почему-то там оно не работает
-    //для двачей
+    //для двачей переменные
     char passcode[64] = "пасскода нет нихуя :("; //храним пасскод
     char board_name[10] = "b"; //имя нужной борды
     long long int post_number = 0; //номер поста в борде
 
 	//getopt
     int opt;
-    //char *optarg;//man 3 getopt
     bool start_or_not = false; //понадобится при 's', чтобы после была проверка запускать или нет.
 
     if (argc == 1) /* Если аргументов нет, вывод помощи */ {
@@ -62,7 +61,7 @@ int main (int argc, char **argv)
 
     if (start_or_not == false) return 0; //проверка запускать или нет
 
-    //setlocale (LC_ALL, ""); //с этой штукой падает неясная ошибка Аварийный останов, аж в трейс впадает.
+    setlocale (LC_ALL, ""); //с этой штукой падает неясная ошибка Аварийный останов, аж в трейс впадает.
 
 	makabaSetup();
 	char* thread_ch = (char*) calloc (Thread_size, sizeof(char));
@@ -75,21 +74,25 @@ int main (int argc, char **argv)
                     getThreadJSON (board_name, post_number, false),
 					Thread_size
 					);
-	struct thread* thread = initThread(thread_ch, strlen(thread), true);
+    struct thread* thread = initThread(thread_ch, sizeof(thread), true);
 
 	initscr();
 	raw();
 	keypad (stdscr, TRUE);
 	noecho();
-	printw ("Push [c] to clear screen, anything else to print another post\n");
+    printw ("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
 	for (int i = 0; i < thread->nposts; i++) {
 		bool done = 0;
 		while (! done)
 			switch (getch()) { 
 				case 'C': case 'c':
 					clear();
-					printw ("Push [c] to clear screen, anything else to print another post\n");
+                    printw ("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
 					break;
+                case 'Q': case 'q':
+                    done = 1;
+                    i = thread->nposts;
+                    break;
 				default:
 					fprintf(stderr, "Printing post #%d\n", i);
 					printPost(thread->posts[i], true, true);

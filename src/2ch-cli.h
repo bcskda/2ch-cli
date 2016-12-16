@@ -16,7 +16,7 @@
 #include "makaba.c"
 #include "parser.c"
 
-#define VERSION "vTesting"
+#define VERSION "v0.3test2"
 
 const size_t Thread_size = 1000000;
 
