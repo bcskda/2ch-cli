@@ -10,6 +10,13 @@ int main (void) {
 	setlocale (LC_ALL, "");
 
 	makabaSetup();
+	
+
+	//printf( "Testing: %s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON("abu","49946",true),true),true) );
+	//printf( "Testing: %s\n", getCaptchaSettingsJSON("abu",true) );
+
+	//return 0;
+
 	char* thread_ch = (char*) calloc (Thread_size, sizeof(char));
 	if (thread_ch == NULL) {
 		fprintf(stderr, "[main]! Error: 'thread_ch' memory allocation\n");

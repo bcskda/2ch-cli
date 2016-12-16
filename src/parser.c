@@ -16,7 +16,7 @@ unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool 
 	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n");
 
 	short srclen = strlen (src);
-	int* temp = (int*) calloc (sizeof(int),srclen/8);
+	int* temp = (int*) calloc (srclen/8, sizeof(int));
 
 	short depth = 0;
 	unsigned postcount = 0;
@@ -79,7 +79,7 @@ unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool 
 
 	if (v) fprintf (LOCAL_LOG, "%d posts found\n", postcount);
 
-	unsigned* posts = (int*) calloc (sizeof(int), postcount);
+	unsigned* posts = (int*) calloc (postcount, sizeof(int));
 	posts = memcpy (posts, temp, postcount*sizeof(int));
 	free (temp);
 	if (v) fprintf (LOCAL_LOG, "Posts begin at:\n");
@@ -230,7 +230,7 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 	if (v) fprintf (LOCAL_LOG, "] = All main fields detected\n");
 
 	// Init struct:
-	struct post* post = (struct post*) calloc (1,sizeof(struct post));
+	struct post* post = (struct post*) calloc (1, sizeof(struct post));
 
 	post->num = str2unsigned(ptr_num, num_len);
 
@@ -249,14 +249,14 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 		fprintf (LOCAL_LOG, "!! post.comment.text = %s\n", post->comment->text);
 	}
 
-	post->date = (char*) calloc (sizeof(char), date_len+1);
+	post->date = (char*) calloc (date_len+1, sizeof(char));
 	if (post->date == NULL) {
 		fprintf (stderr, "! Error allocating memory (post.date)\n");
 		return ERR_MEMORY;
 	}
 	memcpy (post->date, ptr_date, sizeof(char)*date_len);
 
-	post->name = (char*) calloc (sizeof(char), name_len+1);
+	post->name = (char*) calloc (name_len+1, sizeof(char));
 	if (post->name == NULL) {
 		fprintf (stderr, "! Error allocating memory (post.name)\n");
 		return ERR_MEMORY;
@@ -265,7 +265,7 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 	if (email_len == 0) {
 		post->email = NULL;
 	} else {
-		post->email = (char*) calloc (sizeof(char), email_len+1);
+		post->email = (char*) calloc (email_len+1, sizeof(char));
 		if (post->email == NULL) {
 		fprintf (stderr, "! Error allocating memory (post.email)\n");
 		return ERR_MEMORY;
@@ -275,7 +275,7 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 	if (files_len == 0) {
 		post->files = NULL;
 	} else {
-		post->files = (char*) calloc (sizeof(char), files_len+1);
+		post->files = (char*) calloc (files_len+1, sizeof(char));
 		if (post->files == NULL) {
 		fprintf (stderr, "! Error allocating memory (post.files)\n");
 		return ERR_MEMORY;
@@ -538,7 +538,7 @@ struct thread* initThread (const char* thread_string, const unsigned thread_len,
 	unsigned* post_diffs = findPostsInJSON(thread_string,&nposts,false);
 	if (v) fprintf(LOCAL_LOG, "] nposts = %d\n", nposts);
 
-	struct post** posts = (struct post**) calloc(nposts,sizeof(struct post*));
+	struct post** posts = (struct post**) calloc (nposts, sizeof(struct post*));
 	for (int i = 0; i < nposts-1; i++) {
 		if (v) fprintf(LOCAL_LOG, "] Calling initPost #%d\n", i);
 		posts[i] = initPost( 
@@ -592,7 +592,7 @@ char* parse2chaptchaId (const char* capId_string, const bool v) {
 	}
 	captcha_start += strlen(PATTERN_CAPID);
 	short captcha_len = strstr(captcha_start,"\"") - captcha_start;
-	char* captcha_id = (char*) calloc (sizeof(char), captcha_len);
+	char* captcha_id = (char*) calloc (captcha_len, sizeof(char));
 	captcha_id = memcpy (captcha_id, captcha_start, captcha_len);
 
 	if (v) {
