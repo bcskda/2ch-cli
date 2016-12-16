@@ -61,7 +61,7 @@ int main (int argc, char **argv)
 
     if (start_or_not == false) return 0; //проверка запускать или нет
 
-    setlocale (LC_ALL, ""); //с этой штукой падает неясная ошибка Аварийный останов, аж в трейс впадает.
+    setlocale (LC_ALL, "");
 
 	makabaSetup();
 	char* thread_ch = (char*) calloc (Thread_size, sizeof(char));
