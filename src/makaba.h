@@ -36,6 +36,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v);
 
 char* getCaptchaSettingsJSON (const char* board, const bool v);
 char* get2chaptchaIdJSON (const char* board, const char* thread, const bool v);
+char* get2chaptchaPicURL (const char* id, const bool v);
 
 size_t CURL_writeToBuff (const char* src, const size_t size, const size_t nmemb, void* dest);
 char* unsigned2str (const unsigned val);

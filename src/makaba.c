@@ -34,14 +34,14 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 		short URL_length = strlen(BASE_URL)+strlen(board)+1+strlen(page_string)+5;
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
 		// URL format: 2ch.hk/$board/$page.json
-		char* URL = (char*) calloc (sizeof(char), URL_length);
+		char* URL = (char*) calloc (URL_length, sizeof(char));
 		if (URL != NULL) {
 			if (v) fprintf (stderr, "memory allocated (URL)\n");
 		}
 		else {
 			fprintf (stderr, "[getBoardPage]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-            return ERR_MEMORY;
+			return ERR_MEMORY;
 		}
 
 		if (v) fprintf (stderr, "] Forming URL\n");
@@ -110,7 +110,7 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
 		short URL_length = strlen(BASE_URL)+strlen(board)+1+7+5;
 		// URL format: 2ch.hk/$board/catalog.json
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
-		char* URL = (char*) calloc (sizeof(char), URL_length);
+		char* URL = (char*) calloc (URL_length, sizeof(char));
 		if (URL != NULL) {
 			if (v) fprintf (stderr, "memory allocated (URL)\n");
 		}
@@ -182,7 +182,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 		const short URL_length = strlen(BASE_URL)+strlen(MOBILE_API);
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
 		// API URL: 2ch.hk/makaba/mobile.fcgi
-		char* URL = (char*) calloc (sizeof(char), URL_length);
+		char* URL = (char*) calloc (URL_length, sizeof(char));
 		if (URL != NULL) {
 			if (v) fprintf (stderr, "memory allocated (URL)\n");
 		}
@@ -210,7 +210,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDSIZE, postfields_length);
 		if (v) fprintf (stderr, "] Option POSTFIELDSIZE set\n");
 
-        char* postfields = (char*) calloc (sizeof(char),postfields_length);
+		const char* postfields = (char*) calloc (postfields_length, sizeof(char));
 		if (postfields != NULL) {
 			if (v) fprintf (stderr, "memory allocated (POST data)\n");
 		}
@@ -378,7 +378,7 @@ char* get2chaptchaIdJSON (const char* board, const char* thread, const bool v) {
 		if (v) fprintf (LOCAL_LOG, "] curl handle initialized\n");
 
 		const short URL_length = strlen(BASE_URL)+strlen(CAPTCHA_2CHAPTCHA)+2+1;
-		char* URL = (char*) calloc (sizeof(char), URL_length);
+		char* URL = (char*) calloc (URL_length, sizeof(char));
 		if (URL == NULL) {
 			fprintf (stderr, "[get2chaptchaID]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
@@ -393,7 +393,7 @@ char* get2chaptchaIdJSON (const char* board, const char* thread, const bool v) {
 		if (v) fprintf (LOCAL_LOG, "] option URL set\n");
 
 		const short postfields_length = 6+strlen(board)+8+strlen(thread)+1;
-		char* postfields = (char*) calloc (sizeof(char), postfields_length);
+		char* postfields = (char*) calloc (postfields_length, sizeof(char));
 		if (postfields == NULL) {
 			fprintf (stderr, "[get2chaptchaID]! Error allocating memory (POST data)\n");
 			curl_easy_cleanup (curl_handle);
@@ -456,9 +456,37 @@ char* get2chaptchaIdJSON (const char* board, const char* thread, const bool v) {
 	return CURL_BUFF_BODY;
 }
 
-char* get2chaptchaImage (const char* id, const bool v) {
+char* get2chaptchaPicURL (const char* id, const bool v) {
+	fprintf (stderr, "]] Starting get2chaptchaPic");
+	FILE* LOCAL_LOG = NULL;
+	if (v) {
+		LOCAL_LOG = fopen ("log/get2chaptchaPic.log", "a");
+		fprintf(stderr, " (verbose, log in log/get2chaptchaPic.log)\n");
+		fprintf (LOCAL_LOG, "\n]] New thread\n] initializing curl handle\n");
+	}
+	else {
+		puts("");
+	}
 
-	//return CURL_BUFF_BODY;
+	const unsigned URL_length = strlen(BASE_URL)+strlen(CAPTCHA_2CHAPTCHA)+6+strlen(id)+1;
+	char* URL = (char*) calloc (URL_length, sizeof(char));
+	if (URL == NULL) {
+			fprintf (stderr, "[get2chaptchaPic]! Error allocating memory (URL)\n");
+			return ERR_MEMORY;
+	}
+	URL = strcpy (URL, BASE_URL);
+	URL = strcat (URL, CAPTCHA_2CHAPTCHA);
+	URL = strcat (URL, "image/");
+	URL = strcat (URL, id);
+	fprintf(LOCAL_LOG, "] URL formed: %s\n", URL);
+
+	if (v) {
+		fprintf(LOCAL_LOG, "]] Exiting\n");
+		fclose (LOCAL_LOG);
+	}
+	fprintf(stderr, "]] Exiting get2chaptchaID\n");	
+
+	return URL;
 }
 
 // ========================================
@@ -491,7 +519,7 @@ char* unsigned2str (const unsigned val) {
 	for (int k = 1; k <= val; k*=10) {
 		length += 1;
 	}
-	char* res = (char*) calloc (sizeof(char), length+1);
+	char* res = (char*) calloc (length+1, sizeof(char));
 	if (res != NULL) {
 	}
 	else {
