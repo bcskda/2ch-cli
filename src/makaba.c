@@ -169,7 +169,7 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
 	return CURL_BUFF_BODY;
 }
 
-char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) {
+char* getThreadJSON (const char* board, const unsigned threadnum, unsigned* threadsize, const bool v) {
 	fprintf (stderr, "]] Starting getThread");
 	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 	if (v) fprintf (stderr, "] initializing curl handle\n");
@@ -250,7 +250,9 @@ char* getThreadJSON (const char* board, const unsigned threadnum, const bool v) 
 		request_status = curl_easy_perform (curl_handle);
 		if (v) fprintf (stderr, "] curl request performed\n");
 		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
-		CURL_BUFF_POS = 0;
+
+		*threadsize = CURL_BUFF_POS; // Кладём по данному указателю размер
+		CURL_BUFF_POS = 0;           // буфера с тредом
 		if (v) fprintf (stderr, "] buffer pos set to 0\n");
 		if (request_status == CURLE_OK) {
 			if (v) fprintf (stderr, "request status: OK\n");

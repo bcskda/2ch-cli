@@ -32,7 +32,7 @@ void makabaCleanup();
 int getBoardsList (const char* resFile, const bool v);
 char* getBoardPageJSON (const char* board, const unsigned page, bool v);
 char* getBoardCatalogJSON (const char* board, const bool v);
-char* getThreadJSON (const char* board, const unsigned threadnum, const bool v);
+char* getThreadJSON (const char* board, const unsigned threadnum, unsigned* threadsize, const bool v);
 
 char* getCaptchaSettingsJSON (const char* board, const bool v);
 char* get2chaptchaIdJSON (const char* board, const char* thread, const bool v);

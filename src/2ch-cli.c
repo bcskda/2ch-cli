@@ -77,17 +77,27 @@ int main (int argc, char **argv)
 
 	//return RET_PREEXIT;
 
-	char* thread_ch = (char*) calloc (Thread_size, sizeof(char));
+
+	unsigned threadsize = 0;
+	char* thread_recv_ch = getThreadJSON (board_name, post_number, &threadsize, true); // Получаем указатель на скачанный тред
+	char* thread_ch = (char*) calloc (threadsize, sizeof(char)); // Заказываем память под собственный буфер треда
 	if (thread_ch == NULL) {
 		fprintf(stderr, "[main]! Error: 'thread_ch' memory allocation\n");
 		return ERR_MEMORY;
 	}
-	thread_ch = memcpy(
-					thread_ch,
-					getThreadJSON (board_name, post_number, false),
-					Thread_size
+	thread_ch = memcpy( // Копируем скачанный тред из буфера загрузок, тк хранить там ненадежно
+					thread_ch, 
+					thread_recv_ch,
+					threadsize
 					);
-	struct thread* thread = initThread(thread_ch, sizeof(thread), true);
+	//printf("%s\n", thread_ch);
+	fprintf(stderr, "Get OK\n");
+
+	struct thread* thread = initThread( thread_ch, (unsigned)strlen(thread), true );
+
+	fprintf(stderr, "Init OK\n");
+
+	return RET_PREEXIT;
 
 	initscr();
 	raw();
@@ -129,6 +139,23 @@ int main (int argc, char **argv)
 
 
 int printPost (struct post* post,const bool show_email,const bool show_files) {
+	if (post->comment == NULL) {
+		fprintf(stderr, "! ERROR @printPost: Null comment in struct post\n");
+		return ERR_BROKEN_POST;
+	}
+	if (post->comment->text == NULL) {
+		fprintf(stderr, "! ERROR @printPost: Null text in struct comment\n");
+		return ERR_BROKEN_POST;
+	}
+	if (post->num == NULL) {
+		fprintf(stderr, "! ERROR @printPost: Null num in struct post\n");
+		return ERR_BROKEN_POST;
+	}
+	if (post->date == NULL) {
+		fprintf(stderr, "! ERROR @printPost: Null date in struct post\n");
+		return ERR_BROKEN_POST;
+	}
+
 	if (show_email && (post->email != NULL)) {
 		printw ("[=== %s (%s) #%d %s ===]\n%s\n\n",
 			post->name, post->email, post->num, post->date, post->comment->text);
