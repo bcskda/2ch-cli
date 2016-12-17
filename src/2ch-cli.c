@@ -65,7 +65,7 @@ int main (int argc, char **argv)
 		}
 	}
 
-	if (start_or_not == false) return 0;
+	if (start_or_not == false) return RET_OK;
 
 	setlocale (LC_ALL, "");
 
@@ -75,7 +75,7 @@ int main (int argc, char **argv)
 	//printf( "Testing: %s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON("abu","49946",true),true),true) );
 	//printf( "Testing: %s\n", getCaptchaSettingsJSON("abu",true) );
 
-	//return 0;
+	//return RET_PREEXIT;
 
 	char* thread_ch = (char*) calloc (Thread_size, sizeof(char));
 	if (thread_ch == NULL) {
@@ -124,7 +124,7 @@ int main (int argc, char **argv)
 	makabaCleanup();
 	fprintf(stderr, "Cleanup done, exiting\n");
 
-	return 0;
+	return RET_OK;
 }
 
 
