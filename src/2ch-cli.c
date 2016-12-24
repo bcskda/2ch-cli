@@ -80,7 +80,8 @@ int main (int argc, char **argv)
 
 	unsigned threadsize = 0;
 	char* thread_recv_ch = getThreadJSON (board_name, post_number, &threadsize, true); // Получаем указатель на скачанный тред
-	char* thread_ch = (char*) calloc (threadsize, sizeof(char)); // Заказываем память под собственный буфер треда
+	fprintf(stderr, "threadsize = %u\n", threadsize);
+	char* thread_ch = (char*) calloc (threadsize+1, sizeof(char)); // Заказываем память под собственный буфер треда
 	if (thread_ch == NULL) {
 		fprintf(stderr, "[main]! Error: 'thread_ch' memory allocation\n");
 		return ERR_MEMORY;
@@ -90,10 +91,28 @@ int main (int argc, char **argv)
 					thread_recv_ch,
 					threadsize
 					);
-	//printf("%s\n", thread_ch);
+	thread_ch[threadsize] = 0;
+	fprintf(stderr, "thread_ch = %p\n", thread_ch);
+
+	/*
+	printf("%c%c%c%c%c%c%c%c%c%c\n",
+			thread_ch[threadsize-10],
+			thread_ch[threadsize-9 ],
+			thread_ch[threadsize-8 ],
+			thread_ch[threadsize-7 ],
+			thread_ch[threadsize-6 ],
+			thread_ch[threadsize-5 ],
+			thread_ch[threadsize-4 ],
+			thread_ch[threadsize-3 ],
+			thread_ch[threadsize-2 ],
+			thread_ch[threadsize+1 ]);
+	*/
+
+	FILE *thread_o = fopen( "log/thread_o", "w" );
+	fprintf(thread_o, "%s\n", thread_ch);
 	fprintf(stderr, "Get OK\n");
 
-	struct thread* thread = initThread( thread_ch, (unsigned)strlen(thread), true );
+	struct thread* thread = initThread( thread_ch, threadsize, true );
 
 	fprintf(stderr, "Init OK\n");
 

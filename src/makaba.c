@@ -251,7 +251,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, unsigned* thre
 		if (v) fprintf (stderr, "] curl request performed\n");
 		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
 
-		*threadsize = CURL_BUFF_POS; // Кладём по данному указателю размер
+		*threadsize = (unsigned)CURL_BUFF_POS; // Кладём по данному указателю размер
 		CURL_BUFF_POS = 0;           // буфера с тредом
 		if (v) fprintf (stderr, "] buffer pos set to 0\n");
 		if (request_status == CURLE_OK) {

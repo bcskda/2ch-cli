@@ -15,7 +15,8 @@ unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool 
 	if (v) LOCAL_LOG = fopen("log/findPostsInJSON.log", "a");
 	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n");
 
-	short srclen = strlen (src);
+	int srclen = strlen (src);
+	if (v) fprintf(LOCAL_LOG, "srclen = %d\n", srclen);
 	int* temp = (int*) calloc (srclen/8, sizeof(int));
 
 	short depth = 0;
@@ -69,11 +70,13 @@ unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool 
 			default:
 				fprintf (stderr, "! Error: Unusual depth (%d)\n", depth);
 				free (temp);
+				if (v) fclose (LOCAL_LOG);
 				return ERR_PARTTHREAD_DEPTH;
 		}
 	}
 	if (depth != 0) {
 		fprintf (stderr, "! Error: Non-zero depth (%d) after cycle\n", depth);
+		if (v) fclose (LOCAL_LOG);
 		return ERR_PARTTHREAD_DEPTH;
 	}
 
@@ -100,9 +103,10 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 	if (v) LOCAL_LOG = fopen("log/initPost.log", "a");
 	if (v) fprintf(stderr, " (verbose, log in log/initPost.log)"); fprintf (stderr, "\n");
 	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n]] Args:\n== | post_string = ");
-	if (v) for (int i = 0; i < 100; i++)
+	if (v) for (int i = 0; i < postlen; i++)
 		fprintf(LOCAL_LOG, "%c", post_string[i]);
 	if (v) fprintf(LOCAL_LOG, "\n| postlen = %d\n", postlen);
+	fflush(LOCAL_LOG);
 
 	// Detecting comment:
 	char* ptr_comment = strstr (post_string, PATTERN_COMMENT) + strlen (PATTERN_COMMENT);
@@ -110,6 +114,7 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 		fprintf (stderr, "! Error: Bad post format: Comment pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
+	fflush(LOCAL_LOG);
 
 	short comment_len = 0; bool stop = false;
 	for (int i = ptr_comment-post_string; !stop && (i < postlen); i++) {
@@ -344,7 +349,7 @@ struct comment* parseComment (char* comment, const bool v) {
 			if ( (class != NULL) && (class < strstr(cinst, PATTERN_HREF_CLOSE)) ) {
 				if (v) fprintf (LOCAL_LOG, "]]]] Type: reply\n");
 				nrefs++;
-				cref = parseRef_Reply (cinst, cinst_end-cinst, false);
+				cref = parseRef_Reply (cinst, cinst_end-cinst, true);
 				memcpy (clean_comment+clean_len, ">>", sizeof(char)*2);
 				clean_len += 2;
 				short csize = strlen (unsigned2str(cref->num));
@@ -405,7 +410,7 @@ struct comment* parseComment (char* comment, const bool v) {
 		if (v) fprintf(LOCAL_LOG, "]] afterCopied\n");
 		clean_len += csize;
 	}
-	char* finally_clean_comment = cleanupComment (clean_comment,clean_len,false);
+	char* finally_clean_comment = cleanupComment (clean_comment,clean_len,true);
 	if (v) fprintf(LOCAL_LOG, "]]] Total: %d refs\n", nrefs);
 	struct comment* parsed = (struct comment*) calloc (1, sizeof(struct comment));
 	parsed->text = (char*) calloc (comment_len, sizeof(char));
@@ -433,12 +438,16 @@ struct comment* parseComment (char* comment, const bool v) {
 			fprintf(LOCAL_LOG, "Done | ");
 			fflush(LOCAL_LOG);
 		}
-		fputs(LOCAL_LOG,"Copied all refs");
+		fprintf(LOCAL_LOG,"Copied all refs");
+		fflush(LOCAL_LOG);
 	}
 	else {
 		fprintf(LOCAL_LOG, "No refs\n");
 		fflush(LOCAL_LOG);
 	}
+	// Сюда доходит
+	fprintf(LOCAL_LOG, "Almost there\n");
+	fflush(LOCAL_LOG);
 
 	if (v) fprintf(LOCAL_LOG, "<< End of Thread >>\n");
 	if (v) fclose(LOCAL_LOG);
@@ -562,25 +571,27 @@ struct thread* initThread (const char* thread_string, const unsigned thread_len,
 		fprintf(LOCAL_LOG, "\n\n== New Thread ==\n]] Args:\n| thread_string = %p\n| thread_len = %d\n",
 			thread_string, thread_len);
 	}
+	fflush(LOCAL_LOG);
 
 	unsigned nposts = 0;
-	unsigned* post_diffs = findPostsInJSON(thread_string,&nposts,false);
+	unsigned* post_diffs = findPostsInJSON( thread_string, &nposts, true );
 	if (v) fprintf(LOCAL_LOG, "] nposts = %d\n", nposts);
+	fflush(LOCAL_LOG);
 
 	struct post** posts = (struct post**) calloc (nposts, sizeof(struct post*));
-	for (int i = 0; i < nposts-1; i++) {
+	for (int i = 0; i < ((int)nposts)-1; i++) {
 		if (v) fprintf(LOCAL_LOG, "] Calling initPost #%d\n", i);
 		fflush(LOCAL_LOG);
 		posts[i] = initPost( 
 							thread_string + post_diffs[i],
 							post_diffs[i+1] - post_diffs[i],
-							false
+							true
 							);
 	}
 	posts[nposts-1] = initPost( 
 							   thread_string + post_diffs[nposts-1],
 							   strlen(thread_string) - post_diffs[nposts-1],
-							   false
+							   true
 							   );
 
 	struct thread* thread = (struct thread*) calloc (1, sizeof(struct thread));
