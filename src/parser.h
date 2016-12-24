@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include <stddef.h>
 #pragma once
 
 struct list {
@@ -48,6 +49,9 @@ const char* PATTERN_NAME = ",\"name\":\"";
 const char* PATTERN_EMAIL = ",\"email\":\"";
 const char* PATTERN_FILES = ",\"files\":[{";
 const char* PATTERN_NUM = ",\"num\":\"";
+
+const char* PATTERN_TAG_OPEN = "\\u003c";
+const char* PATTERN_TAG_CLOSE = "\\u003e";
 
 const char* PATTERN_HREF_OPEN = "\\u003ca href=\\\"";
 const char* PATTERN_HREF_CLOSE = "\\u003c/a\\u003e";

@@ -117,8 +117,8 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 	fflush(LOCAL_LOG);
 
 	short comment_len = 0; bool stop = false;
-	for (int i = ptr_comment-post_string; !stop && (i < postlen); i++) {
-		if ((post_string[i-1] != '\\') && (post_string[i] == '\"') && (post_string[i+1] != 'u')) {
+	for (ptrdiff_t i = ptr_comment-post_string; !stop && (i < postlen); i++) {
+		if ((post_string[((int)i)-1] != '\\') && (post_string[(int)i] == '\"') && (post_string[((int)i)+1] != 'u')) {
 			stop = true;
 		}
 		comment_len++;
@@ -317,16 +317,16 @@ struct comment* parseComment (char* comment, const bool v) {
 	struct ref_reply* cref = 0;
 	unsigned clean_len = 0;
 	char* clean_comment = (char*) calloc (comment_len, sizeof(char));
-	char* previnst = NULL;
+	char* previnst = comment;
 	fflush(LOCAL_LOG);
 
 	char* cinst = strstr(comment,PATTERN_HREF_OPEN);
 	if ((cinst != NULL) && (cinst != comment)) {
 		fprintf(LOCAL_LOG, "]] Starts with text: clean_len = %d\n",
-			comment, cinst, cinst-comment);
+			cinst - comment);
 		memcpy(clean_comment,comment,cinst-comment);
 		fprintf(LOCAL_LOG, "]]]] preCopied\n");
-		clean_len += cinst-comment;
+		clean_len += cinst - comment;
 	} else {
 		fprintf(LOCAL_LOG, "[!!] Doesnt start with text: comment = %p, cinst = %p, clen = %d\n",
 			comment, cinst, cinst-comment);
@@ -375,29 +375,34 @@ struct comment* parseComment (char* comment, const bool v) {
 					fflush(LOCAL_LOG);
 					memcpy (refs->data, (void*) cref, sizeof(struct ref_reply));
 				}
+				free (cref);
 			} else {
 				fprintf (LOCAL_LOG, "]]]] Unknown ref type, treat as text\n");
-				short csize = 0;
-				if (previnst != NULL) {
-					csize = cinst-previnst;
+				int csize = 0;
+				if (previnst != comment) { // Копируем с "сразу после предыдущей ссылки" по "перед началом этой ссылки"
+					if (v) fprintf(LOCAL_LOG, "previnst != NULL\n");
+					csize = cinst - previnst;
 				} else {
-					csize = cinst-comment;
+					if (v) fprintf(LOCAL_LOG, "previnst == NULL\n");
+					csize = cinst - comment;
 				}
 				if (v) fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
 				if (v) fprintf(LOCAL_LOG, "[!] To: %p+%d\n", clean_comment, clean_len);
 				if (v) fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
 				if (csize > 0) {
 					fflush(LOCAL_LOG);
-					memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
+					memcpy (clean_comment+clean_len, previnst, sizeof(char)*csize);
 					if (v) fprintf(LOCAL_LOG, "]]]] otherCopied\n");
 					clean_len += csize;
 				}
 			}
 
-
-			pos = cinst_end-comment+strlen(PATTERN_HREF_CLOSE);
-			free (cref);
-			previnst = cinst;
+			pos = cinst_end - comment + strlen(PATTERN_HREF_CLOSE);
+			int linklen = cinst_end + strlen(PATTERN_HREF_CLOSE) - cinst;
+			fprintf(LOCAL_LOG, "linklen = %d, not copying\n", linklen); // Мы не хотим скопировать и ссылку, и ее HTML-разметку
+			previnst = strstr(cinst, PATTERN_TAG_CLOSE) + strlen(PATTERN_TAG_CLOSE);
+			// "<a href=$link {...}>$link</a>": оставляем "$link</a>
+			// @TODO Добавить </a> в cleanupComment()
 			fflush(LOCAL_LOG);
 	}
 	short csize = comment_len-pos;
@@ -445,9 +450,6 @@ struct comment* parseComment (char* comment, const bool v) {
 		fprintf(LOCAL_LOG, "No refs\n");
 		fflush(LOCAL_LOG);
 	}
-	// Сюда доходит
-	fprintf(LOCAL_LOG, "Almost there\n");
-	fflush(LOCAL_LOG);
 
 	if (v) fprintf(LOCAL_LOG, "<< End of Thread >>\n");
 	if (v) fclose(LOCAL_LOG);
