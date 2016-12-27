@@ -106,38 +106,23 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 	if (v) for (int i = 0; i < postlen; i++)
 		fprintf(LOCAL_LOG, "%c", post_string[i]);
 	if (v) fprintf(LOCAL_LOG, "\n| postlen = %d\n", postlen);
-	fflush(LOCAL_LOG);
+	if (v) fflush(LOCAL_LOG);
 
 	// Detecting comment:
-	char* ptr_comment = strstr (post_string, PATTERN_COMMENT) + strlen (PATTERN_COMMENT);
+	char* ptr_comment = strstr (post_string, PATTERN_COMMENT);
 	if (ptr_comment == NULL) {
 		fprintf (stderr, "! Error: Bad post format: Comment pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
-	fflush(LOCAL_LOG);
+	ptr_comment += strlen(PATTERN_COMMENT);
 
-	short comment_len = 0; bool stop = false;
-	for (ptrdiff_t i = ptr_comment-post_string; !stop && (i < postlen); i++) {
-		if ((post_string[((int)i)-1] != '\\') && (post_string[(int)i] == '\"') && (post_string[((int)i)+1] != 'u')) {
-			stop = true;
-		}
-		comment_len++;
-	}
-	if (!stop) {
-		if (v) fprintf(LOCAL_LOG, "\n=== ! Range violation! ===\n");
-		fprintf(stderr, "! Error: Comment starts but not ends in post-length range\n");
-		return ERR_COMMENT_FORMAT;
-	}
-	comment_len--;
-	if (comment_len <= 0) {
-		fprintf (stderr, "! Error: Bad post format: Null comment\n");
-		return ERR_POST_FORMAT;
-	}
-	if (v) fprintf (LOCAL_LOG, "] Comment length: %d\n", comment_len);
-	if (v) fprintf (LOCAL_LOG, "] Comment: \n== Start comment ==\n");
+	char* ptr_comment_end = strstr (ptr_comment, PATTERN_COMMENT_END);
+	int comment_len = (int) (ptr_comment_end - ptr_comment);
+	if (v) fprintf (LOCAL_LOG, "comment_len = %d\n=== Comment: ===\n", comment_len);
 	if (v) for (int i = 0; i < comment_len; i++)
 		fprintf (LOCAL_LOG, "%c", ptr_comment[i]);
 	if (v) fprintf (LOCAL_LOG, "\n== End of comment ==\n");
+	fflush(LOCAL_LOG);
 
 	// Detect date:
 	char* ptr_date = strstr (ptr_comment+comment_len, PATTERN_DATE)+strlen(PATTERN_DATE);
@@ -145,23 +130,23 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 		fprintf (stderr, "! Error: Bad post format: Date pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
-	short date_len = strstr (ptr_date, "\"")-ptr_date;
+	int date_len = strstr (ptr_date, "\"")-ptr_date;
 	if (v) {
 		fprintf (LOCAL_LOG, "] Date length: %d\n", date_len);
 		fprintf (LOCAL_LOG, "] Date: ");
 		for (int i = 0; i < date_len; i++)
 			fprintf (LOCAL_LOG, "%c", ptr_date[i]);
 		fprintf (LOCAL_LOG, "\n");
-
 	}
+	fflush(LOCAL_LOG);
 
 	// Detect email:
-	char* ptr_email = strstr (ptr_date+date_len, PATTERN_EMAIL)+strlen(PATTERN_EMAIL);
+	char* ptr_email = strstr(ptr_date+date_len, PATTERN_EMAIL) + strlen(PATTERN_EMAIL);
 	if (ptr_email == NULL) {
 		fprintf (stderr, "! Error: Bad post format: Email pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
-	short email_len = strstr (ptr_email, "\"")-ptr_email;
+	int email_len = strstr (ptr_email, "\"")-ptr_email;
 	if (v) {
 		if (email_len == 0) {
 			fprintf (LOCAL_LOG, "] Email not specified\n");
@@ -173,15 +158,19 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 			fprintf (LOCAL_LOG, "\n");
 		}
 	}
+	fflush(LOCAL_LOG);
 
 	// Detect files:
-	char* ptr_files = strstr (ptr_email+email_len, PATTERN_FILES)+strlen(PATTERN_FILES);
-	short files_len = 0;
+	char* ptr_files = strstr(ptr_email+email_len, PATTERN_FILES);
+	int files_len = 0;
+	bool has_files = false;
 	// If NULL, simply no files in post
-	if (ptr_files-strlen(PATTERN_FILES) == NULL) {
+	if (ptr_files == NULL) {
 		if (v) fprintf (LOCAL_LOG, "] Files not specified\n");
 	} else {
-		files_len = strstr (ptr_files, "}]")-ptr_files;
+		ptr_files += strlen(PATTERN_FILES);
+		has_files = true;
+		files_len = strstr(ptr_files, "}]") - ptr_files;
 		if (files_len == 0) {
 			fprintf (stderr, "! Error: Bad post format: Files field specified but null\n");
 			return ERR_POST_FORMAT;
@@ -195,28 +184,37 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 				fprintf (LOCAL_LOG, "\n] End of files\n");
 			}
 	}
+	fflush(LOCAL_LOG);
 
 	// Detect name:
-	char* ptr_name = 0; char* ptr_name_diff = 0; short name_diff_len = 0;
-	if (ptr_files-strlen(PATTERN_FILES) == NULL) {
-		ptr_name_diff = ptr_email; // Files field may include "\"name\":" substring,
-		name_diff_len = email_len; // so we must ignore the files field, if it exists.
-	} else {                       // However, if it is not specified, we cannot use
+	char* ptr_name = 0; char* ptr_name_diff = 0; int name_diff_len = 0;
+	if (has_files) {
 		ptr_name_diff = ptr_files; // ptr_files. So we split into 2 cases and use
 		name_diff_len = files_len; // 2 variants of values for 2 new pointers.
+	} else {                       // However, if it is not specified, we cannot use
+		ptr_name_diff = ptr_email; // Files field may include "\"name\":" substring,
+		name_diff_len = email_len; // so we must ignore the files field, if it exists.
 	}
-	ptr_name = strstr (ptr_name_diff+name_diff_len, PATTERN_NAME)+strlen(PATTERN_NAME);
+	ptr_name = strstr (ptr_name_diff+name_diff_len, PATTERN_NAME);
 	if (ptr_name == NULL) {
+		if (v) {
+			fprintf(LOCAL_LOG, "Error - no name found\n");
+			fclose(LOCAL_LOG);
+		}
 		fprintf (stderr, "! Error: Bad post format: Name pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
-	short name_len = strstr (ptr_name, "\"")-ptr_name;
+	ptr_name += strlen(PATTERN_NAME);
+
+	char* ptr_name_end = strstr (ptr_name, PATTERN_NAME_END);
+	int name_len = (int) (ptr_name_end - ptr_name);
 	if (v) fprintf (LOCAL_LOG, "] Name length: %d\n", name_len);
 	if (v) fprintf (LOCAL_LOG, "] Name: ");
 	if (v) for (int i = 0; i < name_len; i++)
 		fprintf (LOCAL_LOG, "%c", ptr_name[i]);
 	if (v) fprintf (LOCAL_LOG, "\n");
-
+	fflush(LOCAL_LOG);
+	
 	// Detect postnum
 	char* ptr_num = strstr (ptr_name+name_len,PATTERN_NUM) + strlen(PATTERN_NUM);
 	if (ptr_num == NULL) {
@@ -236,21 +234,32 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 
 	// Init struct:
 	struct post* post = (struct post*) calloc (1, sizeof(struct post));
+	if (post == NULL) {
+		printf("Memory corrupt - post calloc()\n");
+		return ERR_MEMORY;
+	}
 
 	post->num = str2unsigned(ptr_num, num_len);
 
 	char* comment_str = (char*) calloc (comment_len, sizeof(char));
+	if (comment_str == NULL) {
+		printf("Memory corrupt - post calloc()\n");
+		return ERR_MEMORY;
+	}
 	memcpy(comment_str, ptr_comment, comment_len);
-
 	post->comment = parseComment (comment_str,true);
 	if (post->comment == NULL) {
 		fprintf (stderr, "! Error parsing comment\n");
 		return ERR_COMMENT_PARSING;
 	}
+	fprintf(LOCAL_LOG, "Exted parseComment()\n"); fflush(LOCAL_LOG);
 	free (comment_str);
+	fprintf(LOCAL_LOG, "Freed comment_str\n"); fflush(LOCAL_LOG);
 	if (v) {
 		fprintf (LOCAL_LOG, "!! post.comment.nrefs = %d\n", post->comment->nrefs);
-		fprintf (LOCAL_LOG, "!! post.comment.refs[0].link = %s\n", post->comment->refs[0].link);
+		if (post->comment->nrefs > 0) {
+			fprintf (LOCAL_LOG, "!! post.comment.refs[0].link = %s\n", post->comment->refs[0].link);
+		}
 		fprintf (LOCAL_LOG, "!! post.comment.text = %s\n", post->comment->text);
 	}
 
@@ -267,24 +276,26 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 		return ERR_MEMORY;
 	}
 	memcpy (post->name, ptr_name, sizeof(char)*name_len);
+	
 	if (email_len == 0) {
 		post->email = NULL;
 	} else {
 		post->email = (char*) calloc (email_len+1, sizeof(char));
 		if (post->email == NULL) {
-		fprintf (stderr, "! Error allocating memory (post.email)\n");
-		return ERR_MEMORY;
-	}
+			fprintf (stderr, "! Error allocating memory (post.email)\n");
+			return ERR_MEMORY;
+		}
 		memcpy (post->email, ptr_email, sizeof(char)*email_len);
 	}
+	
 	if (files_len == 0) {
 		post->files = NULL;
 	} else {
 		post->files = (char*) calloc (files_len+1, sizeof(char));
 		if (post->files == NULL) {
-		fprintf (stderr, "! Error allocating memory (post.files)\n");
-		return ERR_MEMORY;
-	}
+			fprintf (stderr, "! Error allocating memory (post.files)\n");
+			return ERR_MEMORY;
+		}
 		memcpy (post->files, ptr_files, sizeof(char)*files_len);
 	}
 	
@@ -589,6 +600,10 @@ struct thread* initThread (const char* thread_string, const unsigned thread_len,
 							post_diffs[i+1] - post_diffs[i],
 							true
 							);
+		if (posts[i] == (char*) ERR_COMMENT_FORMAT) {
+			fprintf(stderr, "! Error: initPost() returned ERR_COMMENT_FORMAT\n === Exiting ===");
+			exit(3);
+		}
 	}
 	posts[nposts-1] = initPost( 
 							   thread_string + post_diffs[nposts-1],

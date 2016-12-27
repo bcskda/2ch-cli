@@ -43,9 +43,11 @@ struct thread {
 };
 
 const char* PATTERN_COMMENT = ",\"comment\":\"";
+const char* PATTERN_COMMENT_END = "\",\"date\":\"";
 const char* PATTERN_DATE = ",\"date\":\"";
 const char* PATTERN_SUBJECT = ",\"subject\":\"";
 const char* PATTERN_NAME = ",\"name\":\"";
+const char* PATTERN_NAME_END = "\",\"num\":\"";
 const char* PATTERN_EMAIL = ",\"email\":\"";
 const char* PATTERN_FILES = ",\"files\":[{";
 const char* PATTERN_NUM = ",\"num\":\"";
