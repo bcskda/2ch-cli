@@ -19,9 +19,9 @@ void pomogite() // Справка
 
 int main (int argc, char **argv)
 {
-	char passcode[64] = "пасскода нет нихуя :("; // Пасскод
-	char board_name[10] = "b"; // Имя борды
-	long long int post_number = 0; // Номер треда в борде
+    char passcode[32] = "пасскода нет нихуя :("; // Пасскод
+    char board_name[6] = "b"; // Имя борды
+    long long post_number = 0; // Номер треда в борде
 
 	//getopt
 	int opt;
@@ -37,17 +37,17 @@ int main (int argc, char **argv)
 		{
 			case 'p':
 				memset(passcode, '\0', sizeof(passcode));
-				if ( sizeof(optarg) > sizeof(passcode) ) {
+                if ( sizeof(optarg) > sizeof(passcode) ) { //проверка
 					printf("Не шути так больше\n");
 					return ERR_ARGS;
 				}
 				memcpy(passcode, optarg, sizeof(passcode));
-				printf("Разраб хуй, ещё не запилил\n");
+                printf("Разраб хуй, ещё не запилил\n");
 				printf("Уже что-то могу: %s!\n", passcode);
 				break;
 			case 'b':
 				memset(board_name, '\0', sizeof(board_name));
-				if ( sizeof(optarg) > sizeof(board_name) ) {
+                if ( sizeof(optarg) > sizeof(board_name) ) { //проверка
 					printf("Не шути так больше\n");
 					return ERR_ARGS;
 				}
@@ -71,7 +71,6 @@ int main (int argc, char **argv)
 
 	makabaSetup();
 	
-
 	//printf( "Testing: %s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON("abu","49946",true),true),true) );
 	//printf( "Testing: %s\n", getCaptchaSettingsJSON("abu",true) );
 
