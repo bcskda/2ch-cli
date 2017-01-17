@@ -20,7 +20,7 @@ void pomogite() // Справка
 int main (int argc, char **argv)
 {
     char passcode[32] = "пасскода нет нихуя :("; // Пасскод
-    char board_name[6] = "b"; // Имя борды
+    char board_name[10] = "b"; // Имя борды
     long long post_number = 0; // Номер треда в борде
 
 	//getopt
