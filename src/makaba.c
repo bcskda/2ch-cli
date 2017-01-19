@@ -21,7 +21,7 @@ int getBoardsList (const char* resFile, const bool v) {
 	return 0;
 }
 
-char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
+char* getBoardPageJSON (const char* board, const long int page, const bool v) {
 	fprintf (stderr, "]] Starting getBoardPage");
 	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 	if (v) fprintf (stderr, "] initializing curl handle\n");
@@ -29,7 +29,7 @@ char* getBoardPageJSON (const char* board, const unsigned page, const bool v) {
 	CURLcode request_status = 0;
 	if (curl_handle) {
 		if (v) fprintf (stderr, "] curl handle initialized\n");
-		char* page_string = unsigned2str (page);
+		char* page_string = lint2str (page);
 		if (v) fprintf (stderr, "page number (string) = %s\n", page_string);
 		short URL_length = strlen(BASE_URL)+strlen(board)+1+strlen(page_string)+5;
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
@@ -169,7 +169,7 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
 	return CURL_BUFF_BODY;
 }
 
-char* getThreadJSON (const char* board, const unsigned threadnum, unsigned* threadsize, const bool v) {
+char* getThreadJSON (const char* board, const long int threadnum, long int* threadsize, const bool v) {
 	fprintf (stderr, "]] Starting getThread");
 	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 	if (v) fprintf (stderr, "] initializing curl handle\n");
@@ -177,7 +177,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, unsigned* thre
 	CURLcode request_status = 0;
 	if (curl_handle) {
 		if (v) fprintf (stderr, "] curl handle initialized\n");
-		char* threadnum_string = unsigned2str (threadnum);
+		char* threadnum_string = lint2str (threadnum);
 		if (v) fprintf (stderr, "thread number (string) = %s\n", threadnum_string);
 		const short URL_length = strlen(BASE_URL)+strlen(MOBILE_API);
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
@@ -251,7 +251,7 @@ char* getThreadJSON (const char* board, const unsigned threadnum, unsigned* thre
 		if (v) fprintf (stderr, "] curl request performed\n");
 		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
 
-		*threadsize = (unsigned)CURL_BUFF_POS; // Кладём по данному указателю размер
+		*threadsize = (long int)CURL_BUFF_POS; // Кладём по данному указателю размер
 		CURL_BUFF_POS = 0;           // буфера с тредом
 		if (v) fprintf (stderr, "] buffer pos set to 0\n");
 		if (request_status == CURLE_OK) {
@@ -470,7 +470,7 @@ char* get2chaptchaPicURL (const char* id, const bool v) {
 		puts("");
 	}
 
-	const unsigned URL_length = strlen(BASE_URL)+strlen(CAPTCHA_2CHAPTCHA)+6+strlen(id)+1;
+	const long int URL_length = strlen(BASE_URL)+strlen(CAPTCHA_2CHAPTCHA)+6+strlen(id)+1;
 	char* URL = (char*) calloc (URL_length, sizeof(char));
 	if (URL == NULL) {
 			fprintf (stderr, "[get2chaptchaPic]! Error allocating memory (URL)\n");
@@ -516,7 +516,7 @@ size_t CURL_writeToBuff (const char* src, const size_t block_size, const size_t 
 	}
 }
 
-char* unsigned2str (const unsigned val) {
+char* lint2str (const long int val) {
 	short length = 0;
 	for (int k = 1; k <= val; k*=10) {
 		length += 1;
@@ -525,7 +525,7 @@ char* unsigned2str (const unsigned val) {
 	if (res != NULL) {
 	}
 	else {
-		fprintf (stderr, "[unsigned2str]! Error allocating memory (res)\n");
+		fprintf (stderr, "[lint2str]! Error allocating memory (res)\n");
 		return NULL;
 	}
 	for (int i = 1, k = 1; i <= length; i+=1, k*=10) {
@@ -534,9 +534,9 @@ char* unsigned2str (const unsigned val) {
 	return res;
 }
 
-unsigned str2unsigned (const char* str, const unsigned len) {
-	unsigned res = 0;
-	for (unsigned i = 1, k = 1; i <= len; i+=1, k*=10) {
+long int str2lint (const char* str, const long int len) {
+	long int res = 0;
+	for (long int i = 1, k = 1; i <= len; i+=1, k*=10) {
 		res += k * (str[len-i] - '0');
 	}
 	return res;

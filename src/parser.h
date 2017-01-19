@@ -18,17 +18,17 @@ struct list {
 
 struct ref_reply {
 	char* link;
-	unsigned thread;
-	unsigned num;
+	long int thread;
+	long int num;
 };
 
 struct comment {
 	char* text;
 	struct ref_reply* refs;
-	unsigned nrefs;};
+	long int nrefs;};
 
 struct post {
-	unsigned num;
+	long int num;
 	struct comment* comment;
 	char* date;
 	char* name;
@@ -37,8 +37,8 @@ struct post {
 };
 
 struct thread {
-	unsigned num;
-	unsigned nposts;
+	long int num;
+	long int nposts;
 	struct post** posts;
 };
 
@@ -70,13 +70,15 @@ const int ERR_PARTTHREAD_DEPTH = -1,
 		  ERR_COMMENT_FORMAT = -3,
 		  ERR_REF_FORMAT = -4;
 		  ERR_COMMENT_PARSING = -5,
-		  ERR_CAPTCHA_FORMAT = -6;
+		  ERR_CAPTCHA_FORMAT = -6,
+		  ERR_INTERNAL = -7,
+		  ERR_POST_OUT_OF_RANGE = -8;
 
-struct thread* initThread (const char* thread_string, const unsigned thread_len, const bool v);
-unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool v);
-struct post* initPost (const char* post_string, const unsigned postlen, const bool v);
+struct thread* initThread (const char* thread_string, const long int thread_len, const bool v);
+long int* findPostsInJSON (const char* src, long int* postcount_res, const bool v);
+struct post* initPost (const char* post_string, const long int postlen, const bool v);
 struct comment* parseComment (char* comment, const bool v);
-struct ref_reply* parseRef_Reply (const char* ch_ref, const unsigned ref_len, const bool v);
+struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, const bool v);
 char* cleanupComment (const char* src, const int src_len, const bool v);
 
 char* parse2chaptchaId (const char* capid_string, const bool v);
