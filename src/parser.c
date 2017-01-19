@@ -513,7 +513,9 @@ char* cleanupComment (const char* src, const int src_len, const bool v) {
 					  				   && (src[pos+16] == '=' ) && (src[pos+17] == '\\') && (src[pos+18] == '"' ) && (src[pos+19] == 'u')
 					  				   && (src[pos+20] == 'n' ) && (src[pos+21] == 'k' ) && (src[pos+22] == 'f' ) && (src[pos+23] == 'u')
 					  				   && (src[pos+24] == 'n' ) && (src[pos+25] == 'c' ) && (src[pos+26] == '\\') && (src[pos+27] == '"')) {
-			pos += 36; // TEST!
+			pos += 38; // TEST!
+			buf[len] = '>';
+			len++;
 			// Color: green
 		} else if ((pos < src_len-10) && (src[pos   ] == '\\') && (src[pos+1 ] == 'u' ) && (src[pos+2 ] == '0' ) && (src[pos+3 ] == '0')
 				    				  && (src[pos+4 ] == '3' ) && (src[pos+5 ] == 'c' ) && (src[pos+6 ] == '/' ) && (src[pos+7 ] == 's')
