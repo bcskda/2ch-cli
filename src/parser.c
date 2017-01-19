@@ -221,21 +221,29 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 		fprintf (stderr, "! Error: Bad post format: Num pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
-	short num_len = strstr (ptr_num, ",")-ptr_num-1; // Exclude ending '"'
+	int num_len = strstr (ptr_num, ",") - ptr_num - 1; // Exclude ending '"'
 	if (v) {
 		fprintf (LOCAL_LOG, "] Num length: %d\n", num_len);
 		fprintf (LOCAL_LOG, "] Num: |");
-		for (int i = 0; i < num_len; i++)
+		for (int i = 0; i < num_len; i++) {
 			fprintf (LOCAL_LOG, "%c", ptr_num[i]);
+			fprintf (stderr,    "%c", ptr_num[i]);
+		}
 		fprintf (LOCAL_LOG, "|\n");
 	}
 
 	if (v) fprintf (LOCAL_LOG, "] = All main fields detected\n");
 
 	// Init struct:
-	struct post* post = (struct post*) calloc (1, sizeof(struct post));
+	struct post* post = (struct post*) malloc (sizeof(struct post));
 	if (post == NULL) {
-		printf("Memory corrupt - post calloc()\n");
+		if (v) {
+			printf(LOCAL_LOG, "Memory corrupt - `struct post' calloc()\n");
+			fflush(LOCAL_LOG);
+		} else {
+			fprintf(LOCAL_LOG, "Memory allocated (struct post)\n");
+			fflush(LOCAL_LOG);
+		}
 		return ERR_MEMORY;
 	}
 
@@ -243,7 +251,13 @@ struct post* initPost (const char* post_string, const unsigned postlen, const bo
 
 	char* comment_str = (char*) calloc (comment_len, sizeof(char));
 	if (comment_str == NULL) {
-		printf("Memory corrupt - post calloc()\n");
+		if (v) {
+			fprintf(LOCAL_LOG, "Memory corrupt - `comment_str' calloc()\n");
+			fflush(LOCAL_LOG);
+		} else {
+			fprintf(LOCAL_LOG, "Memory allocated (comment_str)\n");
+			fflush(LOCAL_LOG);
+		}
 		return ERR_MEMORY;
 	}
 	memcpy(comment_str, ptr_comment, comment_len);
@@ -416,7 +430,7 @@ struct comment* parseComment (char* comment, const bool v) {
 			// @TODO Добавить </a> в cleanupComment()
 			fflush(LOCAL_LOG);
 	}
-	short csize = comment_len-pos;
+	int csize = comment_len-pos;
 	if (v) fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
 	if (v) fprintf(LOCAL_LOG, "[!] To: %p+%d\n", clean_comment, clean_len);
 	if (v) fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
@@ -426,7 +440,15 @@ struct comment* parseComment (char* comment, const bool v) {
 		if (v) fprintf(LOCAL_LOG, "]] afterCopied\n");
 		clean_len += csize;
 	}
+	if (v) {
+		fprintf(LOCAL_LOG, "] Starting cleanupComment()\n");
+		fflush(LOCAL_LOG);
+	}
 	char* finally_clean_comment = cleanupComment (clean_comment,clean_len,true);
+	if (v) {
+		fprintf(LOCAL_LOG, "] Exited cleanupComment()\n");
+		fflush(LOCAL_LOG);
+	}
 	if (v) fprintf(LOCAL_LOG, "]]] Total: %d refs\n", nrefs);
 	struct comment* parsed = (struct comment*) calloc (1, sizeof(struct comment));
 	parsed->text = (char*) calloc (comment_len, sizeof(char));
@@ -468,7 +490,7 @@ struct comment* parseComment (char* comment, const bool v) {
 	return parsed;
 }
 
-char* cleanupComment (const char* src, const unsigned src_len, const bool v) {
+char* cleanupComment (const char* src, const int src_len, const bool v) {
 	fprintf(stderr, "]] Started cleanupComment");
 	FILE* LOCAL_LOG = NULL;
 	if (v) LOCAL_LOG = fopen("log/cleanupComment.log", "a");
@@ -479,26 +501,26 @@ char* cleanupComment (const char* src, const unsigned src_len, const bool v) {
 	char* buf = (char*) calloc (src_len, sizeof(char));
 	unsigned pos = 0, len = 0;
 	for ( ; pos < src_len; ) {
-		if ((src[pos] == '\\')   && (src[pos+1] == 'u') && (src[pos+2] == '0') && (src[pos+3] == '0')
-			&& (src[pos+4] == '3') && (src[pos+5] == 'c') && (src[pos+6] == 'b') && (src[pos+7] == 'r')) {
+		if ((pos < src_len-7) && (src[pos] == '\\') && (src[pos+1] == 'u') && (src[pos+2] == '0') && (src[pos+3] == '0')
+			                && (src[pos+4] == '3') && (src[pos+5] == 'c') && (src[pos+6] == 'b') && (src[pos+7] == 'r')) {
 			pos += 14;
 			buf[len] = '\n';
 			len++;
-		} else if ((src[pos   ] == '\\') && (src[pos+1 ] == 'u' ) && (src[pos+2 ] == '0' ) && (src[pos+3 ] == '0')
-				    && (src[pos+4 ] == '3' ) && (src[pos+5 ] == 'c' ) && (src[pos+6 ] == 's' ) && (src[pos+7 ] == 'p')
-					  && (src[pos+8 ] == 'a' ) && (src[pos+9 ] == 'n' ) && (src[pos+10] == ' ' ) && (src[pos+11] == 'c')
-					  && (src[pos+12] == 'l' ) && (src[pos+13] == 'a' ) && (src[pos+14] == 's' ) && (src[pos+15] == 's')
-					  && (src[pos+16] == '=' ) && (src[pos+17] == '\\') && (src[pos+18] == '"' ) && (src[pos+19] == 'u')
-					  && (src[pos+20] == 'n' ) && (src[pos+21] == 'k' ) && (src[pos+22] == 'f' ) && (src[pos+23] == 'u')
-					  && (src[pos+24] == 'n' ) && (src[pos+25] == 'c' ) && (src[pos+26] == '\\') && (src[pos+27] == '"')) {
-				pos += 36; // TEST!
-				// Color: green
-		} else if ((src[pos   ] == '\\') && (src[pos+1 ] == 'u' ) && (src[pos+2 ] == '0' ) && (src[pos+3 ] == '0')
-				    && (src[pos+4 ] == '3' ) && (src[pos+5 ] == 'c' ) && (src[pos+6 ] == '/' ) && (src[pos+7 ] == 's')
-					  && (src[pos+8 ] == 'p' ) && (src[pos+9 ] == 'a' ) && (src[pos+10] == 'n' )) {
-				pos += 17;
-		} else if ((src[pos   ] == '\\') && (src[pos+1 ] == '\\' ) && (src[pos+2 ] == 'r') && (src[pos+3 ] == '\\')
-						&& (src[pos+4 ] == '\\') && (src[pos+5 ] == 'n')) {
+		} else if ((pos < src_len-27)  && (src[pos   ] == '\\') && (src[pos+1 ] == 'u' ) && (src[pos+2 ] == '0' ) && (src[pos+3 ] == '0')
+				     	 			   && (src[pos+4 ] == '3' ) && (src[pos+5 ] == 'c' ) && (src[pos+6 ] == 's' ) && (src[pos+7 ] == 'p')
+					  	 			   && (src[pos+8 ] == 'a' ) && (src[pos+9 ] == 'n' ) && (src[pos+10] == ' ' ) && (src[pos+11] == 'c')
+					  				   && (src[pos+12] == 'l' ) && (src[pos+13] == 'a' ) && (src[pos+14] == 's' ) && (src[pos+15] == 's')
+					  				   && (src[pos+16] == '=' ) && (src[pos+17] == '\\') && (src[pos+18] == '"' ) && (src[pos+19] == 'u')
+					  				   && (src[pos+20] == 'n' ) && (src[pos+21] == 'k' ) && (src[pos+22] == 'f' ) && (src[pos+23] == 'u')
+					  				   && (src[pos+24] == 'n' ) && (src[pos+25] == 'c' ) && (src[pos+26] == '\\') && (src[pos+27] == '"')) {
+			pos += 36; // TEST!
+			// Color: green
+		} else if ((pos < src_len-10) && (src[pos   ] == '\\') && (src[pos+1 ] == 'u' ) && (src[pos+2 ] == '0' ) && (src[pos+3 ] == '0')
+				    				  && (src[pos+4 ] == '3' ) && (src[pos+5 ] == 'c' ) && (src[pos+6 ] == '/' ) && (src[pos+7 ] == 's')
+					  				  && (src[pos+8 ] == 'p' ) && (src[pos+9 ] == 'a' ) && (src[pos+10] == 'n' )) {
+			pos += 17;
+		} else if ((pos < src_len-5) && (src[pos   ] == '\\') && (src[pos+1 ] == '\\' ) && (src[pos+2 ] == 'r') && (src[pos+3 ] == '\\')
+									 && (src[pos+4 ] == '\\') && (src[pos+5 ] == 'n')) {
 			pos += 6;
 			buf[len] = '\n';
 			len++;
@@ -508,9 +530,11 @@ char* cleanupComment (const char* src, const unsigned src_len, const bool v) {
 			pos++;
 		}
 	}
-
+	fprintf(stderr, "[cleanupComment] len = %d\n[cleanupComment] doing calloc()\n",len);
 	char* clean = (char*) calloc (len, sizeof(char));
+	fprintf(stderr, "[cleanupComment] calloc() done, doing memcpy()\n");
 	memcpy(clean, buf, sizeof(char)*len);
+	fprintf(stderr, "[cleanupComment] memcpy() done\n");
 	free (buf);
 	if (v) fprintf(LOCAL_LOG, "=== End of Thread ===\n");
 	if (v) fclose(LOCAL_LOG);

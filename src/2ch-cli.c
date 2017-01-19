@@ -116,8 +116,6 @@ int main (int argc, char **argv)
 
 	fprintf(stderr, "Init OK\n");
 
-	return RET_PREEXIT;
-
 	initscr();
 	raw();
 	keypad (stdscr, TRUE);

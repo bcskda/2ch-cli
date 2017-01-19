@@ -6,7 +6,7 @@
 // TODO:
 //[ ] captcha
 //[x] makabaSetup()
-//[ ] FIX CURL BUFF ZERO-END
+//[x] FIX CURL BUFF ZERO-END
 // ========================================
 
 #pragma once

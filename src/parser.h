@@ -77,7 +77,7 @@ unsigned* findPostsInJSON (const char* src, unsigned* postcount_res, const bool 
 struct post* initPost (const char* post_string, const unsigned postlen, const bool v);
 struct comment* parseComment (char* comment, const bool v);
 struct ref_reply* parseRef_Reply (const char* ch_ref, const unsigned ref_len, const bool v);
-char* cleanupComment (const char* src, const unsigned src_len, const bool v);
+char* cleanupComment (const char* src, const int src_len, const bool v);
 
 char* parse2chaptchaId (const char* capid_string, const bool v);
 
