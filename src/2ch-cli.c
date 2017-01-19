@@ -85,7 +85,7 @@ int main (int argc, char **argv)
 		fprintf(stderr, "[main]! Error: 'thread_ch' memory allocation\n");
 		return ERR_MEMORY;
 	}
-	thread_ch = memcpy( // Копируем скачанный тред из буфера загрузок, тк хранить там ненадежно
+	thread_ch = memcpy( // Копируем скачанный тред из буфера загрузок, т.к. хранить там ненадежно
 					thread_ch, 
 					thread_recv_ch,
 					threadsize

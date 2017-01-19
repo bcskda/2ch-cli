@@ -26,11 +26,43 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 	for (int i = 1; i < srclen; i+=1) {
 		if (v) fprintf(LOCAL_LOG, "%c", src[i]);
 		switch (depth) {
-			case 2:
-				if (comment_read) { // in: .post.files
+			case 5: {
+				if (src[i] == '"' && src[i-1 != '\\']) {
+					depth -= 1;
+				}
+				break;
+			}
+			case 4: {
+				if (src[i] == '"' && src[i-1 != '\\']) {
+					depth -= 1;
+				}
+				break;
+			}
+			case 3: {
+				if (src[i] == '"' && src[i-1 != '\\']) {
+					depth -= 1; // Выход из displayname/fullname
+					if (v) fprintf (LOCAL_LOG, "Exiting name\n");
+				}
+				break;
+			}
+			case 2: {
+				if (comment_read) { // in .post.files
+					if ((src[i-2]=='"')&&(src[i-1]=='d')&&(src[i]=='i')&&
+						(src[i+1]=='s')&&(src[i+2]=='p')) { 
+							depth += 3; // Вход в displayname
+							if (v) fprintf (LOCAL_LOG, "Entering displayname\n");
+							break;
+						}
+					if ((src[i-2]=='"')&&(src[i-1]=='f')&&(src[i]=='u')&&
+						(src[i+1]=='l')&&(src[i+2]=='l')) {
+							depth += 3; // Вход в fullname
+							if (v) fprintf (LOCAL_LOG, "Entering fullname\n");
+							break;
+					}
 					if (src[i] == ']') {
 						if (v) fprintf (LOCAL_LOG, "Exiting files. ");
 						depth -= 1;
+						break;
 					}
 				}
 				else { // in: .post.comment
@@ -40,9 +72,10 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 						depth -= 1;
 					}
 				}
-				continue;
-			case 1: // in: .post
-				if (src[i] == '}') { //@TODO reverse order of ifs in 'case 1'
+				break;
+			}
+			case 1: { // in: .post
+				if (src[i] == '}') {
 					if (v) fprintf (LOCAL_LOG, "Exiting post (@%d).\n", i);
 					postcount += 1;
 					depth -= 1;
@@ -59,7 +92,8 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 					depth += 1;
 				}
 				continue;
-			case 0: // in: .
+			}
+			case 0: { // in: .
 				if (src[i] == '{') {
 					if (v) fprintf (LOCAL_LOG, "Entering post #%d ", postcount+1);
 					temp[postcount] = i;
@@ -67,11 +101,13 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 					depth += 1;
 				}
 				continue;
-			default:
+			}
+			default: {
 				fprintf (stderr, "! Error: Unusual depth (%d)\n", depth);
 				free (temp);
 				if (v) fclose (LOCAL_LOG);
 				return ERR_PARTTHREAD_DEPTH;
+			}
 		}
 	}
 	if (depth != 0) {
@@ -188,7 +224,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	fflush(LOCAL_LOG);
 
 	// Detect name:
-	char* ptr_name = 0; char *ptr_name_diff = 0; int name_diff_len = 0;
+	char *ptr_name_diff = 0; int name_diff_len = 0;
 	if (has_files) {
 		ptr_name_diff = ptr_files; // ptr_files. So we split into 2 cases and use
 		name_diff_len = files_len; // 2 variants of values for 2 new pointers.
@@ -196,7 +232,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 		ptr_name_diff = ptr_email; // Files field may include "\"name\":" substring,
 		name_diff_len = email_len; // so we must ignore the files field, if it exists.
 	}
-	ptr_name = strstr( ptr_name_diff + (ptrdiff_t)name_diff_len, PATTERN_NAME );
+	char *ptr_name = strstr( ptr_name_diff + (ptrdiff_t)name_diff_len, PATTERN_NAME );
 	if (ptr_name == NULL) {
 		if (v) {
 			fprintf(LOCAL_LOG, "Error - no name found\n");
@@ -205,7 +241,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 		fprintf (stderr, "! Error: Bad post format: Name pattern not found\n");
 		return (char *) ERR_POST_FORMAT;
 	}
-	ptr_name += strlen(PATTERN_NAME);
+	ptr_name += (ptrdiff_t)strlen(PATTERN_NAME);
 
 	char* ptr_name_end = strstr(ptr_name, PATTERN_NAME_END);
 	int name_len = (int) (ptr_name_end - ptr_name);
@@ -217,11 +253,11 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	fflush(LOCAL_LOG);
 	
 
+	// Detect postnum
 	if (ptr_name + (ptrdiff_t)name_len >= postlen) {
 		fprintf(stderr, "! Error: Out of post range\n");
 		return (char *) ERR_POST_OUT_OF_RANGE;
 	}
-	// Detect postnum
 	char *ptr_num = strstr( ptr_name + (ptrdiff_t)name_len, PATTERN_NUM );
 	if (ptr_num == NULL) {
 		fprintf (stderr, "! Error: Bad post format: Num pattern not found\n");
