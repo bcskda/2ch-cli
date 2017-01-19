@@ -251,10 +251,9 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 		fprintf (LOCAL_LOG, "%c", ptr_name[i]);
 	if (v) fprintf (LOCAL_LOG, "[name end]\n");
 	fflush(LOCAL_LOG);
-	
 
 	// Detect postnum
-	if (ptr_name + (ptrdiff_t)name_len >= postlen) {
+	if ((long int) (ptr_name + name_len - post_string) >= postlen) {
 		fprintf(stderr, "! Error: Out of post range\n");
 		return (char *) ERR_POST_OUT_OF_RANGE;
 	}
@@ -675,9 +674,13 @@ struct thread* initThread (const char* thread_string, const long int thread_len,
 							post_diffs[i+1] - post_diffs[i],
 							true
 							);
-		if (posts[i] == (char*) ERR_COMMENT_FORMAT) {
+		if (posts[i] == (char *) ERR_COMMENT_FORMAT) {
 			fprintf(stderr, "! Error: initPost() returned ERR_COMMENT_FORMAT\n === Exiting ===");
 			exit(3);
+		}
+		if (posts[i] == (char *) ERR_POST_OUT_OF_RANGE) {
+			fprintf(stderr, "! Error: initPost() returned ERR_POST_OUT_OF_RANGE\n === Exiting ===");
+			exit(4);
 		}
 	}
 	posts[nposts-1] = initPost( 
