@@ -166,7 +166,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 		fprintf (stderr, "! Error: Bad post format: Date pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
-	int date_len = strstr (ptr_date, "\"")-ptr_date;
+	int date_len = strstr (ptr_date, "\"") - ptr_date;
 	if (v) {
 		fprintf (LOCAL_LOG, "] Date length: %d\n", date_len);
 		fprintf (LOCAL_LOG, "] Date: ");
@@ -202,7 +202,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	int files_len = 0;
 	bool has_files = false;
 	// If NULL, simply no files in post
-	if (ptr_files == NULL) {
+	if ( (ptr_files == NULL) || ((long int) (ptr_files - post_string) >= postlen) ) {
 		if (v) fprintf (LOCAL_LOG, "] Files not specified\n");
 	} else {
 		ptr_files += strlen(PATTERN_FILES);
@@ -253,8 +253,10 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	fflush(LOCAL_LOG);
 
 	// Detect postnum
-	if ((long int) (ptr_name + name_len - post_string) >= postlen) {
+	if ((long int) (ptr_name_end - post_string) >= postlen) {
 		fprintf(stderr, "! Error: Out of post range\n");
+		fprintf(stderr, "! Given as argument: %ld, locally calculated: %ld\n", 
+			postlen, (long int) (ptr_name_end - post_string));
 		return (char *) ERR_POST_OUT_OF_RANGE;
 	}
 	char *ptr_num = strstr( ptr_name + (ptrdiff_t)name_len, PATTERN_NUM );
@@ -667,11 +669,14 @@ struct thread* initThread (const char* thread_string, const long int thread_len,
 
 	struct post** posts = (struct post**) calloc (nposts, sizeof(struct post*));
 	for (int i = 0; i < ((int)nposts)-1; i++) {
-		if (v) fprintf(LOCAL_LOG, "] Calling initPost #%d\n", i);
+		char *cpost_ptr = thread_string + (ptrdiff_t) post_diffs[i];
+		long int cpost_len = post_diffs[i+1] - post_diffs[i];
+		if (v) fprintf( LOCAL_LOG, "] Calling initPost #%d: from %d to %d, length %d\n", 
+			i, post_diffs[i], post_diffs[i+1], cpost_len );
 		fflush(LOCAL_LOG);
 		posts[i] = initPost( 
-							thread_string + post_diffs[i],
-							post_diffs[i+1] - post_diffs[i],
+							cpost_ptr,
+							cpost_len,
 							true
 							);
 		if (posts[i] == (char *) ERR_COMMENT_FORMAT) {

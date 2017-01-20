@@ -78,7 +78,7 @@ int main (int argc, char **argv)
 
 
 	long int threadsize = 0;
-	char* thread_recv_ch = getThreadJSON (board_name, post_number, &threadsize, true); // Получаем указатель на скачанный тред
+	char* thread_recv_ch = getThreadJSON (board_name, post_number, &threadsize, false); // Получаем указатель на скачанный тред
 	fprintf(stderr, "threadsize = %u\n", threadsize);
 	char* thread_ch = (char*) calloc (threadsize+1, sizeof(char)); // Заказываем память под собственный буфер треда
 	if (thread_ch == NULL) {
