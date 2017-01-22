@@ -29,7 +29,7 @@ const int ERR_MEMORY = -1,
 void makabaSetup();
 void makabaCleanup();
 
-int getBoardsList (const char* resFile, const bool v);
+char* getBoardsListJSON (const bool v);
 char* getBoardPageJSON (const char* board, const long int page, bool v);
 char* getBoardCatalogJSON (const char* board, const bool v);
 char* getThreadJSON (const char* board, const long int threadnum, long int* threadsize, const bool v);

@@ -16,9 +16,76 @@
 // General info getting
 // ========================================
 
-int getBoardsList (const char* resFile, const bool v) {
+char* getBoardsListJSON (const bool v) {
+	fprintf (stderr, "]] Starting getBoardsList");
+	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
+	if (v) fprintf (stderr, "] initializing curl handle\n");
+	CURL* curl_handle = curl_easy_init();
+	CURLcode request_status = 0;
+	if (curl_handle) {
+		if (v) fprintf (stderr, "] curl handle initialized\n");
+		short URL_length = strlen(BASE_URL)+strlen(MOBILE_API)+16+1;
+		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
+		// URL: 2ch.hk/makaba/mobile.fcgi?task=get_boards
+		char* URL = (char*) calloc (URL_length, sizeof(char));
+		if (URL != NULL) {
+			if (v) fprintf (stderr, "memory allocated (URL)\n");
+		}
+		else {
+			fprintf (stderr, "[getBoardsList]! Error allocating memory (URL)\n");
+			curl_easy_cleanup (curl_handle);
+			return ERR_MEMORY;
+		}
 
-	return 0;
+		if (v) fprintf (stderr, "] Forming URL\n");
+		URL = strcpy (URL, BASE_URL);
+		if (v) fprintf (stderr, "URL state 0: %s\n", URL);
+		URL = strcat (URL, MOBILE_API);
+		if (v) fprintf (stderr, "URL state 1: %s\n", URL);
+		URL = strcat (URL, "?task=get_boards");
+		if (v) fprintf (stderr, "URL state 2: %s\n", URL);
+		if (v) fprintf (stderr, "] URL formed\n");
+		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
+		if (v) fprintf (stderr, "] option URL set\n");
+
+		if (CURL_BUFF_BODY == NULL) {
+			fprintf(stderr, "[getBoardsList]! Error: curl body buffer not allocated\n");
+			return ERR_MAKABA_SETUP;
+		}
+		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
+		if (v) fprintf (stderr, "] option WRITEDATA set\n");
+
+		curl_easy_setopt (curl_handle, CURLOPT_WRITEFUNCTION, CURL_writeToBuff);
+		if (v) fprintf (stderr, "] option WRITEFUNCTION set\n");
+
+		request_status = curl_easy_perform (curl_handle);
+		if (v) fprintf (stderr, "] curl request performed\n");
+		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
+		CURL_BUFF_POS = 0;
+		if (v) fprintf (stderr, "] buffer pos set to 0\n");
+		if (request_status == CURLE_OK) {
+			if (v) fprintf (stderr, "request status: OK\n");
+			printf ("%s\n", CURL_BUFF_BODY);
+		}
+		else {
+			fprintf (stderr, "[getBoardsList]! Error @ curl_easy_perform: %s\n",
+				curl_easy_strerror(request_status));
+			curl_easy_cleanup (curl_handle);
+			free (URL);
+			return ERR_CURL_PERFORM;
+		}
+
+		curl_easy_cleanup (curl_handle);
+		if (v) fprintf (stderr, "] curl cleanup done\n");
+		free (URL);
+		fprintf (stderr, "]] Exiting getBoardsList\n");
+	}
+	else {
+		fprintf (stderr, "! Error initializing curl handle\n");
+		return ERR_CURL_INIT;
+	}
+
+	return CURL_BUFF_BODY;
 }
 
 char* getBoardPageJSON (const char* board, const long int page, const bool v) {
