@@ -72,19 +72,12 @@ int main (int argc, char **argv)
 
 	makabaSetup();
 
-	//printf( "Testing: %s\n", parse2chaptchaId(get2chaptchaIdJSON("abu","49946")) );
-	//printf( "Testing: %s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON("abu","49946"))) );
-
-
+	#ifdef CAPTCHA_TEST
 	printf("%s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON(board_name, lint2str(post_number)))));
-	//printf("%s\n", parse2chaptchaId(get2chaptchaIdJSON(board_name, post_number)));
-	//printf("%s\n", parse2chaptchaId(get2chaptchaIdJSON(board_name, lint2str(post_number))));
 	makabaCleanup();
-	//return 0;
-	//printf( "Testing: %s\n", getCaptchaSettingsJSON("abu",true) );
-
+	printf("%s\n", getCaptchaSettingsJSON(board_name,true) );
 	return RET_PREEXIT;
-
+	#endif
 
 	long int threadsize = 0;
 	char* thread_recv_ch = getThreadJSON (board_name, post_number, &threadsize, false); // Получаем указатель на скачанный тред
