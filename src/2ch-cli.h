@@ -27,6 +27,4 @@ const int RET_OK = 0,
 
 //const size_t Thread_size = 10000000; // Размер буфера с тредом
 
-int printPost (struct post* post,	const bool show_email, const bool show_files);
-
-
+int printPost (struct post* post, const bool show_email, const bool show_files);

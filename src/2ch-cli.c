@@ -70,7 +70,7 @@ int main (int argc, char **argv)
 	setlocale (LC_ALL, "");
 
 	makabaSetup();
-	
+
 	//printf( "Testing: %s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON("abu","49946",true),true),true) );
 	//printf( "Testing: %s\n", getCaptchaSettingsJSON("abu",true) );
 
@@ -86,7 +86,7 @@ int main (int argc, char **argv)
 		return ERR_MEMORY;
 	}
 	thread_ch = memcpy( // Копируем скачанный тред из буфера загрузок, т.к. хранить там ненадежно
-					thread_ch, 
+					thread_ch,
 					thread_recv_ch,
 					threadsize
 					);
@@ -124,7 +124,7 @@ int main (int argc, char **argv)
 		bool done = 0;
 		while (! done)
 			switch (getch())
-			{ 
+			{
 				case 'C': case 'c':
 					clear();
 					printw ("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
@@ -144,7 +144,7 @@ int main (int argc, char **argv)
 	printw("\nPush a key to exit\n");
 	getch();
 	endwin();
-	
+
 	freeThread(thread);
 	free(thread_ch);
 	makabaCleanup();
@@ -159,10 +159,6 @@ int printPost (struct post* post,const bool show_email,const bool show_files) {
 		fprintf(stderr, "! ERROR @printPost: Null comment in struct post\n");
 		return ERR_BROKEN_POST;
 	}
-	if (post->comment->text == NULL) {
-		fprintf(stderr, "! ERROR @printPost: Null text in struct comment\n");
-		return ERR_BROKEN_POST;
-	}
 	if (post->num == NULL) {
 		fprintf(stderr, "! ERROR @printPost: Null num in struct post\n");
 		return ERR_BROKEN_POST;
@@ -174,11 +170,11 @@ int printPost (struct post* post,const bool show_email,const bool show_files) {
 
 	if (show_email && (post->email != NULL)) {
 		printw ("[=== %s (%s) #%d %s ===]\n%s\n\n",
-			post->name, post->email, post->num, post->date, post->comment->text);
+			post->name, post->email, post->num, post->date, post->comment);
 	}
 	else {
 		printw ("[=== %s #%d %s ===]\n%s\n\n",
-			post->name, post->num, post->date, post->comment->text);
+			post->name, post->num, post->date, post->comment);
 	}
 	return 0;
 }

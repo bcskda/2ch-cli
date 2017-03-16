@@ -11,35 +11,30 @@
 #pragma once
 
 struct list {
-	void* data;
-	struct list* first;
-	struct list* next;
+	void *data;
+	struct list *first;
+	struct list *next;
 };
 
 struct ref_reply {
-	char* link;
+	char *link;
 	long int thread;
 	long int num;
 };
 
-struct comment {
-	char* text;
-	struct ref_reply* refs;
-	long int nrefs;};
-
 struct post {
 	long int num;
-	struct comment* comment;
-	char* date;
-	char* name;
-	char* email;
-	char* files;
+	char *comment;
+	char *date;
+	char *name;
+	char *email;
+	char *files;
 };
 
 struct thread {
 	long int num;
 	long int nposts;
-	struct post** posts;
+	struct post **posts;
 };
 
 const char* PATTERN_COMMENT = ",\"comment\":\"";
@@ -74,16 +69,16 @@ const int ERR_PARTTHREAD_DEPTH = -1,
 		  ERR_INTERNAL = -7,
 		  ERR_POST_OUT_OF_RANGE = -8;
 
-struct thread* initThread (const char* thread_string, const long int thread_len, const bool v);
-long int* findPostsInJSON (const char* src, long int* postcount_res, const bool v);
-struct post* initPost (const char* post_string, const long int postlen, const bool v);
-struct comment* parseComment (char* comment, const bool v);
-struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, const bool v);
-char* cleanupComment (const char* src, const int src_len, const bool v);
+struct thread *initThread (const char *thread_string, const long int thread_len, const bool v);
+long int *findPostsInJSON (const char *src, long int *postcount_res, const bool v);
+struct post *initPost (const char *post_string, const long int postlen, const bool v);
+char *parseComment (char *comment, const bool v);
+struct ref_reply *parseRef_Reply (const char *ch_ref, const long int ref_len, const bool v);
+char *cleanupComment (const char *src, const int src_len, int *new_len, const bool v);
 
-char* parse2chaptchaId (const char* capid_string, const bool v);
+char *parse2chaptchaId (const char *capid_string, const bool v);
 
-void freeRefReply (struct ref_reply* ref);
-void freePost (struct post* post);
-void freeComment (struct comment* arg);
-void freeThread (struct thread* thread);
+void freeRefReply (struct ref_reply *ref);
+void freePost (struct post *post);
+void freeComment (char *arg);
+void freeThread (struct thread *thread);

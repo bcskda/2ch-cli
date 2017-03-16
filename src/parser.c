@@ -48,7 +48,7 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 			case 2: {
 				if (comment_read) { // in .post.files
 					if ((src[i-2]=='"')&&(src[i-1]=='d')&&(src[i]=='i')&&
-						(src[i+1]=='s')&&(src[i+2]=='p')) { 
+						(src[i+1]=='s')&&(src[i+2]=='p')) {
 							depth += 3; // Вход в displayname
 							if (v) fprintf (LOCAL_LOG, "Entering displayname\n");
 							break;
@@ -255,7 +255,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	// Detect postnum
 	if ((long int) (ptr_name_end - post_string) >= postlen) {
 		fprintf(stderr, "! Error: Out of post range\n");
-		fprintf(stderr, "! Given as argument: %ld, locally calculated: %ld\n", 
+		fprintf(stderr, "! Given as argument: %ld, locally calculated: %ld\n",
 			postlen, (long int) (ptr_name_end - post_string));
 		return (char *) ERR_POST_OUT_OF_RANGE;
 	}
@@ -310,21 +310,12 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 		}
 		return ERR_MEMORY;
 	}
-	memcpy(comment_str, ptr_comment, comment_len);
-	post->comment = parseComment (comment_str,true);
-	if (post->comment == NULL) {
-		fprintf (stderr, "! Error parsing comment\n");
-		return ERR_COMMENT_PARSING;
-	}
-	fprintf(LOCAL_LOG, "Exted parseComment()\n"); fflush(LOCAL_LOG);
+	post->comment = parseComment (comment_str, true);
+	fprintf(LOCAL_LOG, "Exited parseComment()\n");
 	free (comment_str);
-	fprintf(LOCAL_LOG, "Freed comment_str\n"); fflush(LOCAL_LOG);
+	fprintf(LOCAL_LOG, "Freed comment_str\n");
 	if (v) {
-		fprintf (LOCAL_LOG, "!! post.comment.nrefs = %d\n", post->comment->nrefs);
-		if (post->comment->nrefs > 0) {
-			fprintf (LOCAL_LOG, "!! post.comment.refs[0].link = %s\n", post->comment->refs[0].link);
-		}
-		fprintf (LOCAL_LOG, "!! post.comment.text = %s\n", post->comment->text);
+		fprintf(stderr, "Clean text: %s\n", post->comment);
 	}
 
 	post->date = (char*) calloc (date_len+1, sizeof(char));
@@ -340,7 +331,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 		return ERR_MEMORY;
 	}
 	memcpy (post->name, ptr_name, sizeof(char)*name_len);
-	
+
 	if (email_len == 0) {
 		post->email = NULL;
 	} else {
@@ -351,7 +342,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 		}
 		memcpy (post->email, ptr_email, sizeof(char)*email_len);
 	}
-	
+
 	if (files_len == 0) {
 		post->files = NULL;
 	} else {
@@ -362,7 +353,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 		}
 		memcpy (post->files, ptr_files, sizeof(char)*files_len);
 	}
-	
+
 	if (v) {
 		fprintf(LOCAL_LOG, "] = Init struct done\n");
 		fprintf(LOCAL_LOG, "<< End of Thread >>\n");
@@ -372,183 +363,49 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	return post;
 }
 
-struct comment* parseComment (char* comment, const bool v) {
+char * parseComment (char* comment, const bool v) { // Пока что игнорируем разметку
 	fprintf (stderr, "]] Started parseComment");
-	FILE* LOCAL_LOG = NULL;
-	if (v) LOCAL_LOG = fopen("log/parseComment.log", "a");
-	if (v) fprintf (stderr, " (verbose, log in log/parseComment.log)"); fprintf(LOCAL_LOG, "\n");
-	fprintf (stderr, "\n");
-
-	if (v) fprintf(LOCAL_LOG, "\n\n << New Thread >>\n");
-	if (v) fprintf(LOCAL_LOG, "]] Args:\n]]| %s\n", comment);
-	
-	long int comment_len = strlen (comment);
-	int nrefs = 0;
-	size_t pos = 0;
-	struct list* refs = calloc (1, sizeof(struct list));
-	refs->first = refs;
-	refs->data = 0;
-	refs->next = 0;
-	struct ref_reply* cref = 0;
-	long int clean_len = 0;
-	char* clean_comment = (char*) calloc (comment_len, sizeof(char));
-	char* previnst = comment;
-	fflush(LOCAL_LOG);
-
-	char* cinst = strstr(comment,PATTERN_HREF_OPEN);
-	if ((cinst != NULL) && (cinst != comment)) {
-		fprintf(LOCAL_LOG, "]] Starts with text: clean_len = %d\n",
-			cinst - comment);
-		memcpy(clean_comment,comment,cinst-comment);
-		fprintf(LOCAL_LOG, "]]]] preCopied\n");
-		clean_len += cinst - comment;
-	} else {
-		fprintf(LOCAL_LOG, "[!!] Doesnt start with text: comment = %p, cinst = %p, clen = %d\n",
-			comment, cinst, cinst-comment);
-	}
-	fprintf(LOCAL_LOG, "clean_len = %d\n", clean_len);
-	fflush(LOCAL_LOG);
-
-	for ( ; cinst != NULL; cinst = strstr(pos+comment,PATTERN_HREF_OPEN)) {
-		if (v) fprintf (LOCAL_LOG, "]]] New ref\n]]]] Opened @ [%d]\n", cinst-comment);
-		pos = cinst-comment;
-		char* cinst_end = strstr (cinst, PATTERN_HREF_CLOSE);
-		if (cinst_end == NULL) {
-			fprintf (stderr, "! Error: ref opened but not closed\n");
-			fprintf (LOCAL_LOG, "-- Comment: \"%s\"\n", comment);
-			return ERR_COMMENT_FORMAT;
-		}
-			fflush(LOCAL_LOG);
-			if (v) fprintf (LOCAL_LOG, "]]]] Closed @ [%d]\n", cinst_end-comment);
-			char* class = strstr(cinst, PATTERN_REPLY_CLASS);
-			if ( (class != NULL) && (class < strstr(cinst, PATTERN_HREF_CLOSE)) ) {
-				if (v) fprintf (LOCAL_LOG, "]]]] Type: reply\n");
-				nrefs++;
-				cref = parseRef_Reply (cinst, cinst_end-cinst, true);
-				memcpy (clean_comment+clean_len, ">>", sizeof(char)*2);
-				clean_len += 2;
-				short csize = strlen (lint2str(cref->num));
-				fflush(LOCAL_LOG);
-				memcpy (clean_comment+clean_len, lint2str(cref->num), sizeof(char)*csize);
-				if (v) fprintf(LOCAL_LOG, "]]]] replyCopied\n");
-				clean_len += csize;
-				if (v) fprintf (LOCAL_LOG, "]]]] Init done:\n");
-				if (v) fprintf (LOCAL_LOG, "]]]]] link=\"%s\"\n]]]]] thread=%d\n]]]]] num=%d\n",
-												cref->link, cref->thread, cref->num);
-				if (v) fprintf(LOCAL_LOG, "Adding new ref #%d\n", nrefs);
-				if (nrefs > 1) {
-					refs->next = (struct list*) calloc (1, sizeof(struct list));
-					refs->next->first = refs->first;
-					refs->next->next = 0;
-					refs->next->data = calloc (1, sizeof(struct ref_reply));
-					fflush(LOCAL_LOG);
-					memcpy (refs->next->data, (void*) cref, sizeof(struct ref_reply));
-					refs = refs->next;
-				} else {
-					refs->next = 0;
-					refs->data = calloc (1, sizeof(struct ref_reply));
-					fflush(LOCAL_LOG);
-					memcpy (refs->data, (void*) cref, sizeof(struct ref_reply));
-				}
-				free (cref);
-			} else {
-				fprintf (LOCAL_LOG, "]]]] Unknown ref type, treat as text\n");
-				int csize = 0;
-				if (previnst != comment) { // Копируем с "сразу после предыдущей ссылки" по "перед началом этой ссылки"
-					if (v) fprintf(LOCAL_LOG, "previnst != NULL\n");
-					csize = cinst - previnst;
-				} else {
-					if (v) fprintf(LOCAL_LOG, "previnst == NULL\n");
-					csize = cinst - comment;
-				}
-				if (v) fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
-				if (v) fprintf(LOCAL_LOG, "[!] To: %p+%d\n", clean_comment, clean_len);
-				if (v) fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
-				if (csize > 0) {
-					fflush(LOCAL_LOG);
-					memcpy (clean_comment+clean_len, previnst, sizeof(char)*csize);
-					if (v) fprintf(LOCAL_LOG, "]]]] otherCopied\n");
-					clean_len += csize;
-				}
+	long long comment_len = strlen(comment);
+	char *parsed = (char *) calloc(comment_len, sizeof(char));
+	int depth = 0;
+	long long parsed_len = 0;
+	for (int i = 0; i < comment_len; i++) {
+		if (strncmp(comment + (ptrdiff_t)i, PATTERN_TAG_OPEN, strlen(PATTERN_TAG_OPEN)) == 0) {
+			depth ++;
+			if (strncmp(comment + (ptrdiff_t)i, PATTERN_NEWLINE, strlen(PATTERN_NEWLINE)) == 0) {
+				parsed[parsed_len] = '\n';
+				parsed_len ++;
 			}
-
-			pos = cinst_end - comment + strlen(PATTERN_HREF_CLOSE);
-			int linklen = cinst_end + strlen(PATTERN_HREF_CLOSE) - cinst;
-			fprintf(LOCAL_LOG, "linklen = %d, not copying\n", linklen); // Мы не хотим скопировать и ссылку, и ее HTML-разметку
-			previnst = strstr(cinst, PATTERN_TAG_CLOSE) + strlen(PATTERN_TAG_CLOSE);
-			// "<a href=$link {...}>$link</a>": оставляем "$link</a>
-			// @TODO Добавить </a> в cleanupComment()
-			fflush(LOCAL_LOG);
-	}
-	int csize = comment_len-pos;
-	if (v) fprintf(LOCAL_LOG, "[!] From #%d: %s\n", pos, comment+pos);
-	if (v) fprintf(LOCAL_LOG, "[!] To: %p+%d\n", clean_comment, clean_len);
-	if (v) fprintf(LOCAL_LOG, "[!] Size: %d\n", csize);
-	fflush(LOCAL_LOG);
-	if (csize > 0) {
-		memcpy (clean_comment+clean_len, comment+pos, sizeof(char)*csize);
-		if (v) fprintf(LOCAL_LOG, "]] afterCopied\n");
-		clean_len += csize;
-	}
-	if (v) {
-		fprintf(LOCAL_LOG, "] Starting cleanupComment()\n");
-		fflush(LOCAL_LOG);
-	}
-	char* finally_clean_comment = cleanupComment (clean_comment,clean_len,true);
-	if (v) {
-		fprintf(LOCAL_LOG, "] Exited cleanupComment()\n");
-		fflush(LOCAL_LOG);
-	}
-	if (v) fprintf(LOCAL_LOG, "]]] Total: %d refs\n", nrefs);
-	struct comment* parsed = (struct comment*) calloc (1, sizeof(struct comment));
-	parsed->text = (char*) calloc (comment_len, sizeof(char));
-	fflush(LOCAL_LOG);
-	memcpy (parsed->text, finally_clean_comment, sizeof(char)*strlen(finally_clean_comment));
-	fprintf(LOCAL_LOG, "Copied clean text\n");
-	fflush(LOCAL_LOG);
-	free (clean_comment);
-	fprintf(LOCAL_LOG, "Freed clean_comment\n");
-	fflush(LOCAL_LOG);
-	if (v) fprintf(LOCAL_LOG, "Final text: %s\n", parsed->text);
-	parsed->nrefs = nrefs;
-	if (v) fprintf(LOCAL_LOG, "Final number of refs: %d\n", parsed->nrefs);
-	refs = refs->first;
-	if (nrefs > 0) {
-		parsed->refs = (struct ref_reply*) calloc (nrefs, sizeof(struct ref_reply));
-		fprintf(LOCAL_LOG, "Allocated parsed->refs\n");
-		fflush(LOCAL_LOG);
-		fprintf(LOCAL_LOG, "Started copy refs\n");
-		fflush(LOCAL_LOG);
-		for (int i = 0; i < nrefs; i++) {
-			fprintf(LOCAL_LOG, "Copy ref #%2d..", i);
-			fflush(LOCAL_LOG);
-			memcpy(parsed->refs+i*sizeof(struct ref_reply), (void*) refs->data, sizeof(struct ref_reply));
-			fprintf(LOCAL_LOG, "Done | ");
-			fflush(LOCAL_LOG);
 		}
-		fprintf(LOCAL_LOG,"Copied all refs");
-		fflush(LOCAL_LOG);
+		else
+			if (strncmp(comment + (ptrdiff_t)i, PATTERN_TAG_CLOSE, strlen(PATTERN_TAG_CLOSE)) == 0) {
+				depth --;
+			}
+			else
+				if (depth == 0) {
+					parsed[parsed_len] = comment[i];
+					parsed_len ++;
+				}
 	}
-	else {
-		fprintf(LOCAL_LOG, "No refs\n");
-		fflush(LOCAL_LOG);
-	}
-
-	if (v) fprintf(LOCAL_LOG, "<< End of Thread >>\n");
-	if (v) fclose(LOCAL_LOG);
+	fprintf(stderr, "]] Final length: %d\n", parsed_len);
 	fprintf(stderr, "]] Exiting parseComment\n");
 	return parsed;
 }
 
-char* cleanupComment (const char* src, const int src_len, const bool v) {
+char* cleanupComment (const char* src, const int src_len, int *new_len, const bool v) {
 	fprintf(stderr, "]] Started cleanupComment");
-	FILE* LOCAL_LOG = NULL;
-	if (v) LOCAL_LOG = fopen("log/cleanupComment.log", "a");
-	if (v) fprintf(stderr, " (verbose, log in log/cleanupComment.log");
-	fprintf(stderr, "\n");
-	if (v) fprintf(LOCAL_LOG, "\n\n=== New Thread ===\nArgs:\n| src = %s\n| src_len = %d\n", src, src_len);
+	// FILE* LOCAL_LOG = NULL;
+	// fprintf(stderr, "NULL done\n");
+	// if (v) LOCAL_LOG = fopen("log/cleanupComment.log", "a");
+	// fprintf(stderr, "fopen done\n");
+	// if (v) fprintf(stderr, " (verbose, log in log/cleanupComment.log");
+	// fprintf(stderr, "\n");
+	fprintf(stderr, "\nCleanup === New Thread ===\nArgs:\n| src_len = %d\n", src_len);
+	// fprintf(stderr, "\n\n=== New Thread ===\nArgs:\n| src = %s\n| src_len = %d\n", src, src_len);
+	// if (v) fflush(LOCAL_LOG);
 
 	char* buf = (char*) calloc (src_len, sizeof(char));
+	fprintf(stderr, "Alloc done\n");
 	long int pos = 0, len = 0;
 	for ( ; pos < src_len; ) {
 		if ((pos < src_len-7) && (src[pos] == '\\') && (src[pos+1] == 'u') && (src[pos+2] == '0') && (src[pos+3] == '0')
@@ -583,20 +440,22 @@ char* cleanupComment (const char* src, const int src_len, const bool v) {
 		}
 	}
 	fprintf(stderr, "[cleanupComment] len = %d\n[cleanupComment] doing calloc()\n",len);
-	char* clean = (char*) calloc (len, sizeof(char));
+	char* clean = (char*) calloc (len + 1, sizeof(char));
 	fprintf(stderr, "[cleanupComment] calloc() done, doing memcpy()\n");
 	memcpy(clean, buf, sizeof(char)*len);
 	fprintf(stderr, "[cleanupComment] memcpy() done\n");
 	free (buf);
-	if (v) fprintf(LOCAL_LOG, "=== End of Thread ===\n");
-	if (v) fclose(LOCAL_LOG);
+	//if (v) fprintf(LOCAL_LOG, "=== End of Thread ===\n");
+	//if (v) fclose(LOCAL_LOG);
+	*new_len = len;
 	fprintf(stderr, "]] Exiting cleanupComment\n");
 	return clean;
 }
 
 struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, const bool v) {
 	fprintf (stderr, "-]] Started parseRef_Reply");
-	FILE* LOCAL_LOG = NULL;
+	//FILE* LOCAL_LOG = NULL;
+	/*
 	if (v) {
 		LOCAL_LOG = fopen("log/parseRef_Reply.log", "a");
 		fprintf(stderr, " (verbose, log in log/parseRef_Reply.log)"); fprintf (stderr, "\n");
@@ -604,11 +463,11 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 		for (int i = 0; i < 100; i++)
 			fprintf(LOCAL_LOG, "%c", ch_ref[i]);
 		fprintf(LOCAL_LOG, "\n| ref_len = %d\n", ref_len);
-	}
+	}*/
 
 	char* link_start = ch_ref + strlen (PATTERN_HREF_OPEN);
 	short link_len = strstr (ch_ref, PATTERN_REPLY_CLASS) - 3 - link_start;
-													// '-3' to exclude JSON 
+													// '-3' to exclude JSON
 
 	char* data_thread_start = strstr (ch_ref, PATTERN_REPLY_THREAD) + strlen(PATTERN_REPLY_THREAD);
 	if (data_thread_start == NULL) { // '+ strlen' to exclude opening string
@@ -621,7 +480,7 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 		return ERR_REF_FORMAT;
 	}
 	long int data_thread = str2lint (data_thread_start, data_thread_end-data_thread_start+1);
-	if (v) fprintf (LOCAL_LOG, "-]]] Thread: %d\n", data_thread);
+	if (v) fprintf (stderr, "-]]] Thread: %d\n", data_thread);
 
 	char* data_num_start = strstr (ch_ref, PATTERN_REPLY_NUM) + strlen(PATTERN_REPLY_NUM);
 	if (data_num_start == NULL) { // '+ strlen' to exclude opening string
@@ -634,7 +493,7 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 		return ERR_REF_FORMAT;
 	}
 	long int data_num = str2lint (data_num_start, data_num_end-data_num_start+1);
-	if (v) fprintf (LOCAL_LOG, "-]]] Postnum: %d\n", data_num);
+	if (v) fprintf (stderr, "-]]] Postnum: %d\n", data_num);
 
 	struct ref_reply* ref_parsed = (struct ref_reply*) calloc (1, sizeof(struct ref_reply));
 	ref_parsed->link = (char*) calloc (link_len, sizeof(char) + 1);
@@ -642,10 +501,7 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 	ref_parsed->thread = data_thread;
 	ref_parsed->num = data_num;
 
-	if (v) {
-		fprintf(LOCAL_LOG, "<< End of Thread >>\n");
-		fclose(LOCAL_LOG);
-	}
+	if (v)	fprintf(stderr, "<< End of Thread >>\n");
 	fprintf (stderr, "-]] Exiting parseRef_Reply\n");
 
 	return ref_parsed;
@@ -671,10 +527,10 @@ struct thread* initThread (const char* thread_string, const long int thread_len,
 	for (int i = 0; i < ((int)nposts)-1; i++) {
 		char *cpost_ptr = thread_string + (ptrdiff_t) post_diffs[i];
 		long int cpost_len = post_diffs[i+1] - post_diffs[i];
-		if (v) fprintf( LOCAL_LOG, "] Calling initPost #%d: from %d to %d, length %d\n", 
+		if (v) fprintf( LOCAL_LOG, "] Calling initPost #%d: from %d to %d, length %d\n",
 			i, post_diffs[i], post_diffs[i+1], cpost_len );
 		fflush(LOCAL_LOG);
-		posts[i] = initPost( 
+		posts[i] = initPost(
 							cpost_ptr,
 							cpost_len,
 							true
@@ -688,7 +544,7 @@ struct thread* initThread (const char* thread_string, const long int thread_len,
 			exit(4);
 		}
 	}
-	posts[nposts-1] = initPost( 
+	posts[nposts-1] = initPost(
 							   thread_string + post_diffs[nposts-1],
 							   strlen(thread_string) - post_diffs[nposts-1],
 							   true
@@ -750,16 +606,15 @@ char* parse2chaptchaId (const char* capId_string, const bool v) {
 // Freeing functions
 // ========================================
 
-void freeRefReply (struct ref_reply* ref) {
+void freeRefReply (struct ref_reply *ref) {
 	free (ref->link);
 }
 
-void freeComment (struct comment* arg) {
-	free (arg->text);
-	free (arg->refs);
+void freeComment (char *arg) {
+	free (arg);
 }
 
-void freePost (struct post* post) {
+void freePost (struct post *post) {
 	freeComment (post->comment);
 	free (post->date);
 	free (post->name);
@@ -770,7 +625,7 @@ void freePost (struct post* post) {
 	free (post);
 }
 
-void freeThread (struct thread* thread) {
+void freeThread (struct thread *thread) {
 	for (int i = 1; i < thread->nposts; i++) {
 		freePost (thread->posts[i]);
 	}
