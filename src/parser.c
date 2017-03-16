@@ -586,17 +586,8 @@ struct thread* initThread (const char* thread_string, const long int thread_len,
 // Captcha
 // ========================================
 
-char* parse2chaptchaId (const char* capId_string, const bool v) {
-	fprintf (stderr, "]] Starting parse2chaptchaId");
-	FILE* LOCAL_LOG = NULL;
-	if (v) {
-		LOCAL_LOG = fopen ("log/parse2chaptchaId.log", "a");
-		fprintf(stderr, " (verbose, log in log/parse2chaptchaId.log)\n");
-		fprintf(LOCAL_LOG, "\n]] New thread\nJSON: %s", capId_string);
-	}
-	else {
-		puts("");
-	}
+char* parse2chaptchaId (const char* capId_string) {
+	fprintf (stderr, "]] Starting parse2chaptchaId\n");
 
 	char* captcha_start = strstr (capId_string, PATTERN_CAPID);
 	if (captcha_start == NULL) {
@@ -607,12 +598,7 @@ char* parse2chaptchaId (const char* capId_string, const bool v) {
 	short captcha_len = strstr(captcha_start,"\"") - captcha_start;
 	char* captcha_id = (char*) calloc (captcha_len, sizeof(char));
 	captcha_id = memcpy (captcha_id, captcha_start, captcha_len);
-
-	if (v) {
-		fprintf(LOCAL_LOG, "ID: %s\n", captcha_id);
-		fprintf(LOCAL_LOG, "]] Exiting\n");
-		fclose(LOCAL_LOG);
-	}
+	
 	fprintf(stderr, "]] Exiting parse2chaptchaId\n");
 
 	return captcha_id;

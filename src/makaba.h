@@ -34,9 +34,9 @@ char* getBoardPageJSON (const char* board, const long int page, bool v);
 char* getBoardCatalogJSON (const char* board, const bool v);
 char* getThreadJSON (const char* board, const long int threadnum, long int* threadsize, const bool v);
 
-char* getCaptchaSettingsJSON (const char* board, const bool v);
-char* get2chaptchaIdJSON (const char* board, const char* thread, const bool v);
-char* get2chaptchaPicURL (const char* id, const bool v);
+char* getCaptchaSettingsJSON (const char* board);
+char* get2chaptchaIdJSON (const char* board, const char* thread);
+char* get2chaptchaPicURL (const char* id);
 
 size_t CURL_writeToBuff (const char* src, const size_t size, const size_t nmemb, void* dest);
 char* lint2str (const long int val);

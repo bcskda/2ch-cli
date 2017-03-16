@@ -76,7 +76,7 @@ char *parseComment (char *comment, const long long  comment_len, const bool v);
 struct ref_reply *parseRef_Reply (const char *ch_ref, const long int ref_len, const bool v);
 char *cleanupComment (const char *src, const int src_len, int *new_len, const bool v);
 
-char *parse2chaptchaId (const char *capid_string, const bool v);
+char *parse2chaptchaId (const char *capid_string);
 
 void freeRefReply (struct ref_reply *ref);
 void freePost (struct post *post);

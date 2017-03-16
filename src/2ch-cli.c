@@ -19,7 +19,8 @@ void pomogite() // Справка
 
 int main (int argc, char **argv)
 {
-    char passcode[32] = "пасскода нет нихуя :("; // Пасскод
+
+	char passcode[32] = "пасскода нет нихуя :("; // Пасскод
     char board_name[10] = "b"; // Имя борды
     long long post_number = 0; // Номер треда в борде
 
@@ -71,10 +72,18 @@ int main (int argc, char **argv)
 
 	makabaSetup();
 
-	//printf( "Testing: %s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON("abu","49946",true),true),true) );
+	//printf( "Testing: %s\n", parse2chaptchaId(get2chaptchaIdJSON("abu","49946")) );
+	//printf( "Testing: %s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON("abu","49946"))) );
+
+
+	printf("%s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON(board_name, lint2str(post_number)))));
+	//printf("%s\n", parse2chaptchaId(get2chaptchaIdJSON(board_name, post_number)));
+	//printf("%s\n", parse2chaptchaId(get2chaptchaIdJSON(board_name, lint2str(post_number))));
+	makabaCleanup();
+	//return 0;
 	//printf( "Testing: %s\n", getCaptchaSettingsJSON("abu",true) );
 
-	//return RET_PREEXIT;
+	return RET_PREEXIT;
 
 
 	long int threadsize = 0;
