@@ -72,7 +72,7 @@ const int ERR_PARTTHREAD_DEPTH = -1,
 struct thread *initThread (const char *thread_string, const long int thread_len, const bool v);
 long int *findPostsInJSON (const char *src, long int *postcount_res, const bool v);
 struct post *initPost (const char *post_string, const long int postlen, const bool v);
-char *parseComment (char *comment, const bool v);
+char *parseComment (char *comment, const long long  comment_len, const bool v);
 struct ref_reply *parseRef_Reply (const char *ch_ref, const long int ref_len, const bool v);
 char *cleanupComment (const char *src, const int src_len, int *new_len, const bool v);
 

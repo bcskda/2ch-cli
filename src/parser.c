@@ -310,7 +310,8 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 		}
 		return ERR_MEMORY;
 	}
-	post->comment = parseComment (comment_str, true);
+	memcpy(comment_str, ptr_comment, comment_len);
+	post->comment = parseComment (comment_str, comment_len, true);
 	fprintf(LOCAL_LOG, "Exited parseComment()\n");
 	free (comment_str);
 	fprintf(LOCAL_LOG, "Freed comment_str\n");
@@ -363,29 +364,44 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	return post;
 }
 
-char * parseComment (char* comment, const bool v) { // Пока что игнорируем разметку
-	fprintf (stderr, "]] Started parseComment");
-	long long comment_len = strlen(comment);
+char *parseComment (char *comment, const long long  comment_len, const bool v) { // Пока что игнорируем разметку
+	fprintf (stderr, "]] Started parseComment\n");
+	fprintf(stderr, "Comment len: %d\n", comment_len);
 	char *parsed = (char *) calloc(comment_len, sizeof(char));
 	int depth = 0;
 	long long parsed_len = 0;
-	for (int i = 0; i < comment_len; i++) {
-		if (strncmp(comment + (ptrdiff_t)i, PATTERN_TAG_OPEN, strlen(PATTERN_TAG_OPEN)) == 0) {
-			depth ++;
-			if (strncmp(comment + (ptrdiff_t)i, PATTERN_NEWLINE, strlen(PATTERN_NEWLINE)) == 0) {
-				parsed[parsed_len] = '\n';
-				parsed_len ++;
+	long long i;
+
+	for (i = 0; i < comment_len; i++) {
+		if (strncmp(&(comment[i]), PATTERN_TAG_OPEN, strlen(PATTERN_TAG_OPEN)) == 0) { // HTML tag open
+			/*if (strncmp(&(comment[i]), , strlen(PATTERN_NEWLINE)) == 0) { // Post answer
+
+			}
+			else*/ {
+				depth ++;
+				if (strncmp(&(comment[i]), PATTERN_NEWLINE, strlen(PATTERN_NEWLINE)) == 0) { // <br>
+					parsed[parsed_len] = '\n';
+					parsed_len ++;
+				}
+				i += strlen(PATTERN_TAG_OPEN) - 1;
 			}
 		}
 		else
-			if (strncmp(comment + (ptrdiff_t)i, PATTERN_TAG_CLOSE, strlen(PATTERN_TAG_CLOSE)) == 0) {
-				depth --;
-			}
-			else
-				if (depth == 0) {
-					parsed[parsed_len] = comment[i];
-					parsed_len ++;
+			if (strncmp(&(comment[i]), PATTERN_TAG_CLOSE, strlen(PATTERN_TAG_CLOSE)) == 0) { // '>' char
+					if (depth > 0) { // HTML tag close
+						depth --;
+					}
+					else { // In-text '>'
+						parsed[parsed_len] = '>';
+						parsed_len ++;
+					}
+					i += strlen(PATTERN_TAG_CLOSE) - 1;
 				}
+				else
+					if (depth == 0) { // Ordinary character
+						parsed[parsed_len] = comment[i];
+						parsed_len ++;
+					}
 	}
 	fprintf(stderr, "]] Final length: %d\n", parsed_len);
 	fprintf(stderr, "]] Exiting parseComment\n");
