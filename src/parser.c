@@ -253,12 +253,14 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	fflush(LOCAL_LOG);
 
 	// Detect postnum
+	/*
 	if ((long int) (ptr_name_end - post_string) >= postlen) {
 		fprintf(stderr, "! Error: Out of post range\n");
 		fprintf(stderr, "! Given as argument: %ld, locally calculated: %ld\n",
 			postlen, (long int) (ptr_name_end - post_string));
 		return (char *) ERR_POST_OUT_OF_RANGE;
 	}
+	*/
 	char *ptr_num = strstr( ptr_name + (ptrdiff_t)name_len, PATTERN_NUM );
 	if (ptr_num == NULL) {
 		fprintf (stderr, "! Error: Bad post format: Num pattern not found\n");
@@ -598,7 +600,7 @@ char* parse2chaptchaId (const char* capId_string) {
 	short captcha_len = strstr(captcha_start,"\"") - captcha_start;
 	char* captcha_id = (char*) calloc (captcha_len, sizeof(char));
 	captcha_id = memcpy (captcha_id, captcha_start, captcha_len);
-	
+
 	fprintf(stderr, "]] Exiting parse2chaptchaId\n");
 
 	return captcha_id;
