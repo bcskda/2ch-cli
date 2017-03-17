@@ -16,7 +16,7 @@
 #include "makaba.c"
 #include "parser.c"
 
-#define VERSION "v0.3test3"
+#define VERSION "v0.4test1"
 
 const int ERR_ARGS = -1,
 		  ERR_BROKEN_POST = -2;

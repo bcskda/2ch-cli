@@ -74,8 +74,8 @@ int main (int argc, char **argv)
 
 	#ifdef CAPTCHA_TEST
 	printf("%s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON(board_name, lint2str(post_number)))));
+	printf("%s\n", getCaptchaSettingsJSON(board_name) );
 	makabaCleanup();
-	printf("%s\n", getCaptchaSettingsJSON(board_name,true) );
 	return RET_PREEXIT;
 	#endif
 
