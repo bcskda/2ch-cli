@@ -9,14 +9,13 @@
 
 long int* findPostsInJSON (const char* src, long int* postcount_res, const bool v) {
 	fprintf (stderr, "]] Starting findPostsInJSON");
-	FILE* LOCAL_LOG = NULL;
 
-	if (v) fprintf (stderr, " (verbose, log in ./log/findPostsInJSON)"); fprintf (stderr, "\n");
-	if (v) LOCAL_LOG = fopen("log/findPostsInJSON.log", "a");
-	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n");
+	if (v) fprintf (stderr, " (verbose");
+	fprintf (stderr, "\n");
+	if (v) fprintf(stderr, "\n\n<< New Thread >>\n");
 
 	int srclen = strlen (src);
-	if (v) fprintf(LOCAL_LOG, "srclen = %d\n", srclen);
+	if (v) fprintf(stderr, "srclen = %d\n", srclen);
 	long int* temp = (long int*) calloc (srclen/8, sizeof(long int));
 
 	short depth = 0;
@@ -24,7 +23,7 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 	bool comment_read = false;
 
 	for (int i = 1; i < srclen; i+=1) {
-		if (v) fprintf(LOCAL_LOG, "%c", src[i]);
+		if (v) fprintf(stderr, "%c", src[i]);
 		switch (depth) {
 			case 5: {
 				if (src[i] == '"' && src[i-1 != '\\']) {
@@ -41,7 +40,7 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 			case 3: {
 				if (src[i] == '"' && src[i-1 != '\\']) {
 					depth -= 1; // Выход из displayname/fullname
-					if (v) fprintf (LOCAL_LOG, "Exiting name\n");
+					if (v) fprintf (stderr, "Exiting name\n");
 				}
 				break;
 			}
@@ -50,24 +49,24 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 					if ((src[i-2]=='"')&&(src[i-1]=='d')&&(src[i]=='i')&&
 						(src[i+1]=='s')&&(src[i+2]=='p')) {
 							depth += 3; // Вход в displayname
-							if (v) fprintf (LOCAL_LOG, "Entering displayname\n");
+							if (v) fprintf (stderr, "Entering displayname\n");
 							break;
 						}
 					if ((src[i-2]=='"')&&(src[i-1]=='f')&&(src[i]=='u')&&
 						(src[i+1]=='l')&&(src[i+2]=='l')) {
 							depth += 3; // Вход в fullname
-							if (v) fprintf (LOCAL_LOG, "Entering fullname\n");
+							if (v) fprintf (stderr, "Entering fullname\n");
 							break;
 					}
 					if (src[i] == ']') {
-						if (v) fprintf (LOCAL_LOG, "Exiting files. ");
+						if (v) fprintf (stderr, "Exiting files. ");
 						depth -= 1;
 						break;
 					}
 				}
 				else { // in: .post.comment
 					if ((src[i-1] != '\\') && (src[i] == '"')) {
-						if (v) fprintf (LOCAL_LOG, "Exiting comment. ");
+						if (v) fprintf (stderr, "Exiting comment. ");
 						comment_read = true;
 						depth -= 1;
 					}
@@ -76,28 +75,28 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 			}
 			case 1: { // in: .post
 				if (src[i] == '}') {
-					if (v) fprintf (LOCAL_LOG, "Exiting post (@%d).\n", i);
+					if (v) fprintf (stderr, "Exiting post (@%d).\n", i);
 					postcount += 1;
 					depth -= 1;
 					comment_read = false;
 				}
 				if ((src[i-2]=='"')&&(src[i-1]=='f')&&(src[i]=='i')&&
 					(src[i+1]=='l')&&(src[i+2]=='e')) {
-					if (v) fprintf (LOCAL_LOG, "Entering files. ");
+					if (v) fprintf (stderr, "Entering files. ");
 					depth += 1;
 				}
 				if ((src[i-2]=='"')&&(src[i-1]=='c')&&(src[i]=='o')&&
 					(src[i+1]=='m')&&(src[i+2]=='m')) {
-					if (v) fprintf (LOCAL_LOG, "Entering comment. ");
+					if (v) fprintf (stderr, "Entering comment. ");
 					depth += 1;
 				}
 				continue;
 			}
 			case 0: { // in: .
 				if (src[i] == '{') {
-					if (v) fprintf (LOCAL_LOG, "Entering post #%d ", postcount+1);
+					if (v) fprintf (stderr, "Entering post #%d ", postcount+1);
 					temp[postcount] = i;
-					if (v) fprintf (LOCAL_LOG, "(@%d)\n", temp[postcount]);
+					if (v) fprintf (stderr, "(@%d)\n", temp[postcount]);
 					depth += 1;
 				}
 				continue;
@@ -105,97 +104,91 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 			default: {
 				fprintf (stderr, "! Error: Unusual depth (%d)\n", depth);
 				free (temp);
-				if (v) fclose (LOCAL_LOG);
 				return ERR_PARTTHREAD_DEPTH;
 			}
 		}
 	}
 	if (depth != 0) {
-		fprintf (stderr, "! Error: Non-zero depth (%d) after cycle\n", depth);
-		if (v) fclose (LOCAL_LOG);
+		fprintf (stderr, "[findPostsInJSON]! Error: Non-zero depth (%d) after cycle\n", depth);
 		return ERR_PARTTHREAD_DEPTH;
 	}
 
-	if (v) fprintf (LOCAL_LOG, "%d posts found\n", postcount);
+	if (v) fprintf (stderr, "%d posts found\n", postcount);
 
 	long int* posts = (long int*) calloc (postcount, sizeof(long int));
 	posts = memcpy (posts, temp, postcount*sizeof(long int));
 	free (temp);
-	if (v) fprintf (LOCAL_LOG, "Posts begin at:\n");
-	if (v) for (int i = 0; i < postcount; i++)
-		fprintf (LOCAL_LOG, "] %2d: %5d\n", i, posts[i]);
+	if (v) {
+		fprintf (stderr, "Posts begin at:\n");
+		for (int i = 0; i < postcount; i++)
+			fprintf (stderr, "] %2d: %5d\n", i, posts[i]);
+	}
 
 	*postcount_res = postcount;
 
-	if (v) fprintf(LOCAL_LOG, "<< End of Thread >>\n");
-	if (v) fclose(LOCAL_LOG);
+	if (v) fprintf(stderr, "<< End of Thread >>\n");
 	fprintf(stderr, "]] Exiting findPostsInJSON\n");
 	return posts;
 }
 
 struct post* initPost (const char* post_string, const long int postlen, const bool v) {
 	fprintf(stderr, "]] Starting initPost");
-	FILE* LOCAL_LOG = NULL;
-	if (v) LOCAL_LOG = fopen("log/initPost.log", "a");
-	if (v) fprintf(stderr, " (verbose, log in log/initPost.log)"); fprintf (stderr, "\n");
-	if (v) fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n]] Args:\n== | post_string = ");
+	if (v) fprintf(stderr, " (verbose)");
+	fprintf (stderr, "\n");
+	if (v) fprintf(stderr, "\n\n<< New Thread >>\n]] Args:\n== | post_string = ");
 	if (v) for (int i = 0; i < postlen; i++)
-		fprintf(LOCAL_LOG, "%c", post_string[i]);
-	if (v) fprintf(LOCAL_LOG, "\n| postlen = %d\n", postlen);
-	if (v) fflush(LOCAL_LOG);
+		fprintf(stderr, "%c", post_string[i]);
+	if (v) fprintf(stderr, "\n| postlen = %d\n", postlen);
 
 	// Detecting comment:
 	char* ptr_comment = strstr (post_string, PATTERN_COMMENT);
 	if (ptr_comment == NULL) {
-		fprintf (stderr, "! Error: Bad post format: Comment pattern not found\n");
+		fprintf (stderr, "[initPost]! Error: Bad post format: Comment pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
 	ptr_comment += strlen(PATTERN_COMMENT);
 
 	char* ptr_comment_end = strstr (ptr_comment, PATTERN_COMMENT_END);
 	int comment_len = (int) (ptr_comment_end - ptr_comment);
-	if (v) fprintf (LOCAL_LOG, "comment_len = %d\n=== Comment: ===\n", comment_len);
+	if (v) fprintf (stderr, "comment_len = %d\n=== Comment: ===\n", comment_len);
 	if (v) for (int i = 0; i < comment_len; i++)
-		fprintf (LOCAL_LOG, "%c", ptr_comment[i]);
-	if (v) fprintf (LOCAL_LOG, "\n== End of comment ==\n");
-	fflush(LOCAL_LOG);
+		fprintf (stderr, "%c", ptr_comment[i]);
+	if (v) fprintf (stderr, "\n== End of comment ==\n");
 
 	// Detect date:
 	char* ptr_date = strstr (ptr_comment+comment_len, PATTERN_DATE)+strlen(PATTERN_DATE);
 	if (ptr_date == NULL) {
-		fprintf (stderr, "! Error: Bad post format: Date pattern not found\n");
+		fprintf (stderr, "[initPost]! Error: Bad post format: Date pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
 	int date_len = strstr (ptr_date, "\"") - ptr_date;
 	if (v) {
-		fprintf (LOCAL_LOG, "] Date length: %d\n", date_len);
-		fprintf (LOCAL_LOG, "] Date: ");
+		fprintf (stderr, "] Date length: %d\n", date_len);
+		fprintf (stderr, "] Date: ");
 		for (int i = 0; i < date_len; i++)
-			fprintf (LOCAL_LOG, "%c", ptr_date[i]);
-		fprintf (LOCAL_LOG, "\n");
+			fprintf (stderr, "%c", ptr_date[i]);
+		fprintf (stderr, "\n");
 	}
-	fflush(LOCAL_LOG);
 
 	// Detect email:
 	char* ptr_email = strstr(ptr_date + (ptrdiff_t)date_len, PATTERN_EMAIL);
 	if (ptr_email == NULL) {
-		fprintf (stderr, "! Error: Bad post format: Email pattern not found\n");
+		fprintf (stderr, "[initPost]! Error: Bad post format: Email pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
 	ptr_email += (ptrdiff_t) strlen(PATTERN_EMAIL);
 	int email_len = (int) (strstr (ptr_email, "\"") - ptr_email);
 	if (v) {
 		if (email_len == 0) {
-			fprintf (LOCAL_LOG, "] Email not specified\n");
+			fprintf (stderr, "] Email not specified\n");
 		} else {
-			fprintf (LOCAL_LOG, "] Email length: %d\n", email_len);
-			fprintf (LOCAL_LOG, "] Email: ");
+			fprintf (stderr, "] Email length: %d\n", email_len);
+			fprintf (stderr, "] Email: ");
 			for (int i = 0; i < email_len; i++)
-				fprintf (LOCAL_LOG, "%c", ptr_email[i]);
-			fprintf (LOCAL_LOG, "\n");
+				fprintf (stderr, "%c", ptr_email[i]);
+			fprintf (stderr, "\n");
 		}
 	}
-	fflush(LOCAL_LOG);
 
 	// Detect files:
 	char* ptr_files = strstr(ptr_email + (ptrdiff_t)email_len, PATTERN_FILES);
@@ -203,25 +196,24 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	bool has_files = false;
 	// If NULL, simply no files in post
 	if ( (ptr_files == NULL) || ((long int) (ptr_files - post_string) >= postlen) ) {
-		if (v) fprintf (LOCAL_LOG, "] Files not specified\n");
+		if (v) fprintf (stderr, "] Files not specified\n");
 	} else {
 		ptr_files += strlen(PATTERN_FILES);
 		has_files = true;
 		files_len = strstr(ptr_files, "}]") - ptr_files;
 		if (files_len == 0) {
-			fprintf (stderr, "! Error: Bad post format: Files field specified but null\n");
+			fprintf (stderr, "[initPost]! Error: Bad post format: Files field specified but null\n");
 			return ERR_POST_FORMAT;
 		} else
 			if (v) {
-				fprintf(LOCAL_LOG, "] Files length: %d\n", files_len);
-				fprintf (LOCAL_LOG, "] Files: \n");
+				fprintf(stderr, "] Files length: %d\n", files_len);
+				fprintf (stderr, "] Files: \n");
 				for (int i = 0; i < files_len; i++) {
-					fprintf (LOCAL_LOG, "%c", ptr_files[i]);
+					fprintf (stderr, "%c", ptr_files[i]);
 				}
-				fprintf (LOCAL_LOG, "\n] End of files\n");
+				fprintf (stderr, "\n] End of files\n");
 			}
 	}
-	fflush(LOCAL_LOG);
 
 	// Detect name:
 	char *ptr_name_diff = 0; int name_diff_len = 0;
@@ -234,67 +226,52 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	}
 	char *ptr_name = strstr( ptr_name_diff + (ptrdiff_t)name_diff_len, PATTERN_NAME );
 	if (ptr_name == NULL) {
-		if (v) {
-			fprintf(LOCAL_LOG, "Error - no name found\n");
-			fclose(LOCAL_LOG);
-		}
-		fprintf (stderr, "! Error: Bad post format: Name pattern not found\n");
+		fprintf (stderr, "[initPost]! Error: Bad post format: Name pattern not found\n");
 		return (char *) ERR_POST_FORMAT;
 	}
 	ptr_name += (ptrdiff_t)strlen(PATTERN_NAME);
 
 	char* ptr_name_end = strstr(ptr_name, PATTERN_NAME_END);
 	int name_len = (int) (ptr_name_end - ptr_name);
-	if (v) fprintf (LOCAL_LOG, "] Name length: %d\n", name_len);
-	if (v) fprintf (LOCAL_LOG, "] Name: ");
+	if (v) fprintf (stderr, "] Name length: %d\n", name_len);
+	if (v) fprintf (stderr, "] Name: ");
 	if (v) for (int i = 0; i < name_len; i++)
-		fprintf (LOCAL_LOG, "%c", ptr_name[i]);
-	if (v) fprintf (LOCAL_LOG, "[name end]\n");
-	fflush(LOCAL_LOG);
+		fprintf (stderr, "%c", ptr_name[i]);
+	if (v) fprintf (stderr, "[name end]\n");
 
 	// Detect postnum
-	/*
-	if ((long int) (ptr_name_end - post_string) >= postlen) {
-		fprintf(stderr, "! Error: Out of post range\n");
-		fprintf(stderr, "! Given as argument: %ld, locally calculated: %ld\n",
-			postlen, (long int) (ptr_name_end - post_string));
-		return (char *) ERR_POST_OUT_OF_RANGE;
-	}
-	*/
 	char *ptr_num = strstr( ptr_name + (ptrdiff_t)name_len, PATTERN_NUM );
 	if (ptr_num == NULL) {
-		fprintf (stderr, "! Error: Bad post format: Num pattern not found\n");
+		fprintf (stderr, "[initPost]! Error: Bad post format: Num pattern not found\n");
 		return (char *) ERR_POST_FORMAT;
 	}
-	if (v) fprintf (LOCAL_LOG, "[ptr_num] %c%c%c%c%c\n", ptr_num[0],ptr_num[1],ptr_num[2],ptr_num[3],ptr_num[4]);
+	if (v) fprintf (stderr, "[ptr_num] %c%c%c%c%c\n", ptr_num[0],ptr_num[1],ptr_num[2],ptr_num[3],ptr_num[4]);
 	ptr_num += (ptrdiff_t) strlen(PATTERN_NUM);
 	char *num_end =  strstr (ptr_num, ",");
 	if (num_end == NULL) {
-		fprintf(stderr, "! Error: Something strange with `num' field\n");
+		fprintf(stderr, "[initPost]! Error: Something strange with `num' field\n");
 		return (char *) ERR_INTERNAL;
 	}
 	int num_len = (int) (num_end - ptr_num - 1); // Exclude ending '"'
 	if (v) {
-		fprintf (LOCAL_LOG, "] Num length: %d\n", num_len);
-		fprintf (LOCAL_LOG, "] Num: |");
+		fprintf (stderr, "] Num length: %d\n", num_len);
+		fprintf (stderr, "] Num: |");
 		for (int i = 0; i < num_len; i++) {
-			fprintf (LOCAL_LOG, "%c", ptr_num[i]);
+			fprintf (stderr, "%c", ptr_num[i]);
 			fprintf (stderr,    "%c", ptr_num[i]);
 		}
-		fprintf (LOCAL_LOG, "|\n");
+		fprintf (stderr, "|\n");
 	}
 
-	if (v) fprintf (LOCAL_LOG, "] = All main fields detected\n");
+	if (v) fprintf (stderr, "] = All main fields detected\n");
 
 	// Init struct:
 	struct post* post = (struct post*) malloc (sizeof(struct post));
 	if (post == NULL) {
 		if (v) {
-			printf(LOCAL_LOG, "Memory corrupt - `struct post' calloc()\n");
-			fflush(LOCAL_LOG);
+			fprintf(stderr, "Memory corrupt - `struct post' calloc()\n");
 		} else {
-			fprintf(LOCAL_LOG, "Memory allocated (struct post)\n");
-			fflush(LOCAL_LOG);
+			fprintf(stderr, "Memory allocated (struct post)\n");
 		}
 		return (char *) ERR_MEMORY;
 	}
@@ -304,33 +281,31 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	char* comment_str = (char*) calloc (comment_len, sizeof(char));
 	if (comment_str == NULL) {
 		if (v) {
-			fprintf(LOCAL_LOG, "Memory corrupt - `comment_str' calloc()\n");
-			fflush(LOCAL_LOG);
+			fprintf(stderr, "Memory corrupt - `comment_str' calloc()\n");
 		} else {
-			fprintf(LOCAL_LOG, "Memory allocated (comment_str)\n");
-			fflush(LOCAL_LOG);
+			fprintf(stderr, "Memory allocated (comment_str)\n");
 		}
 		return ERR_MEMORY;
 	}
 	memcpy(comment_str, ptr_comment, comment_len);
 	post->comment = parseComment (comment_str, comment_len, true);
-	fprintf(LOCAL_LOG, "Exited parseComment()\n");
+	fprintf(stderr, "Exited parseComment()\n");
 	free (comment_str);
-	fprintf(LOCAL_LOG, "Freed comment_str\n");
+	fprintf(stderr, "Freed comment_str\n");
 	if (v) {
 		fprintf(stderr, "Clean text: %s\n", post->comment);
 	}
 
 	post->date = (char*) calloc (date_len+1, sizeof(char));
 	if (post->date == NULL) {
-		fprintf (stderr, "! Error allocating memory (post.date)\n");
+		fprintf (stderr, "[initPost]! Error allocating memory (post.date)\n");
 		return ERR_MEMORY;
 	}
 	memcpy (post->date, ptr_date, sizeof(char)*date_len);
 
 	post->name = (char*) calloc (name_len+1, sizeof(char));
 	if (post->name == NULL) {
-		fprintf (stderr, "! Error allocating memory (post.name)\n");
+		fprintf (stderr, "[initPost]! Error allocating memory (post.name)\n");
 		return ERR_MEMORY;
 	}
 	memcpy (post->name, ptr_name, sizeof(char)*name_len);
@@ -340,7 +315,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	} else {
 		post->email = (char*) calloc (email_len+1, sizeof(char));
 		if (post->email == NULL) {
-			fprintf (stderr, "! Error allocating memory (post.email)\n");
+			fprintf (stderr, "[initPost]! Error allocating memory (post.email)\n");
 			return ERR_MEMORY;
 		}
 		memcpy (post->email, ptr_email, sizeof(char)*email_len);
@@ -351,16 +326,15 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	} else {
 		post->files = (char*) calloc (files_len+1, sizeof(char));
 		if (post->files == NULL) {
-			fprintf (stderr, "! Error allocating memory (post.files)\n");
+			fprintf (stderr, "[initPost]! Error allocating memory (post.files)\n");
 			return ERR_MEMORY;
 		}
 		memcpy (post->files, ptr_files, sizeof(char)*files_len);
 	}
 
 	if (v) {
-		fprintf(LOCAL_LOG, "] = Init struct done\n");
-		fprintf(LOCAL_LOG, "<< End of Thread >>\n");
-		fclose(LOCAL_LOG);
+		fprintf(stderr, "] = Init struct done\n");
+		fprintf(stderr, "<< End of Thread >>\n");
 	}
 	fprintf (stderr, "]] Exiting initPost\n");
 	return post;
@@ -412,15 +386,6 @@ char *parseComment (char *comment, const long long  comment_len, const bool v) {
 
 char* cleanupComment (const char* src, const int src_len, int *new_len, const bool v) {
 	fprintf(stderr, "]] Started cleanupComment");
-	// FILE* LOCAL_LOG = NULL;
-	// fprintf(stderr, "NULL done\n");
-	// if (v) LOCAL_LOG = fopen("log/cleanupComment.log", "a");
-	// fprintf(stderr, "fopen done\n");
-	// if (v) fprintf(stderr, " (verbose, log in log/cleanupComment.log");
-	// fprintf(stderr, "\n");
-	fprintf(stderr, "\nCleanup === New Thread ===\nArgs:\n| src_len = %d\n", src_len);
-	// fprintf(stderr, "\n\n=== New Thread ===\nArgs:\n| src = %s\n| src_len = %d\n", src, src_len);
-	// if (v) fflush(LOCAL_LOG);
 
 	char* buf = (char*) calloc (src_len, sizeof(char));
 	fprintf(stderr, "Alloc done\n");
@@ -463,8 +428,7 @@ char* cleanupComment (const char* src, const int src_len, int *new_len, const bo
 	memcpy(clean, buf, sizeof(char)*len);
 	fprintf(stderr, "[cleanupComment] memcpy() done\n");
 	free (buf);
-	//if (v) fprintf(LOCAL_LOG, "=== End of Thread ===\n");
-	//if (v) fclose(LOCAL_LOG);
+	//if (v) fprintf(stderr, "=== End of Thread ===\n");
 	*new_len = len;
 	fprintf(stderr, "]] Exiting cleanupComment\n");
 	return clean;
@@ -472,16 +436,15 @@ char* cleanupComment (const char* src, const int src_len, int *new_len, const bo
 
 struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, const bool v) {
 	fprintf (stderr, "-]] Started parseRef_Reply");
-	//FILE* LOCAL_LOG = NULL;
 	/*
 	if (v) {
-		LOCAL_LOG = fopen("log/parseRef_Reply.log", "a");
-		fprintf(stderr, " (verbose, log in log/parseRef_Reply.log)"); fprintf (stderr, "\n");
-		fprintf(LOCAL_LOG, "\n\n<< New Thread >>\n]] Args:\n== | ch_ref = ");
+		fprintf(stderr, " (verbose)");
+		fprintf(stderr, "\n\n<< New Thread >>\n]] Args:\n== | ch_ref = ");
 		for (int i = 0; i < 100; i++)
-			fprintf(LOCAL_LOG, "%c", ch_ref[i]);
-		fprintf(LOCAL_LOG, "\n| ref_len = %d\n", ref_len);
+			fprintf(stderr, "%c", ch_ref[i]);
+		fprintf(stderr, "\n| ref_len = %d\n", ref_len);
 	}*/
+	fprintf (stderr, "\n");
 
 	char* link_start = ch_ref + strlen (PATTERN_HREF_OPEN);
 	short link_len = strstr (ch_ref, PATTERN_REPLY_CLASS) - 3 - link_start;
@@ -489,12 +452,12 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 
 	char* data_thread_start = strstr (ch_ref, PATTERN_REPLY_THREAD) + strlen(PATTERN_REPLY_THREAD);
 	if (data_thread_start == NULL) { // '+ strlen' to exclude opening string
-		fprintf (stderr, "! Error: no data-thread in reply-ref\n");
+		fprintf (stderr, "[parseRef_Reply]! Error: no data-thread in reply-ref\n");
 		return ERR_REF_FORMAT;
 	}
 	char* data_thread_end = strstr (data_thread_start, "\\\"") - 1;
 	if (data_thread_end == NULL-1) {  // '- 1' to exclude '\'
-		fprintf (stderr, "! Error: data-thread opened but not closed\n");
+		fprintf (stderr, "[parseRef_Reply]! Error: data-thread opened but not closed\n");
 		return ERR_REF_FORMAT;
 	}
 	long int data_thread = str2lint (data_thread_start, data_thread_end-data_thread_start+1);
@@ -502,12 +465,12 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 
 	char* data_num_start = strstr (ch_ref, PATTERN_REPLY_NUM) + strlen(PATTERN_REPLY_NUM);
 	if (data_num_start == NULL) { // '+ strlen' to exclude opening string
-		fprintf (stderr, "! Error: no data-num in reply-ref\n");
+		fprintf (stderr, "[parseRef_Reply]! Error: no data-num in reply-ref\n");
 		return ERR_REF_FORMAT;
 	}
 	char* data_num_end = strstr (data_num_start, "\\\"") - 1;
 	if (data_thread_end == NULL-1) {  // '- 1' to exclude '\'
-		fprintf (stderr, "! Error: data-num opened but not closed\n");
+		fprintf (stderr, "[parseRef_Reply]! Error: data-num opened but not closed\n");
 		return ERR_REF_FORMAT;
 	}
 	long int data_num = str2lint (data_num_start, data_num_end-data_num_start+1);
@@ -527,38 +490,33 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 
 struct thread* initThread (const char* thread_string, const long int thread_len, const bool v) {
 	fprintf(stderr, "\n]] Started initThread ");
-	FILE* LOCAL_LOG = NULL;
 	if (v) {
-		LOCAL_LOG = fopen("log/initThread.log", "a");
-		fprintf(stderr, " (verbose, log in log/initThread.log)\n");
-		fprintf(LOCAL_LOG, "\n\n== New Thread ==\n]] Args:\n| thread_string = %p\n| thread_len = %d\n",
+		fprintf(stderr, " (verbose)\n");
+		fprintf(stderr, "\n\n== New Thread ==\n]] Args:\n| thread_string = %p\n| thread_len = %d\n",
 			thread_string, thread_len);
 	}
-	fflush(LOCAL_LOG);
 
 	long int nposts = 0;
 	long int* post_diffs = findPostsInJSON( thread_string, &nposts, true );
-	if (v) fprintf(LOCAL_LOG, "] nposts = %d\n", nposts);
-	fflush(LOCAL_LOG);
+	if (v) fprintf(stderr, "] nposts = %d\n", nposts);
 
 	struct post** posts = (struct post**) calloc (nposts, sizeof(struct post*));
 	for (int i = 0; i < ((int)nposts)-1; i++) {
 		char *cpost_ptr = thread_string + (ptrdiff_t) post_diffs[i];
 		long int cpost_len = post_diffs[i+1] - post_diffs[i];
-		if (v) fprintf( LOCAL_LOG, "] Calling initPost #%d: from %d to %d, length %d\n",
+		if (v) fprintf( stderr, "] Calling initPost #%d: from %d to %d, length %d\n",
 			i, post_diffs[i], post_diffs[i+1], cpost_len );
-		fflush(LOCAL_LOG);
 		posts[i] = initPost(
 							cpost_ptr,
 							cpost_len,
 							true
 							);
 		if (posts[i] == (char *) ERR_COMMENT_FORMAT) {
-			fprintf(stderr, "! Error: initPost() returned ERR_COMMENT_FORMAT\n === Exiting ===");
+			fprintf(stderr, "[initThread]! Error: initPost() returned ERR_COMMENT_FORMAT\n === Exiting ===");
 			exit(3);
 		}
 		if (posts[i] == (char *) ERR_POST_OUT_OF_RANGE) {
-			fprintf(stderr, "! Error: initPost() returned ERR_POST_OUT_OF_RANGE\n === Exiting ===");
+			fprintf(stderr, "[initThread]! Error: initPost() returned ERR_POST_OUT_OF_RANGE\n === Exiting ===");
 			exit(4);
 		}
 	}
@@ -574,10 +532,9 @@ struct thread* initThread (const char* thread_string, const long int thread_len,
 	thread->posts = posts;
 
 	if (v) {
-		fprintf(LOCAL_LOG, "] Struct init done:\n| num = %d\n| nposts = %d\n| posts = %p\n",
+		fprintf(stderr, "] Struct init done:\n| num = %d\n| nposts = %d\n| posts = %p\n",
 			thread->num, thread->nposts, thread->posts);
-		fprintf(LOCAL_LOG, "== End of Thread ==\n");
-		fclose(LOCAL_LOG);
+		fprintf(stderr, "== End of Thread ==\n");
 	}
 	fprintf(stderr, "]] Exiting initThread\n");
 

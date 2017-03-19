@@ -14,7 +14,7 @@ void pomogite() // Справка
 	printf(" -s - запуск\n");
 	printf(" -p - задать пасскод\n");
 	printf(" -b - задать борду\n");
-	printf(" -n - заранее задать номер поста\n");
+	printf(" -n - заранее задать номер треда\n");
 }
 
 int main (int argc, char **argv)
@@ -80,56 +80,34 @@ int main (int argc, char **argv)
 	#endif
 
 	long int threadsize = 0;
-	char* thread_recv_ch = getThreadJSON (board_name, post_number, &threadsize, false); // Получаем указатель на скачанный тред
+	char *thread_recv_ch = getThreadJSON(board_name, post_number, &threadsize, false); // Получаем указатель на скачанный тред
 	fprintf(stderr, "threadsize = %u\n", threadsize);
-	char* thread_ch = (char*) calloc (threadsize+1, sizeof(char)); // Заказываем память под собственный буфер треда
+	char *thread_ch = (char *) calloc(threadsize + 1, sizeof(char)); // Заказываем память под собственный буфер треда
 	if (thread_ch == NULL) {
 		fprintf(stderr, "[main]! Error: 'thread_ch' memory allocation\n");
 		return ERR_MEMORY;
 	}
-	thread_ch = memcpy( // Копируем скачанный тред из буфера загрузок, т.к. хранить там ненадежно
-					thread_ch,
-					thread_recv_ch,
-					threadsize
-					);
+	// Копируем скачанный тред из буфера загрузок, т.к. хранить там ненадежно
+	thread_ch = memcpy(thread_ch, thread_recv_ch, threadsize);
 	thread_ch[threadsize] = 0;
-	fprintf(stderr, "thread_ch = %p\n", thread_ch);
-
-	/*
-	printf("%c%c%c%c%c%c%c%c%c%c\n",
-			thread_ch[threadsize-10],
-			thread_ch[threadsize-9 ],
-			thread_ch[threadsize-8 ],
-			thread_ch[threadsize-7 ],
-			thread_ch[threadsize-6 ],
-			thread_ch[threadsize-5 ],
-			thread_ch[threadsize-4 ],
-			thread_ch[threadsize-3 ],
-			thread_ch[threadsize-2 ],
-			thread_ch[threadsize+1 ]);
-	*/
-
-	FILE *thread_o = fopen( "log/thread_o", "w" );
-	fprintf(thread_o, "%s\n", thread_ch);
 	fprintf(stderr, "Get OK\n");
 
-	struct thread* thread = initThread( thread_ch, threadsize, true );
-
+	struct thread* thread = initThread(thread_ch, threadsize, true);
 	fprintf(stderr, "Init OK\n");
 
 	initscr();
 	raw();
 	keypad (stdscr, TRUE);
 	noecho();
-	printw ("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
+	printw("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
 	for (int i = 0; i < thread->nposts; i++) {
 		bool done = 0;
-		while (! done)
+		while (done == false)
 			switch (getch())
 			{
 				case 'C': case 'c':
 					clear();
-					printw ("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
+					printw("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
 					break;
 				case 'Q': case 'q':
 					done = 1;
@@ -170,13 +148,17 @@ int printPost (struct post* post,const bool show_email,const bool show_files) {
 		return ERR_BROKEN_POST;
 	}
 
+	// Заголовок отдельно
 	if (show_email && (post->email != NULL)) {
-		printw ("[=== %s (%s) #%d %s ===]\n%s\n\n",
-			post->name, post->email, post->num, post->date, post->comment);
+		printw ("[=== %s (%s) #%d %s ===]\n",
+			post->name, post->email, post->num, post->date);
 	}
 	else {
-		printw ("[=== %s #%d %s ===]\n%s\n\n",
-			post->name, post->num, post->date, post->comment);
+		printw ("[=== %s #%d %s ===]\n",
+			post->name, post->num, post->date);
 	}
+	// Комментарий
+	printw("%s\n\n", post->comment);
+
 	return 0;
 }

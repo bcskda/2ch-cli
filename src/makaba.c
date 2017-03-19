@@ -352,14 +352,14 @@ char* getThreadJSON (const char* board, const long int threadnum, long int* thre
 // Captcha
 // ========================================
 
-char* getCaptchaSettingsJSON (const char* board) {
-	fprintf (stderr, "]] Starting getCaptchaSettings\n");
+char *getCaptchaSettingsJSON (const char* board) {
+	fprintf(stderr, "]] Starting getCaptchaSettings\n");
 
-	CURL* curl_handle = curl_easy_init();
+	CURL *curl_handle = curl_easy_init();
 	CURLcode request_status = 0;
 	if (curl_handle) {
 		const short URL_length = strlen(BASE_URL)+strlen(CAPTCHA_SETTINGS)+strlen(board)+1;
-		char* URL = (char*) calloc (URL_length, sizeof(char));
+		char *URL = (char *) calloc (URL_length, sizeof(char));
 		if (URL == NULL) {
 			fprintf (stderr, "[getCaptchaSettings]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
