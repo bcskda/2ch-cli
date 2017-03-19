@@ -15,14 +15,15 @@ void pomogite() // Справка
 	printf(" -p - задать пасскод\n");
 	printf(" -b - задать борду\n");
 	printf(" -n - заранее задать номер треда\n");
+	printf(" -v - подробный лог (для разработчиков)\n");
 }
 
 int main (int argc, char **argv)
 {
-
+	bool verbose = false;
 	char passcode[32] = "пасскода нет нихуя :("; // Пасскод
-    char board_name[10] = "b"; // Имя борды
-    long long post_number = 0; // Номер треда в борде
+  char board_name[10] = "b"; // Имя борды
+  long long post_number = 0; // Номер треда в борде
 
 	//getopt
 	int opt;
@@ -59,6 +60,9 @@ int main (int argc, char **argv)
 				break;
 			case 's':
 				start_or_not = true;
+				break;
+			case 'v':
+				verbose = true;
 				break;
 			default:
 				pomogite();
