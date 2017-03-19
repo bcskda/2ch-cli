@@ -75,6 +75,8 @@ int main (int argc, char **argv)
 	#ifdef CAPTCHA_TEST
 	printf("%s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON(board_name, lint2str(post_number)))));
 	printf("%s\n", getCaptchaSettingsJSON(board_name) );
+	convert_img("captcha.png", "captcha-test.ansi", true);
+	show_img("captcha-test.ansi");
 	makabaCleanup();
 	return RET_PREEXIT;
 	#endif
@@ -95,11 +97,8 @@ int main (int argc, char **argv)
 	struct thread* thread = initThread(thread_ch, threadsize, true);
 	fprintf(stderr, "Init OK\n");
 
-	initscr();
-	raw();
-	keypad (stdscr, TRUE);
-	noecho();
-	printw("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
+	ncurses_init();
+	ncurses_print_help();
 	for (int i = 0; i < thread->nposts; i++) {
 		bool done = 0;
 		while (done == false)
@@ -107,11 +106,14 @@ int main (int argc, char **argv)
 			{
 				case 'C': case 'c':
 					clear();
-					printw("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
+					ncurses_print_help();
 					break;
 				case 'Q': case 'q':
 					done = 1;
 					i = thread->nposts;
+					break;
+				case 'P': case 'p':
+					printw(">>>> Открой капчу в другом терминале. Прости.\n\n");
 					break;
 				default:
 					fprintf(stderr, "Printing post #%d\n", i);
@@ -123,7 +125,7 @@ int main (int argc, char **argv)
 	}
 	printw("\nPush a key to exit\n");
 	getch();
-	endwin();
+	ncurses_exit();
 
 	freeThread(thread);
 	free(thread_ch);
@@ -132,7 +134,6 @@ int main (int argc, char **argv)
 
 	return RET_OK;
 }
-
 
 int printPost (struct post* post,const bool show_email,const bool show_files) {
 	if (post->comment == NULL) {
@@ -161,4 +162,19 @@ int printPost (struct post* post,const bool show_email,const bool show_files) {
 	printw("%s\n\n", post->comment);
 
 	return 0;
+}
+
+void ncurses_init() {
+	initscr();
+	raw();
+	keypad (stdscr, TRUE);
+	noecho();
+}
+
+void ncurses_exit() {
+	endwin();
+}
+
+void ncurses_print_help() {
+	printw("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
 }

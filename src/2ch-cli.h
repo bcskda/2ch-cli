@@ -15,6 +15,7 @@
 
 #include "makaba.c"
 #include "parser.c"
+#include "image.c"
 
 #define VERSION "v0.4test1"
 
@@ -28,3 +29,7 @@ const int RET_OK = 0,
 //const size_t Thread_size = 10000000; // Размер буфера с тредом
 
 int printPost (struct post* post, const bool show_email, const bool show_files);
+
+void ncurses_init();
+void ncurses_exit();
+void ncurses_print_help();

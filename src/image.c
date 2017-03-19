@@ -6,6 +6,38 @@
 
 #include "image.h"
 
+int show_img(const char *filename) {
+    fprintf(stderr, "]] Starting show_img\n");
+
+    caca_canvas_t *canvas;
+    caca_display_t *display;
+    // Подразумевается, что на данном этапе уже есть сессия ncurses
+    canvas = caca_create_canvas(0, 0);
+    if (! canvas) {
+        fprintf(stderr, "[show_img]! Error: could not open libcaca canvas\n");
+        return Ret_show_create_canvas;
+    }
+    ssize_t import_ret = caca_import_canvas_from_file(canvas, filename, "");
+    if (import_ret == NULL) {
+        fprintf(stderr, "[show_img]! Error: could not import canvas from %s\n", filename);
+        return Ret_show_import_canvas;
+    }
+    display = caca_create_display(canvas);
+    if (! display) {
+        fprintf(stderr, "[show_img]! Error: could not open libcaca display\n");
+        return Ret_show_create_display;
+    }
+
+    caca_refresh_display(display);
+
+    caca_event_t event;
+    caca_get_event(display, CACA_EVENT_KEY_PRESS, &event, -1);
+
+    caca_free_display(display);
+    fprintf(stderr, "]] Exiting show_img\n");
+    return Ret_show_OK;
+}
+
 void convert_img(const char *filename, const char *ofile, const bool v) {
     fprintf (stderr, "]] Starting convert_img\n");
     /*
@@ -22,7 +54,7 @@ void convert_img(const char *filename, const char *ofile, const bool v) {
     else {
         // @TODO mktemp()
         freopen(ofile, "w", stdout);
-        char *converter_args[] = {
+        const char *converter_args[] = {
             Converter,
             "-W",
             Converter_width_s,
