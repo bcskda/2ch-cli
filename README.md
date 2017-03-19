@@ -8,7 +8,8 @@ C only
 ## Зависимости
 ```
 libcurl
-ncursesw
+libncursesw
+libcaca с поддержкой ncurses
 ```
 ## Установка
 ```
