@@ -14,9 +14,9 @@
 #include <stdbool.h>
 #include <getopt.h>
 
-#include "makaba.c"
-#include "parser.c"
-#include "image.c"
+#include "makaba.h"
+#include "parser.h"
+#include "image.h"
 
 #define VERSION "v0.4test1"
 
