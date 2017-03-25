@@ -99,32 +99,44 @@ int main (int argc, char **argv)
 
 	ncurses_init();
 	ncurses_print_help();
-	for (int i = 0; i < thread->nposts; i++) {
+	bool should_exit = false;
+	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
 		while (done == false)
 			switch (getch())
 			{
-				case 'C': case 'c':
-					clear();
-					ncurses_print_help();
-					break;
 				case 'Q': case 'q':
 					done = 1;
-					i = thread->nposts;
+					should_exit = true;
 					break;
 				case 'P': case 'p':
 					printw(">>>> Открой капчу в другом терминале. Прости.\n\n");
 					break;
-				default:
-					fprintf(stderr, "Printing post #%d\n", i);
-					printPost(thread->posts[i], true, true);
-					refresh();
+				case 'H': case 'h':
+					ncurses_print_help();
+					break;
+				case KEY_RIGHT: case KEY_DOWN:
+					if (cur_post < thread->nposts - 1) {
+						cur_post ++;
+						ncurses_print_post(thread, cur_post);
+					}
+					else {
+						printw(">>>> Последний пост\n");
+					}
+					done = 1;
+					break;
+				case KEY_LEFT: case KEY_UP:
+					if (cur_post > 0) {
+						cur_post --;
+						ncurses_print_post(thread, cur_post);
+					}
+					else {
+						printw(">>>> Первый пост\n");
+					}
 					done = 1;
 					break;
 			}
 	}
-	printw("\nPush a key to exit\n");
-	getch();
 	ncurses_exit();
 
 	freeThread(thread);
@@ -176,5 +188,12 @@ void ncurses_exit() {
 }
 
 void ncurses_print_help() {
-	printw("Push [c] to clear screen, [q] to exit, anything else to print another post\n");
+	printw(">>>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост, [H] помощь, [Q] выход\n");
+}
+
+void ncurses_print_post(const struct thread *thread, const int postnum) {
+	clear();
+	fprintf(stderr, "Printing post #%d\n", postnum);
+	printPost(thread->posts[postnum], true, true);
+	refresh();
 }
