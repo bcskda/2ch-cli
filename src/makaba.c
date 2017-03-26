@@ -530,6 +530,173 @@ char *get2chaptchaPicPNG (const char *URL, long int *pic_size) {
 }
 
 // ========================================
+// Posting
+// ========================================
+
+int sendPost (const char *board, const char *thread,
+	const char *comment, const char *subject, const char *name, const char *email,
+	const char *captcha_id, const char *captcha_value, long long *answer_length)
+{
+	fprintf (stderr, "]] Starting sendPost\n");
+
+	CURL *curl_handle = curl_easy_init();
+	CURLcode request_status = 0;
+	if (curl_handle) {
+		// URL: https://2ch.hk/makaba/posting.fcgi
+		short URL_length = strlen(BASE_URL) + strlen(POSTING_API);
+		char *URL = (char *) calloc (URL_length, sizeof(char));
+		if (URL == NULL) {
+			fprintf (stderr, "[sendPost]! Error allocating memory (URL)\n");
+			curl_easy_cleanup (curl_handle);
+			return ERR_MEMORY;
+		}
+		URL = strcpy (URL, BASE_URL);
+		URL = strcat (URL, POSTING_API);
+		fprintf(stderr, "url = %s\n", URL);
+		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
+
+		/* Postfields:
+		 * = json=1
+		 * = task=post
+		 * = captcha_type=2chaptcha
+		 * ! board=
+		 * ! thread=
+		 *   name=
+		 *   email=
+		 *   subject=
+		 * ! comment=
+		 * ! 2chaptcha_id=
+		 * ! 2chaptcha_value=
+		 * = - постоянные значения
+		 * ! - обязательные поля
+		 */
+		short postfields_length = strlen(POSTING_FIELDS);
+		if (board != NULL) {
+			postfields_length += 7 + strlen(board);
+		}
+		else {
+			fprintf(stderr, "[sendPost]! Error: board given as NULL\n");
+			curl_easy_cleanup(curl_handle);
+			free(URL);
+			return ERR_BAD_ARGS;
+		}
+		if (thread != NULL) {
+			postfields_length += 8 + strlen(thread);
+		}
+		else {
+			postfields_length += 9; // thread=0 - создать тред
+		}
+		if (comment != NULL) { // Проверить тут потом на длину <= 15000
+			postfields_length += 9 + strlen(comment);
+		}
+		else {
+			fprintf(stderr, "[sendPost]! Error: comment given as NULL\n");
+			curl_easy_cleanup(curl_handle);
+			free(URL);
+			return ERR_BAD_ARGS;
+		}
+		if (subject != NULL) {
+			postfields_length += 9 + strlen(subject);
+		}
+		if (name != NULL) {
+			postfields_length += 6 + strlen(name);
+		}
+		if (email != NULL) {
+			postfields_length += 7 + strlen(email);
+		}
+		if (captcha_id != NULL) {
+			postfields_length += 12 + strlen(captcha_id);
+		}
+		else {
+			fprintf(stderr, "[sendPost]! Error: captcha_id given as NULL\n");
+			curl_easy_cleanup(curl_handle);
+			free(URL);
+			return ERR_BAD_ARGS;
+		}
+		if (captcha_value != NULL) {
+			postfields_length += 15 + strlen(captcha_value);
+		}
+		else {
+			fprintf(stderr, "[sendPost]! Error: captcha_value given as NULL\n");
+			curl_easy_cleanup(curl_handle);
+			free(URL);
+			return ERR_BAD_ARGS;
+		}
+		char *postfields = (char *) calloc (postfields_length, sizeof(char));
+		if (postfields == NULL) {
+			fprintf (stderr, "[sendPost]! Error allocating memory (POST data)\n");
+			curl_easy_cleanup (curl_handle);
+			free (URL);
+			return ERR_MEMORY;
+		}
+		postfields = strcpy (postfields, POSTING_FIELDS);
+		postfields = strcat (postfields, "&board=");
+		postfields = strcat (postfields, board);
+		postfields = strcat (postfields, "&thread=");
+		if (thread != NULL) {
+			postfields = strcat (postfields, thread);
+		}
+		else {
+			postfields = strcat (postfields, "0");
+		}
+		postfields = strcat (postfields, "&comment=");
+		postfields = strcat (postfields, comment);
+		if (subject != NULL) {
+			postfields = strcat (postfields, "&subject=");
+			postfields = strcat (postfields, subject);
+		}
+		if (name != NULL) {
+			postfields = strcat (postfields, "&name=");
+			postfields = strcat (postfields, name);
+		}
+		if (email != NULL) {
+			postfields = strcat (postfields, "&email=");
+			postfields = strcat (postfields, email);
+		}
+		postfields = strcat (postfields, "&2chaptcha_id=");
+		postfields = strcat (postfields, captcha_id);
+		postfields = strcat (postfields, "&2chaptcha_value=");
+		postfields = strcat (postfields, captcha_value);
+		fprintf(stderr, "postfields = %s\n", postfields);
+		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDS, postfields);
+
+		if (CURL_BUFF_BODY == NULL) {
+			fprintf(stderr, "[sendPost]! Error: curl body buffer not allocated\n");
+			return ERR_MAKABA_SETUP;
+		}
+		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
+		curl_easy_setopt (curl_handle, CURLOPT_WRITEFUNCTION, CURL_writeToBuff);
+
+		curl_easy_setopt (curl_handle, CURLOPT_USERAGENT, CURL_UA);
+
+		request_status = curl_easy_perform (curl_handle);
+		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
+		*answer_length = CURL_BUFF_POS;
+		CURL_BUFF_POS = 0;
+		if (request_status != CURLE_OK) {
+			fprintf (stderr, "[sendPost]! Error @ curl_easy_perform: %s\n",
+			curl_easy_strerror(request_status));
+			curl_easy_cleanup (curl_handle);
+			free (URL);
+			free (postfields);
+			return ERR_CURL_PERFORM;
+		}
+
+		curl_easy_cleanup (curl_handle);
+		free (URL);
+		free (postfields);
+	}
+	else {
+		fprintf (stderr, "[sendPost]! Error initializing curl handle\n");
+		return ERR_CURL_INIT;
+	}
+
+	fprintf(stderr, "]] Exiting sendPost\n");
+
+	return 0;
+}
+
+// ========================================
 // Misc utility functions
 // ========================================
 

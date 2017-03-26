@@ -20,6 +20,26 @@ void pomogite() // Справка
 int main (int argc, char **argv)
 {
 
+	#ifdef POSTING_TEST
+	makabaSetup();
+	char *board = "s";
+	char *thread_number = "2000498";
+	char *captcha_id = prepareCaptcha(board, lint2str(thread_number));
+	char captcha_value[6];
+	system("cat captcha.utf8");
+	printf("Ответ на капчу: ");
+	scanf("%s", captcha_value);
+	char *email = "sage";
+	char *comment = "2ch-cli posting test x2";
+	long long answer_length;
+	sendPost(board, thread_number,
+			 comment, NULL, NULL, NULL,
+		 	 captcha_id, captcha_value, &answer_length);
+	printf("Answer: %s\n", CURL_BUFF_BODY); // По-хорошему так делать не надо
+	makabaCleanup();
+	return RET_PREEXIT;
+	#endif
+
 	char passcode[32] = "пасскода нет нихуя :("; // Пасскод
     char board_name[10] = "b"; // Имя борды
     long long post_number = 0; // Номер треда в борде
@@ -39,7 +59,8 @@ int main (int argc, char **argv)
 
 	#ifdef CAPTCHA_TEST
 	printf("%s\n", getCaptchaSettingsJSON(board_name));
-	char *captcha_filename = prepareCaptcha(board_name, lint2str(post_number));
+	char *captcha_id = prepareCaptcha(board_name, lint2str(post_number));
+	printf("captcha_id = %s\n", captcha_id);
 	system("cat captcha.utf8");
 	makabaCleanup();
 	return RET_PREEXIT;
@@ -160,7 +181,7 @@ char *prepareCaptcha(const char *board, const char *thread) {
 	convert_img(CaptchaPngFilename, CaptchaUtfFilename, true);
 
 	free(captcha_png);
-	return CaptchaUtfFilename;
+	return captcha_id;
 }
 
 void parse_argv(const int argc, const char **argv,
