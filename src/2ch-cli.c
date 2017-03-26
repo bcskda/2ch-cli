@@ -148,7 +148,7 @@ char *prepareCaptcha(const char *board, const char *thread) {
 
 	char *captcha_id_raw = get2chaptchaIdJSON(board, thread);
 	char *captcha_id = parse2chaptchaId(captcha_id_raw);
-	char *captcha_png_url = get2chaptchaPicURL(captcha_id);
+	char *captcha_png_url = form2chaptchaPicURL(captcha_id);
 	long int pic_size;
 	char *captcha_png = get2chaptchaPicPNG(captcha_png_url, &pic_size);
 	captcha_png = (char *) calloc(pic_size + 1, sizeof(char));   // Крайне нежелательно доверять

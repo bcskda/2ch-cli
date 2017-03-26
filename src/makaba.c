@@ -471,7 +471,7 @@ char *get2chaptchaIdJSON (const char *board, const char *thread) {
 	return CURL_BUFF_BODY;
 }
 
-char *get2chaptchaPicURL (const char *id) {
+char *form2chaptchaPicURL (const char *id) {
 	fprintf (stderr, "]] Starting get2chaptchaPicURL\n");
 
 	const long int URL_length = strlen(BASE_URL)+strlen(CAPTCHA_2CHAPTCHA)+6+strlen(id)+1;
