@@ -25,51 +25,16 @@ int main (int argc, char **argv)
     long long post_number = 0; // Номер треда в борде
 
 	//getopt
-	int opt;
 	bool start_or_not = false; // Проверяем, есть ли '-s' и нужно ли запускать
-
 	if (argc == 1) /* Если аргументов нет, вывод помощи */ {
 		pomogite();
 		return RET_NOARGS;
 	}
-	while (( opt = getopt(argc, argv, "hp:b:n:s") ) != -1)
-	{
-		switch (opt)
-		{
-			case 'p':
-				memset(passcode, '\0', sizeof(passcode));
-                if ( sizeof(optarg) > sizeof(passcode) ) { //проверка
-					printf("Не шути так больше\n");
-					return ERR_ARGS;
-				}
-				memcpy(passcode, optarg, sizeof(passcode));
-                printf("Разраб хуй, ещё не запилил\n");
-				printf("Уже что-то могу: %s!\n", passcode);
-				break;
-			case 'b':
-				memset(board_name, '\0', sizeof(board_name));
-                if ( sizeof(optarg) > sizeof(board_name) ) { //проверка
-					printf("Не шути так больше\n");
-					return ERR_ARGS;
-				}
-				memcpy(board_name, optarg, sizeof(board_name));
-				break;
-			case 'n':
-				post_number = atoi(optarg);
-				break;
-			case 's':
-				start_or_not = true;
-				break;
-			default:
-				pomogite();
-				return ERR_ARGS;
-		}
-	}
-
-	if (start_or_not == false) return RET_OK;
+	parse_argv(argc, argv, board_name, &post_number, passcode, &start_or_not);
+	if (start_or_not == false)
+		return RET_OK;
 
 	setlocale (LC_ALL, "");
-
 	makabaSetup();
 
 	#ifdef CAPTCHA_TEST
@@ -195,8 +160,46 @@ char *prepareCaptcha(const char *board, const char *thread) {
 	convert_img(CaptchaPngFilename, CaptchaUtfFilename, true);
 
 	free(captcha_png);
-
 	return CaptchaUtfFilename;
+}
+
+void parse_argv(const int argc, const char **argv,
+	char *board_name, long long *post_number, char *passcode, bool *start_or_not)
+{
+	int opt;
+	while (( opt = getopt(argc, argv, "hp:b:n:s") ) != -1)
+	{
+		switch (opt)
+		{
+			case 'p':
+				memset(passcode, '\0', sizeof(passcode));
+                if ( sizeof(optarg) > sizeof(passcode) ) { //проверка
+					printf("Не шути так больше\n");
+					exit(ERR_ARGS);
+				}
+				memcpy(passcode, optarg, sizeof(passcode));
+                printf("Разраб хуй, ещё не запилил пасскоды\n");
+				printf("Уже что-то могу: %s!\n", passcode);
+				break;
+			case 'b':
+				memset(board_name, '\0', sizeof(board_name));
+                if ( sizeof(optarg) > sizeof(board_name) ) { //проверка
+					printf("Не шути так больше\n");
+					exit(ERR_ARGS);
+				}
+				memcpy(board_name, optarg, sizeof(board_name));
+				break;
+			case 'n':
+				*post_number = atoi(optarg);
+				break;
+			case 's':
+				*start_or_not = true;
+				break;
+			default:
+				pomogite();
+				exit(ERR_ARGS);
+		}
+	}
 }
 
 void ncurses_init() {

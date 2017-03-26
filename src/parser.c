@@ -41,7 +41,7 @@ long int *findPostsInJSON (const char *src, long int *postcount_res, const bool 
 				if (src[i] == '"' && src[i-1 != '\\']) {
 					depth -= 1; // Выход из displayname/fullname
 					if (v) fprintf (stderr, "Exiting name\n");
-				} *
+				}
 				break;
 			}
 			case 2: {
