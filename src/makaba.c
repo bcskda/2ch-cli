@@ -16,18 +16,18 @@
 // General info getting
 // ========================================
 
-char* getBoardsListJSON (const bool v) {
+char *getBoardsListJSON (const bool v) {
 	fprintf (stderr, "]] Starting getBoardsList");
 	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 	if (v) fprintf (stderr, "] initializing curl handle\n");
-	CURL* curl_handle = curl_easy_init();
+	CURL *curl_handle = curl_easy_init();
 	CURLcode request_status = 0;
 	if (curl_handle) {
 		if (v) fprintf (stderr, "] curl handle initialized\n");
 		short URL_length = strlen(BASE_URL)+strlen(MOBILE_API)+16+1;
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
 		// URL: 2ch.hk/makaba/mobile.fcgi?task=get_boards
-		char* URL = (char*) calloc (URL_length, sizeof(char));
+		char *URL = (char*) calloc (URL_length, sizeof(char));
 		if (URL != NULL) {
 			if (v) fprintf (stderr, "memory allocated (URL)\n");
 		}
@@ -88,20 +88,20 @@ char* getBoardsListJSON (const bool v) {
 	return CURL_BUFF_BODY;
 }
 
-char* getBoardPageJSON (const char* board, const long int page, const bool v) {
+char *getBoardPageJSON (const char *board, const long int page, const bool v) {
 	fprintf (stderr, "]] Starting getBoardPage");
 	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 	if (v) fprintf (stderr, "] initializing curl handle\n");
-	CURL* curl_handle = curl_easy_init();
+	CURL *curl_handle = curl_easy_init();
 	CURLcode request_status = 0;
 	if (curl_handle) {
 		if (v) fprintf (stderr, "] curl handle initialized\n");
-		char* page_string = lint2str (page);
+		char *page_string = lint2str (page);
 		if (v) fprintf (stderr, "page number (string) = %s\n", page_string);
 		short URL_length = strlen(BASE_URL)+strlen(board)+1+strlen(page_string)+5;
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
 		// URL format: 2ch.hk/$board/$page.json
-		char* URL = (char*) calloc (URL_length, sizeof(char));
+		char *URL = (char*) calloc (URL_length, sizeof(char));
 		if (URL != NULL) {
 			if (v) fprintf (stderr, "memory allocated (URL)\n");
 		}
@@ -166,18 +166,18 @@ char* getBoardPageJSON (const char* board, const long int page, const bool v) {
 	return CURL_BUFF_BODY;
 }
 
-char* getBoardCatalogJSON (const char* board, const bool v) {
+char *getBoardCatalogJSON (const char *board, const bool v) {
 	fprintf (stderr, "]] Starting getBoardCatalog");
 	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 	if (v) fprintf (stderr, "] initializing curl handle\n");
-	CURL* curl_handle = curl_easy_init();
+	CURL *curl_handle = curl_easy_init();
 	CURLcode request_status = 0;
 	if (curl_handle) {
 		if (v) fprintf (stderr, "] curl handle initialized\n");
 		short URL_length = strlen(BASE_URL)+strlen(board)+1+7+5;
 		// URL format: 2ch.hk/$board/catalog.json
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
-		char* URL = (char*) calloc (URL_length, sizeof(char));
+		char *URL = (char*) calloc (URL_length, sizeof(char));
 		if (URL != NULL) {
 			if (v) fprintf (stderr, "memory allocated (URL)\n");
 		}
@@ -236,20 +236,20 @@ char* getBoardCatalogJSON (const char* board, const bool v) {
 	return CURL_BUFF_BODY;
 }
 
-char* getThreadJSON (const char* board, const long int threadnum, long int* threadsize, const bool v) {
+char *getThreadJSON (const char *board, const long int threadnum, long int *threadsize, const bool v) {
 	fprintf (stderr, "]] Starting getThread");
 	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 	if (v) fprintf (stderr, "] initializing curl handle\n");
-	CURL* curl_handle = curl_easy_init();
+	CURL *curl_handle = curl_easy_init();
 	CURLcode request_status = 0;
 	if (curl_handle) {
 		if (v) fprintf (stderr, "] curl handle initialized\n");
-		char* threadnum_string = lint2str (threadnum);
+		char *threadnum_string = lint2str (threadnum);
 		if (v) fprintf (stderr, "thread number (string) = %s\n", threadnum_string);
 		const short URL_length = strlen(BASE_URL)+strlen(MOBILE_API);
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
 		// API URL: 2ch.hk/makaba/mobile.fcgi
-		char* URL = (char*) calloc (URL_length, sizeof(char));
+		char *URL = (char*) calloc (URL_length, sizeof(char));
 		if (URL != NULL) {
 			if (v) fprintf (stderr, "memory allocated (URL)\n");
 		}
@@ -277,7 +277,7 @@ char* getThreadJSON (const char* board, const long int threadnum, long int* thre
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDSIZE, postfields_length);
 		if (v) fprintf (stderr, "] Option POSTFIELDSIZE set\n");
 
-		const char* postfields = (char*) calloc (postfields_length, sizeof(char));
+		const char *postfields = (char*) calloc (postfields_length, sizeof(char));
 		if (postfields != NULL) {
 			if (v) fprintf (stderr, "memory allocated (POST data)\n");
 		}
@@ -352,7 +352,7 @@ char* getThreadJSON (const char* board, const long int threadnum, long int* thre
 // Captcha
 // ========================================
 
-char *getCaptchaSettingsJSON (const char* board) {
+char *getCaptchaSettingsJSON (const char *board) {
 	fprintf(stderr, "]] Starting getCaptchaSettings\n");
 
 	CURL *curl_handle = curl_easy_init();
@@ -403,14 +403,14 @@ char *getCaptchaSettingsJSON (const char* board) {
 }
 
 
-char* get2chaptchaIdJSON (const char* board, const char* thread) {
+char *get2chaptchaIdJSON (const char *board, const char *thread) {
 	fprintf (stderr, "]] Starting get2chaptchaIdJSON\n");
 
-	CURL* curl_handle = curl_easy_init();
+	CURL *curl_handle = curl_easy_init();
 	CURLcode request_status = 0;
 	if (curl_handle) {
 		const short URL_length = strlen(BASE_URL)+strlen(CAPTCHA_2CHAPTCHA)+2+1;
-		char* URL = (char*) calloc (URL_length, sizeof(char));
+		char *URL = (char*) calloc (URL_length, sizeof(char));
 		if (URL == NULL) {
 			fprintf (stderr, "[get2chaptchaIdJSON]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
@@ -422,7 +422,7 @@ char* get2chaptchaIdJSON (const char* board, const char* thread) {
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 
 		const short postfields_length = 6+strlen(board)+8+strlen(thread)+1;
-		char* postfields = (char*) calloc (postfields_length, sizeof(char));
+		char *postfields = (char*) calloc (postfields_length, sizeof(char));
 		if (postfields == NULL) {
 			fprintf (stderr, "[get2chaptchaIdJSON]! Error allocating memory (POST data)\n");
 			curl_easy_cleanup (curl_handle);
@@ -471,11 +471,11 @@ char* get2chaptchaIdJSON (const char* board, const char* thread) {
 	return CURL_BUFF_BODY;
 }
 
-char* get2chaptchaPicURL (const char* id) {
+char *get2chaptchaPicURL (const char *id) {
 	fprintf (stderr, "]] Starting get2chaptchaPicURL\n");
 
 	const long int URL_length = strlen(BASE_URL)+strlen(CAPTCHA_2CHAPTCHA)+6+strlen(id)+1;
-	char* URL = (char*) calloc (URL_length, sizeof(char));
+	char *URL = (char*) calloc (URL_length, sizeof(char));
 	if (URL == NULL) {
 			fprintf (stderr, "[get2chaptchaPicURL]! Error allocating memory (URL)\n");
 			return ERR_MEMORY;
@@ -493,7 +493,7 @@ char* get2chaptchaPicURL (const char* id) {
 char *get2chaptchaPicPNG (const char *URL, long int *pic_size) {
 	fprintf(stderr, "]] Starting get2chaptchaPicPNG\n");
 
-	CURL* curl_handle = curl_easy_init();
+	CURL *curl_handle = curl_easy_init();
 	CURLcode request_status = 0;
 	if (curl_handle) {
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
@@ -543,7 +543,7 @@ void makabaCleanup() {
 		free(CURL_BUFF_BODY);
 }
 
-size_t CURL_writeToBuff (const char* src, const size_t block_size, const size_t nmemb, void* dest) {
+size_t CURL_writeToBuff (const char *src, const size_t block_size, const size_t nmemb, void *dest) {
 	if (src==NULL || CURL_BUFF_POS+block_size*nmemb > CURL_BUFF_BODY_SIZE) {
 		return 0;
 	}
@@ -554,12 +554,12 @@ size_t CURL_writeToBuff (const char* src, const size_t block_size, const size_t 
 	}
 }
 
-char* lint2str (const long int val) {
+char *lint2str (const long int val) {
 	short length = 0;
 	for (int k = 1; k <= val; k*=10) {
 		length += 1;
 	}
-	char* res = (char*) calloc (length+1, sizeof(char));
+	char *res = (char*) calloc (length+1, sizeof(char));
 	if (res != NULL) {
 	}
 	else {
@@ -572,10 +572,10 @@ char* lint2str (const long int val) {
 	return res;
 }
 
-long int str2lint (const char* str, const long int len) {
+long int str2lint (const char *str, const long int len) {
 	long int res = 0;
 	for (long int i = 1, k = 1; i <= len; i+=1, k*=10) {
-		res += k * (str[len-i] - '0');
+		res += k  *(str[len-i] - '0');
 	}
 	return res;
 }

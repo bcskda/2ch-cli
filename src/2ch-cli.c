@@ -93,7 +93,7 @@ int main (int argc, char **argv)
 	thread_ch[threadsize] = 0;
 	fprintf(stderr, "Get OK\n");
 
-	struct thread* thread = initThread(thread_ch, threadsize, true);
+	struct thread *thread = initThread(thread_ch, threadsize, true);
 	fprintf(stderr, "Init OK\n");
 
 	ncurses_init();
@@ -146,7 +146,7 @@ int main (int argc, char **argv)
 	return RET_OK;
 }
 
-int printPost (struct post* post,const bool show_email,const bool show_files) {
+int printPost (struct post *post,const bool show_email,const bool show_files) {
 	if (post->comment == NULL) {
 		fprintf(stderr, "! ERROR @printPost: Null comment in struct post\n");
 		return ERR_BROKEN_POST;
@@ -175,7 +175,7 @@ int printPost (struct post* post,const bool show_email,const bool show_files) {
 	return 0;
 }
 
-char *prepareCaptcha(const char* board, const char* thread) {
+char *prepareCaptcha(const char *board, const char *thread) {
 	if (CURL_BUFF_BODY == NULL)
 		makabaSetup();
 

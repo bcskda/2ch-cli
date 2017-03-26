@@ -7,7 +7,7 @@
 #pragma once
 #include "parser.h"
 
-long int* findPostsInJSON (const char* src, long int* postcount_res, const bool v) {
+long int *findPostsInJSON (const char *src, long int *postcount_res, const bool v) {
 	fprintf (stderr, "]] Starting findPostsInJSON");
 
 	if (v) fprintf (stderr, " (verbose");
@@ -16,7 +16,7 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 
 	int srclen = strlen (src);
 	if (v) fprintf(stderr, "srclen = %d\n", srclen);
-	long int* temp = (long int*) calloc (srclen/8, sizeof(long int));
+	long int *temp = (long int*) calloc (srclen/8, sizeof(long int));
 
 	short depth = 0;
 	int postcount = 0;
@@ -41,7 +41,7 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 				if (src[i] == '"' && src[i-1 != '\\']) {
 					depth -= 1; // Выход из displayname/fullname
 					if (v) fprintf (stderr, "Exiting name\n");
-				}
+				} *
 				break;
 			}
 			case 2: {
@@ -115,7 +115,7 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 
 	if (v) fprintf (stderr, "%d posts found\n", postcount);
 
-	long int* posts = (long int*) calloc (postcount, sizeof(long int));
+	long int *posts = (long int*) calloc (postcount, sizeof(long int));
 	posts = memcpy (posts, temp, postcount*sizeof(long int));
 	free (temp);
 	if (v) {
@@ -131,7 +131,7 @@ long int* findPostsInJSON (const char* src, long int* postcount_res, const bool 
 	return posts;
 }
 
-struct post* initPost (const char* post_string, const long int postlen, const bool v) {
+struct post *initPost (const char *post_string, const long int postlen, const bool v) {
 	fprintf(stderr, "]] Starting initPost");
 	if (v) fprintf(stderr, " (verbose)");
 	fprintf (stderr, "\n");
@@ -141,14 +141,14 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	if (v) fprintf(stderr, "\n| postlen = %d\n", postlen);
 
 	// Detecting comment:
-	char* ptr_comment = strstr (post_string, PATTERN_COMMENT);
+	char *ptr_comment = strstr (post_string, PATTERN_COMMENT);
 	if (ptr_comment == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Comment pattern not found\n");
 		return ERR_POST_FORMAT;
 	}
 	ptr_comment += strlen(PATTERN_COMMENT);
 
-	char* ptr_comment_end = strstr (ptr_comment, PATTERN_COMMENT_END);
+	char *ptr_comment_end = strstr (ptr_comment, PATTERN_COMMENT_END);
 	int comment_len = (int) (ptr_comment_end - ptr_comment);
 	if (v) fprintf (stderr, "comment_len = %d\n=== Comment: ===\n", comment_len);
 	if (v) for (int i = 0; i < comment_len; i++)
@@ -156,7 +156,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	if (v) fprintf (stderr, "\n== End of comment ==\n");
 
 	// Detect date:
-	char* ptr_date = strstr (ptr_comment+comment_len, PATTERN_DATE)+strlen(PATTERN_DATE);
+	char *ptr_date = strstr (ptr_comment+comment_len, PATTERN_DATE)+strlen(PATTERN_DATE);
 	if (ptr_date == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Date pattern not found\n");
 		return ERR_POST_FORMAT;
@@ -171,7 +171,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	}
 
 	// Detect email:
-	char* ptr_email = strstr(ptr_date + (ptrdiff_t)date_len, PATTERN_EMAIL);
+	char *ptr_email = strstr(ptr_date + (ptrdiff_t)date_len, PATTERN_EMAIL);
 	if (ptr_email == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Email pattern not found\n");
 		return ERR_POST_FORMAT;
@@ -191,7 +191,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	}
 
 	// Detect files:
-	char* ptr_files = strstr(ptr_email + (ptrdiff_t)email_len, PATTERN_FILES);
+	char *ptr_files = strstr(ptr_email + (ptrdiff_t)email_len, PATTERN_FILES);
 	int files_len = 0;
 	bool has_files = false;
 	// If NULL, simply no files in post
@@ -231,7 +231,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	}
 	ptr_name += (ptrdiff_t)strlen(PATTERN_NAME);
 
-	char* ptr_name_end = strstr(ptr_name, PATTERN_NAME_END);
+	char *ptr_name_end = strstr(ptr_name, PATTERN_NAME_END);
 	int name_len = (int) (ptr_name_end - ptr_name);
 	if (v) fprintf (stderr, "] Name length: %d\n", name_len);
 	if (v) fprintf (stderr, "] Name: ");
@@ -266,7 +266,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 	if (v) fprintf (stderr, "] = All main fields detected\n");
 
 	// Init struct:
-	struct post* post = (struct post*) malloc (sizeof(struct post));
+	struct post *post = (struct post*) malloc (sizeof(struct post));
 	if (post == NULL) {
 		if (v) {
 			fprintf(stderr, "Memory corrupt - `struct post' calloc()\n");
@@ -278,7 +278,7 @@ struct post* initPost (const char* post_string, const long int postlen, const bo
 
 	post->num = str2lint(ptr_num, num_len);
 
-	char* comment_str = (char*) calloc (comment_len, sizeof(char));
+	char *comment_str = (char*) calloc (comment_len, sizeof(char));
 	if (comment_str == NULL) {
 		if (v) {
 			fprintf(stderr, "Memory corrupt - `comment_str' calloc()\n");
@@ -384,10 +384,10 @@ char *parseComment (char *comment, const long long  comment_len, const bool v) {
 	return parsed;
 }
 
-char* cleanupComment (const char* src, const int src_len, int *new_len, const bool v) {
+char *cleanupComment (const char *src, const int src_len, int *new_len, const bool v) {
 	fprintf(stderr, "]] Started cleanupComment");
 
-	char* buf = (char*) calloc (src_len, sizeof(char));
+	char *buf = (char*) calloc (src_len, sizeof(char));
 	fprintf(stderr, "Alloc done\n");
 	long int pos = 0, len = 0;
 	for ( ; pos < src_len; ) {
@@ -423,7 +423,7 @@ char* cleanupComment (const char* src, const int src_len, int *new_len, const bo
 		}
 	}
 	fprintf(stderr, "[cleanupComment] len = %d\n[cleanupComment] doing calloc()\n",len);
-	char* clean = (char*) calloc (len + 1, sizeof(char));
+	char *clean = (char*) calloc (len + 1, sizeof(char));
 	fprintf(stderr, "[cleanupComment] calloc() done, doing memcpy()\n");
 	memcpy(clean, buf, sizeof(char)*len);
 	fprintf(stderr, "[cleanupComment] memcpy() done\n");
@@ -434,7 +434,7 @@ char* cleanupComment (const char* src, const int src_len, int *new_len, const bo
 	return clean;
 }
 
-struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, const bool v) {
+struct ref_reply *parseRef_Reply (const char *ch_ref, const long int ref_len, const bool v) {
 	fprintf (stderr, "-]] Started parseRef_Reply");
 	/*
 	if (v) {
@@ -446,16 +446,16 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 	}*/
 	fprintf (stderr, "\n");
 
-	char* link_start = ch_ref + strlen (PATTERN_HREF_OPEN);
+	char *link_start = ch_ref + strlen (PATTERN_HREF_OPEN);
 	short link_len = strstr (ch_ref, PATTERN_REPLY_CLASS) - 3 - link_start;
 													// '-3' to exclude JSON
 
-	char* data_thread_start = strstr (ch_ref, PATTERN_REPLY_THREAD) + strlen(PATTERN_REPLY_THREAD);
+	char *data_thread_start = strstr (ch_ref, PATTERN_REPLY_THREAD) + strlen(PATTERN_REPLY_THREAD);
 	if (data_thread_start == NULL) { // '+ strlen' to exclude opening string
 		fprintf (stderr, "[parseRef_Reply]! Error: no data-thread in reply-ref\n");
 		return ERR_REF_FORMAT;
 	}
-	char* data_thread_end = strstr (data_thread_start, "\\\"") - 1;
+	char *data_thread_end = strstr (data_thread_start, "\\\"") - 1;
 	if (data_thread_end == NULL-1) {  // '- 1' to exclude '\'
 		fprintf (stderr, "[parseRef_Reply]! Error: data-thread opened but not closed\n");
 		return ERR_REF_FORMAT;
@@ -463,12 +463,12 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 	long int data_thread = str2lint (data_thread_start, data_thread_end-data_thread_start+1);
 	if (v) fprintf (stderr, "-]]] Thread: %d\n", data_thread);
 
-	char* data_num_start = strstr (ch_ref, PATTERN_REPLY_NUM) + strlen(PATTERN_REPLY_NUM);
+	char *data_num_start = strstr (ch_ref, PATTERN_REPLY_NUM) + strlen(PATTERN_REPLY_NUM);
 	if (data_num_start == NULL) { // '+ strlen' to exclude opening string
 		fprintf (stderr, "[parseRef_Reply]! Error: no data-num in reply-ref\n");
 		return ERR_REF_FORMAT;
 	}
-	char* data_num_end = strstr (data_num_start, "\\\"") - 1;
+	char *data_num_end = strstr (data_num_start, "\\\"") - 1;
 	if (data_thread_end == NULL-1) {  // '- 1' to exclude '\'
 		fprintf (stderr, "[parseRef_Reply]! Error: data-num opened but not closed\n");
 		return ERR_REF_FORMAT;
@@ -476,7 +476,7 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 	long int data_num = str2lint (data_num_start, data_num_end-data_num_start+1);
 	if (v) fprintf (stderr, "-]]] Postnum: %d\n", data_num);
 
-	struct ref_reply* ref_parsed = (struct ref_reply*) calloc (1, sizeof(struct ref_reply));
+	struct ref_reply *ref_parsed = (struct ref_reply*) calloc (1, sizeof(struct ref_reply));
 	ref_parsed->link = (char*) calloc (link_len, sizeof(char) + 1);
 	memcpy (ref_parsed->link, link_start, link_len*sizeof(char));
 	ref_parsed->thread = data_thread;
@@ -488,7 +488,7 @@ struct ref_reply* parseRef_Reply (const char* ch_ref, const long int ref_len, co
 	return ref_parsed;
 }
 
-struct thread* initThread (const char* thread_string, const long int thread_len, const bool v) {
+struct thread *initThread (const char *thread_string, const long int thread_len, const bool v) {
 	fprintf(stderr, "\n]] Started initThread ");
 	if (v) {
 		fprintf(stderr, " (verbose)\n");
@@ -497,10 +497,10 @@ struct thread* initThread (const char* thread_string, const long int thread_len,
 	}
 
 	long int nposts = 0;
-	long int* post_diffs = findPostsInJSON( thread_string, &nposts, true );
+	long int *post_diffs = findPostsInJSON( thread_string, &nposts, true );
 	if (v) fprintf(stderr, "] nposts = %d\n", nposts);
 
-	struct post** posts = (struct post**) calloc (nposts, sizeof(struct post*));
+	struct post **posts = (struct post**) calloc (nposts, sizeof(struct post*));
 	for (int i = 0; i < ((int)nposts)-1; i++) {
 		char *cpost_ptr = thread_string + (ptrdiff_t) post_diffs[i];
 		long int cpost_len = post_diffs[i+1] - post_diffs[i];
@@ -526,7 +526,7 @@ struct thread* initThread (const char* thread_string, const long int thread_len,
 							   true
 							   );
 
-	struct thread* thread = (struct thread*) calloc (1, sizeof(struct thread));
+	struct thread *thread = (struct thread*) calloc (1, sizeof(struct thread));
 	thread->num = posts[0]->num;
 	thread->nposts = nposts;
 	thread->posts = posts;
@@ -545,17 +545,17 @@ struct thread* initThread (const char* thread_string, const long int thread_len,
 // Captcha
 // ========================================
 
-char* parse2chaptchaId (const char* capId_string) {
+char *parse2chaptchaId (const char *capId_string) {
 	fprintf (stderr, "]] Starting parse2chaptchaId\n");
 
-	char* captcha_start = strstr (capId_string, PATTERN_CAPID);
+	char *captcha_start = strstr (capId_string, PATTERN_CAPID);
 	if (captcha_start == NULL) {
 		fprintf(stderr, "[parse2chaptchaId]! Error: Bad captcha-JSON format\n");
 		return ERR_CAPTCHA_FORMAT;
 	}
 	captcha_start += strlen(PATTERN_CAPID);
 	short captcha_len = strstr(captcha_start,"\"") - captcha_start;
-	char* captcha_id = (char*) calloc (captcha_len, sizeof(char));
+	char *captcha_id = (char*) calloc (captcha_len, sizeof(char));
 	captcha_id = memcpy (captcha_id, captcha_start, captcha_len);
 
 	fprintf(stderr, "]] Exiting parse2chaptchaId\n");

@@ -31,8 +31,8 @@ const int RET_OK = 0,
 const char *CaptchaPngFilename = "captcha.png";
 const char *CaptchaUtfFilename = "captcha.utf8";
 
-int printPost (struct post* post, const bool show_email, const bool show_files);
-char *prepareCaptcha(const char* board, const char* thread);
+int printPost (struct post *post, const bool show_email, const bool show_files);
+char *prepareCaptcha(const char *board, const char *thread);
 
 void ncurses_init();
 void ncurses_exit();
