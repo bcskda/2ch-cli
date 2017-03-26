@@ -13,11 +13,11 @@
 #include <stdbool.h>
 
 #define Converter          "img2txt"
-#define Converter_width_i  200
-#define Converter_height_i 50
-#define Converter_width_s  "200"
-#define Converter_height_s "50"
-#define Converter_format   "caca"
+#define Converter_width_i  140
+#define Converter_height_i 35
+#define Converter_width_s  "140"
+#define Converter_height_s "35"
+#define Converter_format   "utf8"
 
 const int Ret_show_OK = 0;
 const int Ret_show_create_canvas = 1;

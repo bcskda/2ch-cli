@@ -404,7 +404,7 @@ char *getCaptchaSettingsJSON (const char* board) {
 
 
 char* get2chaptchaIdJSON (const char* board, const char* thread) {
-	fprintf (stderr, "]] Starting get2chaptchaID\n");
+	fprintf (stderr, "]] Starting get2chaptchaIdJSON\n");
 
 	CURL* curl_handle = curl_easy_init();
 	CURLcode request_status = 0;
@@ -412,7 +412,7 @@ char* get2chaptchaIdJSON (const char* board, const char* thread) {
 		const short URL_length = strlen(BASE_URL)+strlen(CAPTCHA_2CHAPTCHA)+2+1;
 		char* URL = (char*) calloc (URL_length, sizeof(char));
 		if (URL == NULL) {
-			fprintf (stderr, "[get2chaptchaID]! Error allocating memory (URL)\n");
+			fprintf (stderr, "[get2chaptchaIdJSON]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
 			return ERR_MEMORY;
 		}
@@ -424,7 +424,7 @@ char* get2chaptchaIdJSON (const char* board, const char* thread) {
 		const short postfields_length = 6+strlen(board)+8+strlen(thread)+1;
 		char* postfields = (char*) calloc (postfields_length, sizeof(char));
 		if (postfields == NULL) {
-			fprintf (stderr, "[get2chaptchaID]! Error allocating memory (POST data)\n");
+			fprintf (stderr, "[get2chaptchaIdJSON]! Error allocating memory (POST data)\n");
 			curl_easy_cleanup (curl_handle);
 			free (URL);
 			return ERR_MEMORY;
@@ -438,7 +438,7 @@ char* get2chaptchaIdJSON (const char* board, const char* thread) {
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDS, postfields);
 
 		if (CURL_BUFF_BODY == NULL) {
-			fprintf(stderr, "[get2chaptchaID]! Error: curl body buffer not allocated\n");
+			fprintf(stderr, "[get2chaptchaIdJSON]! Error: curl body buffer not allocated\n");
 			return ERR_MAKABA_SETUP;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
@@ -449,7 +449,7 @@ char* get2chaptchaIdJSON (const char* board, const char* thread) {
 		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
 		CURL_BUFF_POS = 0;
 		if (request_status != CURLE_OK) {
-			fprintf (stderr, "[get2chaptchaID]! Error @ curl_easy_perform: %s\n",
+			fprintf (stderr, "[get2chaptchaIdJSON]! Error @ curl_easy_perform: %s\n",
 			curl_easy_strerror(request_status));
 			curl_easy_cleanup (curl_handle);
 			free (URL);
@@ -462,22 +462,22 @@ char* get2chaptchaIdJSON (const char* board, const char* thread) {
 		free (postfields);
 	}
 	else {
-		fprintf (stderr, "[get2chaptchaID]! Error initializing curl handle\n");
+		fprintf (stderr, "[get2chaptchaIdJSON]! Error initializing curl handle\n");
 		return ERR_CURL_INIT;
 	}
 
-	fprintf(stderr, "]] Exiting get2chaptchaID\n");
+	fprintf(stderr, "]] Exiting get2chaptchaIdJSON\n");
 
 	return CURL_BUFF_BODY;
 }
 
 char* get2chaptchaPicURL (const char* id) {
-	fprintf (stderr, "]] Starting get2chaptchaPic\n");
+	fprintf (stderr, "]] Starting get2chaptchaPicURL\n");
 
 	const long int URL_length = strlen(BASE_URL)+strlen(CAPTCHA_2CHAPTCHA)+6+strlen(id)+1;
 	char* URL = (char*) calloc (URL_length, sizeof(char));
 	if (URL == NULL) {
-			fprintf (stderr, "[get2chaptchaPic]! Error allocating memory (URL)\n");
+			fprintf (stderr, "[get2chaptchaPicURL]! Error allocating memory (URL)\n");
 			return ERR_MEMORY;
 	}
 	URL = strcpy (URL, BASE_URL);
@@ -485,7 +485,7 @@ char* get2chaptchaPicURL (const char* id) {
 	URL = strcat (URL, "image/");
 	URL = strcat (URL, id);
 
-	fprintf(stderr, "]] Exiting get2chaptchaID\n");
+	fprintf(stderr, "]] Exiting get2chaptchaPicURL\n");
 
 	return URL;
 }
