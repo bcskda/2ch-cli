@@ -17,7 +17,7 @@
 #include "parser.c"
 #include "image.c"
 
-#define VERSION "v0.4test1"
+#define VERSION "v0.4test2"
 
 const int ERR_ARGS = -1,
 		  ERR_BROKEN_POST = -2;

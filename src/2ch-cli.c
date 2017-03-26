@@ -73,12 +73,22 @@ int main (int argc, char **argv)
 	makabaSetup();
 
 	#ifdef CAPTCHA_TEST
-	printf("%s\n", get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON(board_name, lint2str(post_number)))));
+
 	printf("%s\n", getCaptchaSettingsJSON(board_name) );
+	char *captcha_png_url = get2chaptchaPicURL(parse2chaptchaId(get2chaptchaIdJSON(board_name, lint2str(post_number))));
+	printf("%s\n", captcha_png_url);
+	long int pic_size;
+	char *captcha_png = get2chaptchaPicPNG(captcha_png_url, &pic_size);
+	captcha_png = (char *) calloc(pic_size + 1, sizeof(char));       // Нельзя доверять буферу
+	captcha_png = memcpy(captcha_png, CURL_BUFF_BODY, pic_size); // curl`а
+	FILE *captcha_png_file = fopen("captcha.png", "w");
+	fwrite(captcha_png, sizeof(char), pic_size, captcha_png_file);
+	fclose(captcha_png_file);
 	convert_img("captcha.png", "captcha-test.ansi", true);
 	show_img("captcha-test.ansi");
 	makabaCleanup();
 	return RET_PREEXIT;
+
 	#endif
 
 	long int threadsize = 0;

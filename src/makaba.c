@@ -490,6 +490,45 @@ char* get2chaptchaPicURL (const char* id) {
 	return URL;
 }
 
+char *get2chaptchaPicPNG (const char *URL, long int *pic_size) {
+	fprintf(stderr, "]] Starting get2chaptchaPicPNG\n");
+
+	CURL* curl_handle = curl_easy_init();
+	CURLcode request_status = 0;
+	if (curl_handle) {
+		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
+
+		if (CURL_BUFF_BODY == NULL) {
+			fprintf(stderr, "[get2chaptchaPicPNG]! Error: curl body buffer not allocated\n");
+			return ERR_MAKABA_SETUP;
+		}
+		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
+
+		curl_easy_setopt (curl_handle, CURLOPT_WRITEFUNCTION, CURL_writeToBuff);
+
+		request_status = curl_easy_perform (curl_handle);
+		CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
+		*pic_size = CURL_BUFF_POS;
+		CURL_BUFF_POS = 0;
+		if (request_status != CURLE_OK) {
+			fprintf (stderr, "[get2chaptchaPicPNG]! Error @ curl_easy_perform: %s\n",
+				curl_easy_strerror(request_status));
+			curl_easy_cleanup (curl_handle);
+			return ERR_CURL_PERFORM;
+		}
+
+		curl_easy_cleanup (curl_handle);
+	}
+	else {
+		fprintf (stderr, "[get2chaptchaPicPNG]! Error initializing curl handle\n");
+		return ERR_CURL_INIT;
+	}
+
+	fprintf(stderr, "]] Exiting get2chaptchaPicPNG\n");
+
+	return CURL_BUFF_BODY;
+}
+
 // ========================================
 // Misc utility functions
 // ========================================
