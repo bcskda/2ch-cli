@@ -258,7 +258,6 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		fprintf (stderr, "] Num: |");
 		for (int i = 0; i < num_len; i++) {
 			fprintf (stderr, "%c", ptr_num[i]);
-			fprintf (stderr,    "%c", ptr_num[i]);
 		}
 		fprintf (stderr, "|\n");
 	}
