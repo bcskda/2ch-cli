@@ -11,63 +11,61 @@ void pomogite() // Справка
 	printf("2ch-cli "VERSION" - консольный клиент двача\n");
 	printf("Использование:\n");
 	printf(" -h - помощь\n");
-	printf(" -s - запуск\n");
+	printf(" -s - отправить пост\n");
 	printf(" -p - задать пасскод\n");
 	printf(" -b - задать борду\n");
-	printf(" -n - заранее задать номер треда\n");
+	printf(" -n - задать номер треда\n");
+	printf(" -c - задать комментарий\n");
 }
 
 int main (int argc, char **argv)
 {
-
-	#ifdef POSTING_TEST
-	makabaSetup();
-	char *board = "s";
-	char *thread_number = "2000498";
-	char *captcha_id = prepareCaptcha(board, lint2str(thread_number));
-	char captcha_value[6];
-	system("cat captcha.utf8");
-	printf("Ответ на капчу: ");
-	scanf("%s", captcha_value);
-	char *email = "sage";
-	char *comment = "2ch-cli posting test x2";
-	long long answer_length;
-	sendPost(board, thread_number,
-			 comment, NULL, NULL, NULL,
-		 	 captcha_id, captcha_value, &answer_length);
-	printf("Answer: %s\n", CURL_BUFF_BODY); // По-хорошему так делать не надо
-	makabaCleanup();
-	return RET_PREEXIT;
-	#endif
-
 	char passcode[32] = "пасскода нет нихуя :("; // Пасскод
     char board_name[10] = "b"; // Имя борды
-    long long post_number = 0; // Номер треда в борде
+    long long thread_number = 0; // Номер треда в борде
+	char *comment = NULL; // Комментарий - не занимать память, если не указан
 
 	//getopt
-	bool start_or_not = false; // Проверяем, есть ли '-s' и нужно ли запускать
+	bool send_post = false;
 	if (argc == 1) /* Если аргументов нет, вывод помощи */ {
 		pomogite();
 		return RET_NOARGS;
 	}
-	parse_argv(argc, argv, board_name, &post_number, passcode, &start_or_not);
-	if (start_or_not == false)
-		return RET_OK;
+	parse_argv(argc, argv, board_name, &thread_number, &comment, passcode, &send_post);
+	printf("board_name = %s\n", board_name);
+	printf("comment = %s\n", comment);
 
 	setlocale (LC_ALL, "");
 	makabaSetup();
 
 	#ifdef CAPTCHA_TEST
 	printf("%s\n", getCaptchaSettingsJSON(board_name));
-	char *captcha_id = prepareCaptcha(board_name, lint2str(post_number));
+	char *captcha_id = prepareCaptcha(board_name, lint2str(thread_number));
 	printf("captcha_id = %s\n", captcha_id);
 	system("cat captcha.utf8");
 	makabaCleanup();
 	return RET_PREEXIT;
 	#endif
 
+	if (send_post == true) {
+		char *captcha_id = prepareCaptcha(board_name, lint2str(thread_number));
+		char captcha_value[6];
+		system("cat captcha.utf8");
+		printf("Ответ на капчу: ");
+		scanf("%s", captcha_value);
+		long long answer_length;
+		char *email = "sage";
+		sendPost(board_name, lint2str(thread_number),
+			comment, NULL, NULL, email,
+			captcha_id, captcha_value, &answer_length);
+		printf("Ответ API: %s\n", CURL_BUFF_BODY); // По-хорошему так делать не надо
+		makabaCleanup();
+		return RET_OK;
+	}
+
+
 	long int threadsize = 0;
-	char *thread_recv_ch = getThreadJSON(board_name, post_number, &threadsize, false); // Получаем указатель на скачанный тред
+	char *thread_recv_ch = getThreadJSON(board_name, thread_number, &threadsize, false); // Получаем указатель на скачанный тред
 	fprintf(stderr, "threadsize = %u\n", threadsize);
 	char *thread_ch = (char *) calloc(threadsize + 1, sizeof(char)); // Заказываем память под собственный буфер треда
 	if (thread_ch == NULL) {
@@ -127,6 +125,8 @@ int main (int argc, char **argv)
 	freeThread(thread);
 	free(thread_ch);
 	makabaCleanup();
+	if (comment != NULL)
+		free(comment);
 	fprintf(stderr, "Cleanup done, exiting\n");
 
 	return RET_OK;
@@ -185,10 +185,10 @@ char *prepareCaptcha(const char *board, const char *thread) {
 }
 
 void parse_argv(const int argc, const char **argv,
-	char *board_name, long long *post_number, char *passcode, bool *start_or_not)
+	char *board_name, long long *thread_number, char **comment, char *passcode, bool *send_post)
 {
 	int opt;
-	while (( opt = getopt(argc, argv, "hp:b:n:s") ) != -1)
+	while (( opt = getopt(argc, argv, "hp:b:n:sc:") ) != -1)
 	{
 		switch (opt)
 		{
@@ -211,12 +211,28 @@ void parse_argv(const int argc, const char **argv,
 				memcpy(board_name, optarg, sizeof(board_name));
 				break;
 			case 'n':
-				*post_number = atoi(optarg);
+				*thread_number = atoi(optarg);
+				break;
+			case 'c':
+				if (*comment == NULL) {
+					if ( sizeof(optarg) > Max_comment_len ) {
+						printf("Комментарий не длиннее 15к знаков\n");
+						exit(ERR_ARGS);
+					}
+					printf("[%d] %s\n", strlen(optarg), optarg);
+					*comment = (char *) calloc(strlen(optarg) + 1, sizeof(char));
+					memcpy(*comment, optarg, strlen(optarg));
+				}
+				else {
+					printf("Дважды указан комментарий\n");
+					exit(ERR_ARGS);
+				}
 				break;
 			case 's':
-				*start_or_not = true;
+				*send_post = true;
 				break;
 			default:
+				printf("Неизвестная опция %c\n", opt);
 				pomogite();
 				exit(ERR_ARGS);
 		}
