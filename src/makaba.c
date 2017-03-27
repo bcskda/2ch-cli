@@ -3,11 +3,6 @@
 // Makaba API-related functions
 // (Implementation)
 // ========================================
-// TODO:
-//[ ] captcha
-//[x] makabaSetup()
-//[x] FIX CURL BUFF ZERO-END
-// ========================================
 
 #pragma once
 #include "makaba.h"
