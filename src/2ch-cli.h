@@ -17,14 +17,14 @@
 #include "parser.c"
 #include "image.c"
 
-#define VERSION "v0.4test2"
+#define VERSION "v0.4test3"
 
-const int ERR_ARGS = -1,
-		  ERR_BROKEN_POST = -2;
+const int ERR_ARGS = -1;
+const int ERR_BROKEN_POST = -2;
 
-const int RET_OK = 0,
-		  RET_NOARGS = 1,
-		  RET_PREEXIT = 2;
+const int RET_OK = 0;
+const int RET_NOARGS = 1;
+const int RET_PREEXIT = 2;
 
 const size_t Max_comment_len = 15000;
 //const size_t Thread_size = 10000000; // Размер буфера с тредом

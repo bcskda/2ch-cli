@@ -6,6 +6,7 @@
 
 #pragma once
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
 #include <curl/curl.h>
 #include <stdbool.h>
@@ -23,12 +24,12 @@ char *CURL_BUFF_BODY = NULL;
 char *CURL_BUFF_HEADER = NULL;
 size_t CURL_BUFF_POS = 0;
 
-const int ERR_MEMORY = -1,
-		  ERR_UNKNOWN = -2,
-		  ERR_CURL_INIT = -3,
-		  ERR_CURL_PERFORM = -4,
-		  ERR_MAKABA_SETUP = -5,
-		  ERR_BAD_ARGS = -6;
+const int ERR_MEMORY = -1;
+const int ERR_UNKNOWN = -2;
+const int ERR_CURL_INIT = -3;
+const int ERR_CURL_PERFORM = -4;
+const int ERR_MAKABA_SETUP = -5;
+const int ERR_BAD_ARGS = -6;
 
 void makabaSetup();
 void makabaCleanup();

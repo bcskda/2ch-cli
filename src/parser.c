@@ -104,19 +104,19 @@ long int *findPostsInJSON (const char *src, long int *postcount_res, const bool 
 			default: {
 				fprintf (stderr, "! Error: Unusual depth (%d)\n", depth);
 				free (temp);
-				return ERR_PARTTHREAD_DEPTH;
+				return (long int *) ERR_PARTTHREAD_DEPTH;
 			}
 		}
 	}
 	if (depth != 0) {
 		fprintf (stderr, "[findPostsInJSON]! Error: Non-zero depth (%d) after cycle\n", depth);
-		return ERR_PARTTHREAD_DEPTH;
+		return (long int *) ERR_PARTTHREAD_DEPTH;
 	}
 
 	if (v) fprintf (stderr, "%d posts found\n", postcount);
 
 	long int *posts = (long int*) calloc (postcount, sizeof(long int));
-	posts = memcpy (posts, temp, postcount*sizeof(long int));
+	memcpy (posts, temp, postcount*sizeof(long int));
 	free (temp);
 	if (v) {
 		fprintf (stderr, "Posts begin at:\n");
@@ -141,14 +141,14 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	if (v) fprintf(stderr, "\n| postlen = %d\n", postlen);
 
 	// Detecting comment:
-	char *ptr_comment = strstr (post_string, PATTERN_COMMENT);
+	char *ptr_comment = (char *) strstr (post_string, PATTERN_COMMENT);
 	if (ptr_comment == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Comment pattern not found\n");
-		return ERR_POST_FORMAT;
+		return (struct post *) ERR_POST_FORMAT;
 	}
 	ptr_comment += strlen(PATTERN_COMMENT);
 
-	char *ptr_comment_end = strstr (ptr_comment, PATTERN_COMMENT_END);
+	char *ptr_comment_end = (char *) strstr (ptr_comment, PATTERN_COMMENT_END);
 	int comment_len = (int) (ptr_comment_end - ptr_comment);
 	if (v) fprintf (stderr, "comment_len = %d\n=== Comment: ===\n", comment_len);
 	if (v) for (int i = 0; i < comment_len; i++)
@@ -159,7 +159,7 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	char *ptr_date = strstr (ptr_comment+comment_len, PATTERN_DATE)+strlen(PATTERN_DATE);
 	if (ptr_date == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Date pattern not found\n");
-		return ERR_POST_FORMAT;
+		return (struct post *) ERR_POST_FORMAT;
 	}
 	int date_len = strstr (ptr_date, "\"") - ptr_date;
 	if (v) {
@@ -174,7 +174,7 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	char *ptr_email = strstr(ptr_date + (ptrdiff_t)date_len, PATTERN_EMAIL);
 	if (ptr_email == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Email pattern not found\n");
-		return ERR_POST_FORMAT;
+		return (struct post *) ERR_POST_FORMAT;
 	}
 	ptr_email += (ptrdiff_t) strlen(PATTERN_EMAIL);
 	int email_len = (int) (strstr (ptr_email, "\"") - ptr_email);
@@ -203,7 +203,7 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		files_len = strstr(ptr_files, "}]") - ptr_files;
 		if (files_len == 0) {
 			fprintf (stderr, "[initPost]! Error: Bad post format: Files field specified but null\n");
-			return ERR_POST_FORMAT;
+			return (struct post *) ERR_POST_FORMAT;
 		} else
 			if (v) {
 				fprintf(stderr, "] Files length: %d\n", files_len);
@@ -227,7 +227,7 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	char *ptr_name = strstr( ptr_name_diff + (ptrdiff_t)name_diff_len, PATTERN_NAME );
 	if (ptr_name == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Name pattern not found\n");
-		return (char *) ERR_POST_FORMAT;
+		return (struct post *) ERR_POST_FORMAT;
 	}
 	ptr_name += (ptrdiff_t)strlen(PATTERN_NAME);
 
@@ -243,14 +243,14 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	char *ptr_num = strstr( ptr_name + (ptrdiff_t)name_len, PATTERN_NUM );
 	if (ptr_num == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Num pattern not found\n");
-		return (char *) ERR_POST_FORMAT;
+		return (struct post *) ERR_POST_FORMAT;
 	}
 	if (v) fprintf (stderr, "[ptr_num] %c%c%c%c%c\n", ptr_num[0],ptr_num[1],ptr_num[2],ptr_num[3],ptr_num[4]);
 	ptr_num += (ptrdiff_t) strlen(PATTERN_NUM);
 	char *num_end =  strstr (ptr_num, ",");
 	if (num_end == NULL) {
 		fprintf(stderr, "[initPost]! Error: Something strange with `num' field\n");
-		return (char *) ERR_INTERNAL;
+		return (struct post *) ERR_INTERNAL;
 	}
 	int num_len = (int) (num_end - ptr_num - 1); // Exclude ending '"'
 	if (v) {
@@ -272,7 +272,7 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		} else {
 			fprintf(stderr, "Memory allocated (struct post)\n");
 		}
-		return (char *) ERR_MEMORY;
+		return (struct post *) ERR_MEMORY;
 	}
 
 	post->num = str2lint(ptr_num, num_len);
@@ -284,7 +284,7 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		} else {
 			fprintf(stderr, "Memory allocated (comment_str)\n");
 		}
-		return ERR_MEMORY;
+		return (struct post *) ERR_MEMORY;
 	}
 	memcpy(comment_str, ptr_comment, comment_len);
 	post->comment = parseComment (comment_str, comment_len, true);
@@ -298,14 +298,14 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	post->date = (char*) calloc (date_len+1, sizeof(char));
 	if (post->date == NULL) {
 		fprintf (stderr, "[initPost]! Error allocating memory (post.date)\n");
-		return ERR_MEMORY;
+		return (struct post *) ERR_MEMORY;
 	}
 	memcpy (post->date, ptr_date, sizeof(char)*date_len);
 
 	post->name = (char*) calloc (name_len+1, sizeof(char));
 	if (post->name == NULL) {
 		fprintf (stderr, "[initPost]! Error allocating memory (post.name)\n");
-		return ERR_MEMORY;
+		return (struct post *) ERR_MEMORY;
 	}
 	memcpy (post->name, ptr_name, sizeof(char)*name_len);
 
@@ -315,7 +315,7 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		post->email = (char*) calloc (email_len+1, sizeof(char));
 		if (post->email == NULL) {
 			fprintf (stderr, "[initPost]! Error allocating memory (post.email)\n");
-			return ERR_MEMORY;
+			return (struct post *) ERR_MEMORY;
 		}
 		memcpy (post->email, ptr_email, sizeof(char)*email_len);
 	}
@@ -326,7 +326,7 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		post->files = (char*) calloc (files_len+1, sizeof(char));
 		if (post->files == NULL) {
 			fprintf (stderr, "[initPost]! Error allocating memory (post.files)\n");
-			return ERR_MEMORY;
+			return (struct post *) ERR_MEMORY;
 		}
 		memcpy (post->files, ptr_files, sizeof(char)*files_len);
 	}
@@ -433,60 +433,6 @@ char *cleanupComment (const char *src, const int src_len, int *new_len, const bo
 	return clean;
 }
 
-struct ref_reply *parseRef_Reply (const char *ch_ref, const long int ref_len, const bool v) {
-	fprintf (stderr, "-]] Started parseRef_Reply");
-	/*
-	if (v) {
-		fprintf(stderr, " (verbose)");
-		fprintf(stderr, "\n\n<< New Thread >>\n]] Args:\n== | ch_ref = ");
-		for (int i = 0; i < 100; i++)
-			fprintf(stderr, "%c", ch_ref[i]);
-		fprintf(stderr, "\n| ref_len = %d\n", ref_len);
-	}*/
-	fprintf (stderr, "\n");
-
-	char *link_start = ch_ref + strlen (PATTERN_HREF_OPEN);
-	short link_len = strstr (ch_ref, PATTERN_REPLY_CLASS) - 3 - link_start;
-													// '-3' to exclude JSON
-
-	char *data_thread_start = strstr (ch_ref, PATTERN_REPLY_THREAD) + strlen(PATTERN_REPLY_THREAD);
-	if (data_thread_start == NULL) { // '+ strlen' to exclude opening string
-		fprintf (stderr, "[parseRef_Reply]! Error: no data-thread in reply-ref\n");
-		return ERR_REF_FORMAT;
-	}
-	char *data_thread_end = strstr (data_thread_start, "\\\"") - 1;
-	if (data_thread_end == NULL-1) {  // '- 1' to exclude '\'
-		fprintf (stderr, "[parseRef_Reply]! Error: data-thread opened but not closed\n");
-		return ERR_REF_FORMAT;
-	}
-	long int data_thread = str2lint (data_thread_start, data_thread_end-data_thread_start+1);
-	if (v) fprintf (stderr, "-]]] Thread: %d\n", data_thread);
-
-	char *data_num_start = strstr (ch_ref, PATTERN_REPLY_NUM) + strlen(PATTERN_REPLY_NUM);
-	if (data_num_start == NULL) { // '+ strlen' to exclude opening string
-		fprintf (stderr, "[parseRef_Reply]! Error: no data-num in reply-ref\n");
-		return ERR_REF_FORMAT;
-	}
-	char *data_num_end = strstr (data_num_start, "\\\"") - 1;
-	if (data_thread_end == NULL-1) {  // '- 1' to exclude '\'
-		fprintf (stderr, "[parseRef_Reply]! Error: data-num opened but not closed\n");
-		return ERR_REF_FORMAT;
-	}
-	long int data_num = str2lint (data_num_start, data_num_end-data_num_start+1);
-	if (v) fprintf (stderr, "-]]] Postnum: %d\n", data_num);
-
-	struct ref_reply *ref_parsed = (struct ref_reply*) calloc (1, sizeof(struct ref_reply));
-	ref_parsed->link = (char*) calloc (link_len, sizeof(char) + 1);
-	memcpy (ref_parsed->link, link_start, link_len*sizeof(char));
-	ref_parsed->thread = data_thread;
-	ref_parsed->num = data_num;
-
-	if (v)	fprintf(stderr, "<< End of Thread >>\n");
-	fprintf (stderr, "-]] Exiting parseRef_Reply\n");
-
-	return ref_parsed;
-}
-
 struct thread *initThread (const char *thread_string, const long int thread_len, const bool v) {
 	fprintf(stderr, "\n]] Started initThread ");
 	if (v) {
@@ -501,7 +447,7 @@ struct thread *initThread (const char *thread_string, const long int thread_len,
 
 	struct post **posts = (struct post**) calloc (nposts, sizeof(struct post*));
 	for (int i = 0; i < ((int)nposts)-1; i++) {
-		char *cpost_ptr = thread_string + (ptrdiff_t) post_diffs[i];
+		char *cpost_ptr = (char *) thread_string + (ptrdiff_t) post_diffs[i];
 		long int cpost_len = post_diffs[i+1] - post_diffs[i];
 		if (v) fprintf( stderr, "] Calling initPost #%d: from %d to %d, length %d\n",
 			i, post_diffs[i], post_diffs[i+1], cpost_len );
@@ -510,17 +456,17 @@ struct thread *initThread (const char *thread_string, const long int thread_len,
 							cpost_len,
 							true
 							);
-		if (posts[i] == (char *) ERR_COMMENT_FORMAT) {
+		if ((char *) posts[i] == (char *) ERR_COMMENT_FORMAT) {
 			fprintf(stderr, "[initThread]! Error: initPost() returned ERR_COMMENT_FORMAT\n === Exiting ===");
 			exit(3);
 		}
-		if (posts[i] == (char *) ERR_POST_OUT_OF_RANGE) {
+		if ((char *) posts[i] == (char *) ERR_POST_OUT_OF_RANGE) {
 			fprintf(stderr, "[initThread]! Error: initPost() returned ERR_POST_OUT_OF_RANGE\n === Exiting ===");
 			exit(4);
 		}
 	}
 	posts[nposts-1] = initPost(
-							   thread_string + post_diffs[nposts-1],
+							   (char *) thread_string + post_diffs[nposts-1],
 							   strlen(thread_string) - post_diffs[nposts-1],
 							   true
 							   );
@@ -547,15 +493,15 @@ struct thread *initThread (const char *thread_string, const long int thread_len,
 char *parse2chaptchaId (const char *capId_string) {
 	fprintf (stderr, "]] Starting parse2chaptchaId\n");
 
-	char *captcha_start = strstr (capId_string, PATTERN_CAPID);
+	char *captcha_start = (char *) strstr (capId_string, PATTERN_CAPID);
 	if (captcha_start == NULL) {
 		fprintf(stderr, "[parse2chaptchaId]! Error: Bad captcha-JSON format\n");
-		return ERR_CAPTCHA_FORMAT;
+		return (char *) ERR_CAPTCHA_FORMAT;
 	}
 	captcha_start += strlen(PATTERN_CAPID);
-	short captcha_len = strstr(captcha_start,"\"") - captcha_start;
+	short captcha_len = ((char *) strstr(captcha_start,"\"")) - captcha_start;
 	char *captcha_id = (char*) calloc (captcha_len, sizeof(char));
-	captcha_id = memcpy (captcha_id, captcha_start, captcha_len);
+	memcpy (captcha_id, captcha_start, captcha_len);
 
 	fprintf(stderr, "]] Exiting parse2chaptchaId\n");
 
@@ -578,9 +524,9 @@ void freePost (struct post *post) {
 	freeComment (post->comment);
 	free (post->date);
 	free (post->name);
-	if (post->email != -1)
+	if (post->email != NULL)
 		free (post->email);
-	if (post->files != -1)
+	if (post->files != NULL)
 		free (post->files);
 	free (post);
 }

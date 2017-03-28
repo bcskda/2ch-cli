@@ -60,14 +60,14 @@ const char *PATTERN_NEWLINE = "\\u003cbr\\u003e";
 
 const char *PATTERN_CAPID = "\"id\":\"";
 
-const int ERR_PARTTHREAD_DEPTH = -1,
-		  ERR_POST_FORMAT = -2,
-		  ERR_COMMENT_FORMAT = -3,
-		  ERR_REF_FORMAT = -4;
-		  ERR_COMMENT_PARSING = -5,
-		  ERR_CAPTCHA_FORMAT = -6,
-		  ERR_INTERNAL = -7,
-		  ERR_POST_OUT_OF_RANGE = -8;
+const int ERR_PARTTHREAD_DEPTH = -1;
+const int ERR_POST_FORMAT = -2;
+const int  ERR_COMMENT_FORMAT = -3;
+const int ERR_REF_FORMAT = -4;
+const int ERR_COMMENT_PARSING = -5;
+const int ERR_CAPTCHA_FORMAT = -6;
+const int ERR_INTERNAL = -7;
+const int ERR_POST_OUT_OF_RANGE = -8;
 
 struct thread *initThread (const char *thread_string, const long int thread_len, const bool v);
 long int *findPostsInJSON (const char *src, long int *postcount_res, const bool v);
