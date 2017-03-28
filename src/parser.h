@@ -30,12 +30,21 @@ struct post {
 	char *email;
 	char *files;
 };
+typedef struct post makaba_post;
 
 struct thread {
 	long int num;
 	long int nposts;
 	struct post **posts;
 };
+typedef struct thread makaba_thread;
+
+struct thread_cpp {
+	long int num;
+	long int nposts;
+	std::vector<makaba_post> posts;
+};
+typedef struct thread_cpp makaba_thread_cpp;
 
 const char *PATTERN_COMMENT = ",\"comment\":\"";
 const char *PATTERN_COMMENT_END = "\",\"date\":\"";
