@@ -1,13 +1,14 @@
 # 2ch-cli
 Консольный (ncurses) клиент для 2ch.hk
 
-C only
+C/C++
 
 ##### Юзабелен в данной версии, пытайся.
 
 ## Зависимости
 ```
 libcurl
+libjson (https://github.com/vincenthz/libjson)
 libncursesw
 libcaca с поддержкой ncurses
 ```
