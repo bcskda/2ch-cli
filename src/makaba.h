@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <curl/curl.h>
 #include <stdbool.h>
+#include "error.h"
 
 const char *BASE_URL = "https://2ch.hk/";
 const char *MOBILE_API = "makaba/mobile.fcgi";
@@ -23,13 +24,6 @@ const char *CURL_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML
 char *CURL_BUFF_BODY = NULL;
 char *CURL_BUFF_HEADER = NULL;
 size_t CURL_BUFF_POS = 0;
-
-const int ERR_MEMORY = -1;
-const int ERR_UNKNOWN = -2;
-const int ERR_CURL_INIT = -3;
-const int ERR_CURL_PERFORM = -4;
-const int ERR_MAKABA_SETUP = -5;
-const int ERR_BAD_ARGS = -6;
 
 void makabaSetup();
 void makabaCleanup();

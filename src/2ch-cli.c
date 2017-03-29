@@ -8,7 +8,7 @@
 
 void pomogite() // Справка
 {
-	printf("2ch-cli "VERSION" - консольный клиент двача\n");
+	printf("2ch-cli " VERSION " - консольный клиент двача\n");
 	printf("Использование:\n");
 	printf(" -h - помощь\n");
 	printf(" -s - отправить пост\n");
@@ -20,7 +20,7 @@ void pomogite() // Справка
 
 int main (int argc, char **argv)
 {
-	char passcode[32] = "пасскода нет нихуя :("; // Пасскод
+	char passcode[32] = "пасскода нет :("; // Пасскод
     char board_name[10] = "b"; // Имя борды
     long long thread_number = 0; // Номер треда в борде
 	char *comment = NULL; // Комментарий - не занимать память, если не указан
@@ -29,9 +29,9 @@ int main (int argc, char **argv)
 	bool send_post = false;
 	if (argc == 1) /* Если аргументов нет, вывод помощи */ {
 		pomogite();
-		return RET_NOARGS;
+		return RET_ARGS;
 	}
-	parse_argv(argc, argv, board_name, &thread_number, &comment, passcode, &send_post);
+	parse_argv(argc, (const char **)argv, board_name, &thread_number, &comment, passcode, &send_post);
 	printf("board_name = %s\n", board_name);
 	printf("comment = %s\n", comment);
 
@@ -54,7 +54,7 @@ int main (int argc, char **argv)
 		printf("Ответ на капчу: ");
 		scanf("%s", captcha_value);
 		long long answer_length;
-		char *email = "sage";
+		char email[] = "sage";
 		sendPost(board_name, lint2str(thread_number),
 			comment, NULL, NULL, email,
 			captcha_id, captcha_value, &answer_length);
@@ -70,10 +70,10 @@ int main (int argc, char **argv)
 	char *thread_ch = (char *) calloc(threadsize + 1, sizeof(char)); // Заказываем память под собственный буфер треда
 	if (thread_ch == NULL) {
 		fprintf(stderr, "[main]! Error: 'thread_ch' memory allocation\n");
-		return ERR_MEMORY;
+		return RET_MEMORY;
 	}
 	// Копируем скачанный тред из буфера загрузок, т.к. хранить там ненадежно
-	thread_ch = memcpy(thread_ch, thread_recv_ch, threadsize);
+	thread_ch = (char *) memcpy(thread_ch, thread_recv_ch, threadsize);
 	thread_ch[threadsize] = 0;
 	fprintf(stderr, "Get OK\n");
 
@@ -135,15 +135,18 @@ int main (int argc, char **argv)
 int printPost (struct post *post,const bool show_email,const bool show_files) {
 	if (post->comment == NULL) {
 		fprintf(stderr, "! ERROR @printPost: Null comment in struct post\n");
-		return ERR_BROKEN_POST;
+		makaba_errno = ERR_POST_FORMAT;
+		return 1;
 	}
 	if (post->num == NULL) {
 		fprintf(stderr, "! ERROR @printPost: Null num in struct post\n");
-		return ERR_BROKEN_POST;
+		makaba_errno = ERR_POST_FORMAT;
+		return 1;
 	}
 	if (post->date == NULL) {
 		fprintf(stderr, "! ERROR @printPost: Null date in struct post\n");
-		return ERR_BROKEN_POST;
+		makaba_errno = ERR_POST_FORMAT;
+		return 1;
 	}
 
 	// Заголовок отдельно
@@ -173,7 +176,7 @@ char *prepareCaptcha(const char *board, const char *thread) {
 	long int pic_size;
 	char *captcha_png = get2chaptchaPicPNG(captcha_png_url, &pic_size);
 	captcha_png = (char *) calloc(pic_size + 1, sizeof(char));   // Крайне нежелательно доверять
-	captcha_png = memcpy(captcha_png, CURL_BUFF_BODY, pic_size); // буферу curl`а
+	captcha_png = (char *) memcpy(captcha_png, CURL_BUFF_BODY, pic_size); // буферу curl`а
 
 	FILE *captcha_png_file = fopen(CaptchaPngFilename, "w");
 	fwrite(captcha_png, sizeof(char), pic_size, captcha_png_file);
@@ -188,7 +191,7 @@ void parse_argv(const int argc, const char **argv,
 	char *board_name, long long *thread_number, char **comment, char *passcode, bool *send_post)
 {
 	int opt;
-	while (( opt = getopt(argc, argv, "hp:b:n:sc:") ) != -1)
+	while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:sc:") ) != -1)
 	{
 		switch (opt)
 		{
@@ -196,7 +199,7 @@ void parse_argv(const int argc, const char **argv,
 				memset(passcode, '\0', sizeof(passcode));
                 if ( sizeof(optarg) > sizeof(passcode) ) { //проверка
 					printf("Не шути так больше\n");
-					exit(ERR_ARGS);
+					exit(RET_ARGS);
 				}
 				memcpy(passcode, optarg, sizeof(passcode));
                 printf("Разраб хуй, ещё не запилил пасскоды\n");
@@ -206,7 +209,7 @@ void parse_argv(const int argc, const char **argv,
 				memset(board_name, '\0', sizeof(board_name));
                 if ( sizeof(optarg) > sizeof(board_name) ) { //проверка
 					printf("Не шути так больше\n");
-					exit(ERR_ARGS);
+					exit(RET_ARGS);
 				}
 				memcpy(board_name, optarg, sizeof(board_name));
 				break;
@@ -217,7 +220,7 @@ void parse_argv(const int argc, const char **argv,
 				if (*comment == NULL) {
 					if ( sizeof(optarg) > Max_comment_len ) {
 						printf("Комментарий не длиннее 15к знаков\n");
-						exit(ERR_ARGS);
+						exit(RET_ARGS);
 					}
 					printf("[%d] %s\n", strlen(optarg), optarg);
 					*comment = (char *) calloc(strlen(optarg) + 1, sizeof(char));
@@ -225,7 +228,7 @@ void parse_argv(const int argc, const char **argv,
 				}
 				else {
 					printf("Дважды указан комментарий\n");
-					exit(ERR_ARGS);
+					exit(RET_ARGS);
 				}
 				break;
 			case 's':
@@ -234,7 +237,7 @@ void parse_argv(const int argc, const char **argv,
 			default:
 				printf("Неизвестная опция %c\n", opt);
 				pomogite();
-				exit(ERR_ARGS);
+				exit(RET_ARGS);
 		}
 	}
 }

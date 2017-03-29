@@ -18,7 +18,7 @@ int show_img(const char *filename) {
         return Ret_show_create_canvas;
     }
     ssize_t import_ret = caca_import_canvas_from_file(canvas, filename, "");
-    if (import_ret == NULL) {
+    if (import_ret == -1) {
         fprintf(stderr, "[show_img]! Error: could not import canvas from %s\n", filename);
         return Ret_show_import_canvas;
     }
@@ -76,6 +76,6 @@ void convert_img(const char *filename, const char *ofile, const bool v) {
     fprintf(stderr, "]] Exiting convert_img\n");
 }
 
-int perf_exec(const char *args) {
-    return execvp(Converter, args);
+int perf_exec(const char **args) {
+    return execvp(Converter, (char *const *)args);
 }

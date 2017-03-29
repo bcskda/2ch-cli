@@ -104,13 +104,15 @@ long int *findPostsInJSON (const char *src, long int *postcount_res, const bool 
 			default: {
 				fprintf (stderr, "! Error: Unusual depth (%d)\n", depth);
 				free (temp);
-				return (long int *) ERR_PARTTHREAD_DEPTH;
+				makaba_errno = ERR_PARTTHREAD_DEPTH;
+				return NULL;
 			}
 		}
 	}
 	if (depth != 0) {
 		fprintf (stderr, "[findPostsInJSON]! Error: Non-zero depth (%d) after cycle\n", depth);
-		return (long int *) ERR_PARTTHREAD_DEPTH;
+		makaba_errno = ERR_PARTTHREAD_DEPTH;
+		return NULL;
 	}
 
 	if (v) fprintf (stderr, "%d posts found\n", postcount);
@@ -144,7 +146,8 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	char *ptr_comment = (char *) strstr (post_string, PATTERN_COMMENT);
 	if (ptr_comment == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Comment pattern not found\n");
-		return (struct post *) ERR_POST_FORMAT;
+		makaba_errno = ERR_POST_FORMAT;
+		return NULL;
 	}
 	ptr_comment += strlen(PATTERN_COMMENT);
 
@@ -159,7 +162,8 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	char *ptr_date = strstr (ptr_comment+comment_len, PATTERN_DATE)+strlen(PATTERN_DATE);
 	if (ptr_date == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Date pattern not found\n");
-		return (struct post *) ERR_POST_FORMAT;
+		makaba_errno = ERR_POST_FORMAT;
+		return NULL;
 	}
 	int date_len = strstr (ptr_date, "\"") - ptr_date;
 	if (v) {
@@ -174,7 +178,8 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	char *ptr_email = strstr(ptr_date + (ptrdiff_t)date_len, PATTERN_EMAIL);
 	if (ptr_email == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Email pattern not found\n");
-		return (struct post *) ERR_POST_FORMAT;
+		makaba_errno = ERR_POST_FORMAT;
+		return NULL;
 	}
 	ptr_email += (ptrdiff_t) strlen(PATTERN_EMAIL);
 	int email_len = (int) (strstr (ptr_email, "\"") - ptr_email);
@@ -203,7 +208,8 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		files_len = strstr(ptr_files, "}]") - ptr_files;
 		if (files_len == 0) {
 			fprintf (stderr, "[initPost]! Error: Bad post format: Files field specified but null\n");
-			return (struct post *) ERR_POST_FORMAT;
+			makaba_errno = ERR_POST_FORMAT;
+			return NULL;
 		} else
 			if (v) {
 				fprintf(stderr, "] Files length: %d\n", files_len);
@@ -227,7 +233,8 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	char *ptr_name = strstr( ptr_name_diff + (ptrdiff_t)name_diff_len, PATTERN_NAME );
 	if (ptr_name == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Name pattern not found\n");
-		return (struct post *) ERR_POST_FORMAT;
+		makaba_errno = ERR_POST_FORMAT;
+		return NULL;
 	}
 	ptr_name += (ptrdiff_t)strlen(PATTERN_NAME);
 
@@ -243,14 +250,16 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	char *ptr_num = strstr( ptr_name + (ptrdiff_t)name_len, PATTERN_NUM );
 	if (ptr_num == NULL) {
 		fprintf (stderr, "[initPost]! Error: Bad post format: Num pattern not found\n");
-		return (struct post *) ERR_POST_FORMAT;
+		makaba_errno = ERR_POST_FORMAT;
+		return NULL;
 	}
 	if (v) fprintf (stderr, "[ptr_num] %c%c%c%c%c\n", ptr_num[0],ptr_num[1],ptr_num[2],ptr_num[3],ptr_num[4]);
 	ptr_num += (ptrdiff_t) strlen(PATTERN_NUM);
 	char *num_end =  strstr (ptr_num, ",");
 	if (num_end == NULL) {
 		fprintf(stderr, "[initPost]! Error: Something strange with `num' field\n");
-		return (struct post *) ERR_INTERNAL;
+		makaba_errno = ERR_INTERNAL;
+		return NULL;
 	}
 	int num_len = (int) (num_end - ptr_num - 1); // Exclude ending '"'
 	if (v) {
@@ -272,7 +281,8 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		} else {
 			fprintf(stderr, "Memory allocated (struct post)\n");
 		}
-		return (struct post *) ERR_MEMORY;
+		makaba_errno = ERR_MEMORY;
+		return NULL;
 	}
 
 	post->num = str2lint(ptr_num, num_len);
@@ -284,7 +294,8 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		} else {
 			fprintf(stderr, "Memory allocated (comment_str)\n");
 		}
-		return (struct post *) ERR_MEMORY;
+		makaba_errno = ERR_MEMORY;
+		return NULL;
 	}
 	memcpy(comment_str, ptr_comment, comment_len);
 	post->comment = parseComment (comment_str, comment_len, true);
@@ -298,14 +309,16 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 	post->date = (char*) calloc (date_len+1, sizeof(char));
 	if (post->date == NULL) {
 		fprintf (stderr, "[initPost]! Error allocating memory (post.date)\n");
-		return (struct post *) ERR_MEMORY;
+		makaba_errno = ERR_MEMORY;
+		return NULL;
 	}
 	memcpy (post->date, ptr_date, sizeof(char)*date_len);
 
 	post->name = (char*) calloc (name_len+1, sizeof(char));
 	if (post->name == NULL) {
 		fprintf (stderr, "[initPost]! Error allocating memory (post.name)\n");
-		return (struct post *) ERR_MEMORY;
+		makaba_errno = ERR_MEMORY;
+		return NULL;
 	}
 	memcpy (post->name, ptr_name, sizeof(char)*name_len);
 
@@ -315,7 +328,8 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		post->email = (char*) calloc (email_len+1, sizeof(char));
 		if (post->email == NULL) {
 			fprintf (stderr, "[initPost]! Error allocating memory (post.email)\n");
-			return (struct post *) ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 		}
 		memcpy (post->email, ptr_email, sizeof(char)*email_len);
 	}
@@ -326,7 +340,8 @@ struct post *initPost (const char *post_string, const long int postlen, const bo
 		post->files = (char*) calloc (files_len+1, sizeof(char));
 		if (post->files == NULL) {
 			fprintf (stderr, "[initPost]! Error allocating memory (post.files)\n");
-			return (struct post *) ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 		}
 		memcpy (post->files, ptr_files, sizeof(char)*files_len);
 	}
@@ -456,13 +471,9 @@ struct thread *initThread (const char *thread_string, const long int thread_len,
 							cpost_len,
 							true
 							);
-		if ((char *) posts[i] == (char *) ERR_COMMENT_FORMAT) {
-			fprintf(stderr, "[initThread]! Error: initPost() returned ERR_COMMENT_FORMAT\n === Exiting ===");
+		if ((char *) posts[i] == NULL) {
+			fprintf(stderr, "[initThread]! Error: initPost() returned %d\n === Exiting ===", makaba_errno);
 			exit(3);
-		}
-		if ((char *) posts[i] == (char *) ERR_POST_OUT_OF_RANGE) {
-			fprintf(stderr, "[initThread]! Error: initPost() returned ERR_POST_OUT_OF_RANGE\n === Exiting ===");
-			exit(4);
 		}
 	}
 	posts[nposts-1] = initPost(
@@ -496,7 +507,8 @@ char *parse2chaptchaId (const char *capId_string) {
 	char *captcha_start = (char *) strstr (capId_string, PATTERN_CAPID);
 	if (captcha_start == NULL) {
 		fprintf(stderr, "[parse2chaptchaId]! Error: Bad captcha-JSON format\n");
-		return (char *) ERR_CAPTCHA_FORMAT;
+		makaba_errno = ERR_CAPTCHA_FORMAT;
+		return NULL;
 	}
 	captcha_start += strlen(PATTERN_CAPID);
 	short captcha_len = ((char *) strstr(captcha_start,"\"")) - captcha_start;
@@ -506,6 +518,240 @@ char *parse2chaptchaId (const char *capId_string) {
 	fprintf(stderr, "]] Exiting parse2chaptchaId\n");
 
 	return captcha_id;
+}
+
+// ========================================
+// libjson
+// ========================================
+
+int json_callback(void *userdata, int type, const char *data, uint32_t length) {
+    json_context *context = (json_context *) userdata;
+    if (context->type == thread_new) {
+        makaba_thread_cpp *thread = (makaba_thread_cpp *)context->memdest;
+        switch (type) {
+            case JSON_KEY:
+                if (context->status == Status_in_post) {
+                    if (fill_expected(context, (char *)data)) {
+                        printf("! Error @ fill_expected()\n");
+                        return 1;
+                    }
+                }
+                // fill files later
+                break;
+            case JSON_ARRAY_BEGIN:
+                switch(context->status) {
+                    case Status_default:
+                        //fprintf(stderr, ">>> Entering posts array, Status_in_thread\n");
+                        context->status = Status_in_thread;
+                        break;
+                    case Status_in_post:
+                        //fprintf(stderr, ">>> Entering files array, Status_in_files\n");
+                        context->status = Status_in_files;
+                        break;
+                }
+                break;
+            case JSON_ARRAY_END:
+                switch(context->status) {
+                    case Status_in_thread:
+                        //fprintf(stderr, "<<< Exiting posts array, Status_default\n");
+                        context->status = Status_default;
+                        fprintf(stderr, "==== Vector has %ld elements\n", thread->posts.size());
+                        break;
+                    case Status_in_files:
+                        //fprintf(stderr, "]\n<<< Exiting files array, Status_in_post\n");
+                        context->status = Status_in_post;
+                        break;
+                }
+                break;
+            case JSON_OBJECT_BEGIN:
+                switch (context->status) {
+                    case Status_in_thread:
+                        //fprintf(stderr, ">>> Entering post, Status_in_post\n");
+                        context->status = Status_in_post;
+                        thread->nposts++;
+                        thread->posts.push_back({ });
+                        break;
+                }
+                break;
+            case JSON_OBJECT_END:
+                switch (context->status) {
+                    case Status_in_post:
+                        //printf("<<< Exiting post, Status_in_thread\n");
+                        context->status = Status_in_thread;
+                        break;
+                }
+                break;
+            case JSON_STRING:
+                if (context->status == Status_in_post) {
+                    //fprintf(stderr, "Will fill as string %d\n", context->expect);
+                    if (fill_as_string(thread->posts[thread->posts.size() - 1], context->expect, data)) {
+                        fprintf(stderr, "! Error @ fill_as_string\n");
+                        return 1;
+                    }
+                }
+                break;
+            case JSON_INT:
+            case JSON_FLOAT:
+                if (context->status == Status_in_post) {
+                    //fprintf(stderr, "Will fill as int %d\n", context->expect);
+                    if (fill_as_int(thread->posts[thread->posts.size() - 1], context->expect, data)) {
+                        fprintf(stderr, "! Error @ fill_as_int\n");
+                        return 1;
+                    }
+                }
+                break;
+            default:
+                printf("[unhandled] \"%s\"\n", (char *)userdata);
+                break;
+        }
+        return 0;
+    }
+}
+
+int fill_expected(json_context *context, const char *data) {
+    //fprintf(stderr, "Will expect %s\n", data);
+    if (strncmp(data, Key_banned, strlen(Key_banned)) == 0) {
+        context->expect = Expect_banned;
+    }
+    else if (strncmp(data, Key_closed, strlen(Key_closed)) == 0) {
+        context->expect = Expect_closed;
+    }
+    else if (strncmp(data, Key_comment, strlen(Key_comment)) == 0) {
+        context->expect = Expect_comment;
+    }
+    else if (strncmp(data, Key_date, strlen(Key_date)) == 0) {
+        context->expect = Expect_date;
+    }
+    else if (strncmp(data, Key_email, strlen(Key_email)) == 0) {
+        context->expect = Expect_email;
+    }
+    else if (strncmp(data, Key_files, strlen(Key_files)) == 0) {
+        context->expect = Expect_files;
+    }
+    else if (strncmp(data, Key_lasthit, strlen(Key_lasthit)) == 0) {
+        context->expect = Expect_lasthit;
+    }
+    else if (strncmp(data, Key_name, strlen(Key_name)) == 0) {
+        context->expect = Expect_name;
+    }
+    else if (strncmp(data, Key_num, strlen(Key_num)) == 0) {
+        context->expect = Expect_num;
+    }
+    else if (strncmp(data, Key_op, strlen(Key_op)) == 0) {
+        context->expect = Expect_op;
+    }
+    else if (strncmp(data, Key_parent, strlen(Key_parent)) == 0) {
+        context->expect = Expect_parent;
+    }
+    else if (strncmp(data, Key_sticky, strlen(Key_sticky)) == 0) {
+        context->expect = Expect_sticky;
+    }
+    else if (strncmp(data, Key_subject, strlen(Key_subject)) == 0) {
+        context->expect = Expect_subject;
+    }
+    else if (strncmp(data, Key_tags, strlen(Key_tags)) == 0) {
+        context->expect = Expect_tags;
+    }
+    else if (strncmp(data, Key_timestamp, strlen(Key_timestamp)) == 0) {
+        context->expect = Expect_timestamp;
+    }
+    else if (strncmp(data, Key_trip, strlen(Key_trip)) == 0) {
+        context->expect = Expect_trip;
+    }
+    else if (strncmp(data, Key_trip_type, strlen(Key_trip_type)) == 0) {
+        context->expect = Expect_trip_type;
+    }
+    else if (strncmp(data, Key_unique_posters, strlen(Key_unique_posters)) == 0) {
+        context->expect = Expect_unique_posters;
+    }
+    else {
+        fprintf(stderr, "! Error @ fill_expected: unknown key %s\n", data);
+        return 1;
+    }
+    return 0;
+}
+
+int fill_as_int(makaba_post_cpp &post, const int expect, const char *data) {
+    switch (expect) {
+        case Expect_banned:
+            post.banned = atoi(data);
+            return 0;
+        case Expect_closed:
+            post.closed = atoi(data);
+            return 0;
+        case Expect_lasthit:
+            post.lasthit = atoi(data);
+            return 0;
+        // libjson определяет длинные номера постов как строки;
+        // парсятся в fill_as_string()
+        /*
+        case Expect_num:
+        case Expect_parent:
+        */
+        case Expect_op:
+            post.op = atoi(data);
+            return 0;
+        case Expect_sticky:
+            post.sticky = atoi(data);
+            return 0;
+        case Expect_timestamp:
+            post.timestamp = atoi(data);
+            return 0;
+        // unique_posters тоже как string
+        /*
+        case Expect_unique_posters:
+        */
+    }
+    return 1;
+}
+
+int fill_as_string(makaba_post_cpp &post, const int expect, const char *data) {
+    switch (expect) {
+        //fprintf(stderr, "Expect %d ...\n", expect);
+        case Expect_comment:
+            post.comment = (char *) calloc(strlen(data) + 1, sizeof(char));
+            memcpy(post.comment, data, strlen(data));
+            return 0;
+        case Expect_date:
+            post.date = (char *) calloc(strlen(data) + 1, sizeof(char));
+            memcpy(post.date, data, strlen(data));
+            return 0;
+        case Expect_email:
+            post.email = (char *) calloc(strlen(data) + 1, sizeof(char));
+            memcpy(post.email, data, strlen(data));
+            return 0;
+        case Expect_name:
+            post.name = (char *) calloc(strlen(data) + 1, sizeof(char));
+            memcpy(post.name, data, strlen(data));
+            return 0;
+        case Expect_num: // libjson определяет длинные номера постов как строки:
+            post.num = atoi(data);
+            return 0;
+        case Expect_parent: // это тоже номер поста
+            post.parent = atoi(data);
+            return 0;
+        case Expect_subject:
+            post.subject = (char *) calloc(strlen(data) + 1, sizeof(char));
+            memcpy(post.subject, data, strlen(data));
+            return 0;
+        case Expect_tags:
+            post.tags = (char *) calloc(strlen(data) + 1, sizeof(char));
+            memcpy(post.tags, data, strlen(data));
+            return 0;
+        case Expect_trip:
+            post.trip = (char *) calloc(strlen(data) + 1, sizeof(char));
+            memcpy(post.trip, data, strlen(data));
+            return 0;
+        case Expect_trip_type:
+            post.trip_type = (char *) calloc(strlen(data) + 1, sizeof(char));
+            memcpy(post.trip_type, data, strlen(data));
+            return 0;
+        case Expect_unique_posters: // unique_posters тоже как string
+            post.unique_posters = atoi(data);
+            return 0;
+    }
+    fprintf(stderr, "! Error @ fill_as_string: unknown context.expect value: %d\n", expect);
+    return 1;
 }
 
 // ========================================

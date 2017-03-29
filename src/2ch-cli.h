@@ -13,18 +13,17 @@
 #include <stdlib.h>
 #include <getopt.h>
 
+#include "error.h"
 #include "makaba.c"
 #include "parser.c"
 #include "image.c"
 
 #define VERSION "v0.4test3"
 
-const int ERR_ARGS = -1;
-const int ERR_BROKEN_POST = -2;
-
 const int RET_OK = 0;
-const int RET_NOARGS = 1;
+const int RET_ARGS = 1;
 const int RET_PREEXIT = 2;
+const int RET_MEMORY = 3;
 
 const size_t Max_comment_len = 15000;
 //const size_t Thread_size = 10000000; // Размер буфера с тредом
@@ -40,3 +39,4 @@ void parse_argv(const int argc, const char **arvg,
 void ncurses_init();
 void ncurses_exit();
 void ncurses_print_help();
+void ncurses_print_post(const struct thread *thread, const int postnum);

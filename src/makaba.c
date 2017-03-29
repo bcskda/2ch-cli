@@ -29,7 +29,8 @@ char *getBoardsListJSON (const bool v) {
 		else {
 			fprintf (stderr, "[getBoardsList]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-			return (char *)ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 		}
 
 		if (v) fprintf (stderr, "] Forming URL\n");
@@ -45,7 +46,8 @@ char *getBoardsListJSON (const bool v) {
 
 		if (CURL_BUFF_BODY == NULL) {
 			fprintf(stderr, "[getBoardsList]! Error: curl body buffer not allocated\n");
-			return (char *) ERR_MAKABA_SETUP;
+			makaba_errno = ERR_MAKABA_SETUP;
+			return NULL;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -67,7 +69,8 @@ char *getBoardsListJSON (const bool v) {
 				curl_easy_strerror(request_status));
 			curl_easy_cleanup (curl_handle);
 			free (URL);
-			return (char *) ERR_CURL_PERFORM;
+			makaba_errno = ERR_CURL_PERFORM;
+			return NULL;
 		}
 
 		curl_easy_cleanup (curl_handle);
@@ -77,7 +80,8 @@ char *getBoardsListJSON (const bool v) {
 	}
 	else {
 		fprintf (stderr, "! Error initializing curl handle\n");
-		return (char *) ERR_CURL_INIT;
+		makaba_errno = ERR_CURL_INIT;
+		return NULL;
 	}
 
 	return CURL_BUFF_BODY;
@@ -103,7 +107,8 @@ char *getBoardPageJSON (const char *board, const long int page, const bool v) {
 		else {
 			fprintf (stderr, "[getBoardPage]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-			return (char *) ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 		}
 
 		if (v) fprintf (stderr, "] Forming URL\n");
@@ -123,7 +128,8 @@ char *getBoardPageJSON (const char *board, const long int page, const bool v) {
 
 		if (CURL_BUFF_BODY == NULL) {
 			fprintf(stderr, "[getBoardPage]! Error: curl body buffer not allocated\n");
-			return (char *) ERR_MAKABA_SETUP;
+			makaba_errno = ERR_MAKABA_SETUP;
+			return NULL;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -145,7 +151,8 @@ char *getBoardPageJSON (const char *board, const long int page, const bool v) {
 				curl_easy_strerror(request_status));
 			curl_easy_cleanup (curl_handle);
 			free (URL);
-			return (char *) ERR_CURL_PERFORM;
+			makaba_errno = ERR_CURL_PERFORM;
+			return NULL;
 		}
 
 		curl_easy_cleanup (curl_handle);
@@ -155,7 +162,8 @@ char *getBoardPageJSON (const char *board, const long int page, const bool v) {
 	}
 	else {
 		fprintf (stderr, "! Error initializing curl handle\n");
-		return (char *) ERR_CURL_INIT;
+		makaba_errno = ERR_CURL_INIT;
+		return NULL;
 	}
 
 	return CURL_BUFF_BODY;
@@ -179,7 +187,8 @@ char *getBoardCatalogJSON (const char *board, const bool v) {
 		else {
 			fprintf (stderr, "[getBoardCatalog]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-			return (char *) ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 		}
 
 		if (v) fprintf (stderr, "] Forming URL\n");
@@ -195,7 +204,8 @@ char *getBoardCatalogJSON (const char *board, const bool v) {
 
 		if (CURL_BUFF_BODY == NULL) {
 			fprintf(stderr, "[getBoardCatalog]! Error: curl body buffer not allocated\n");
-			return (char *) ERR_MAKABA_SETUP;
+			makaba_errno = ERR_MAKABA_SETUP;
+			return NULL;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -214,7 +224,8 @@ char *getBoardCatalogJSON (const char *board, const bool v) {
 				curl_easy_strerror(request_status));
 				curl_easy_cleanup (curl_handle);
 			free (URL);
-			return (char *) ERR_CURL_PERFORM;
+			makaba_errno = ERR_CURL_PERFORM;
+			return NULL;
 		}
 
 		curl_easy_cleanup (curl_handle);
@@ -225,7 +236,8 @@ char *getBoardCatalogJSON (const char *board, const bool v) {
 	}
 	else {
 		fprintf (stderr, "[getBoardCatalog]! Error initializing curl handle\n");
-		return (char *) ERR_CURL_INIT;
+		makaba_errno = ERR_CURL_INIT;
+		return NULL;
 	}
 
 	return CURL_BUFF_BODY;
@@ -251,7 +263,8 @@ char *getThreadJSON (const char *board, const long int threadnum, long int *thre
 		else {
 			fprintf (stderr, "[getThread]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-			return (char *) ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 		}
 
 		curl_easy_setopt (curl_handle, CURLOPT_POST, 1);
@@ -280,7 +293,8 @@ char *getThreadJSON (const char *board, const long int threadnum, long int *thre
 			fprintf (stderr, "[getThread]! Error allocating memory (POST data)\n");
 			curl_easy_cleanup (curl_handle);
 			free (URL);
-			return (char *) ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 		}
 		if (v) fprintf (stderr, "] Forming POST data\n");
 		postfields = strcpy (postfields, "task=get_thread");
@@ -301,7 +315,8 @@ char *getThreadJSON (const char *board, const long int threadnum, long int *thre
 
 		if (CURL_BUFF_BODY == NULL) {
 			fprintf(stderr, "[getThread]! Error: curl body buffer not allocated\n");
-			return (char *) ERR_MAKABA_SETUP;
+			makaba_errno = ERR_MAKABA_SETUP;
+			return NULL;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 		if (v) fprintf (stderr, "] option WRITEDATA set\n");
@@ -325,7 +340,8 @@ char *getThreadJSON (const char *board, const long int threadnum, long int *thre
 			curl_easy_cleanup (curl_handle);
 			free (URL);
 			free (postfields);
-			return (char *) ERR_CURL_PERFORM;
+			makaba_errno = ERR_CURL_PERFORM;
+			return NULL;
 		}
 
 		curl_easy_cleanup (curl_handle);
@@ -337,7 +353,8 @@ char *getThreadJSON (const char *board, const long int threadnum, long int *thre
 	}
 	else {
 		fprintf (stderr, "[getThread]! Error initializing curl handle\n");
-		return (char *) ERR_CURL_INIT;
+		makaba_errno = ERR_CURL_INIT;
+		return NULL;
 	}
 
 	return CURL_BUFF_BODY;
@@ -358,7 +375,8 @@ char *getCaptchaSettingsJSON (const char *board) {
 		if (URL == NULL) {
 			fprintf (stderr, "[getCaptchaSettings]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-			return (char *) ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 		}
 		URL = strcpy (URL, BASE_URL);
 		URL = strcat (URL, CAPTCHA_SETTINGS);
@@ -367,7 +385,8 @@ char *getCaptchaSettingsJSON (const char *board) {
 
 		if (CURL_BUFF_BODY == NULL) {
 			fprintf(stderr, "[getCaptchaSettings]! Error: curl body buffer not allocated\n");
-			return (char *) ERR_MAKABA_SETUP;
+			makaba_errno = ERR_MAKABA_SETUP;
+			return NULL;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 
@@ -381,7 +400,8 @@ char *getCaptchaSettingsJSON (const char *board) {
 				curl_easy_strerror(request_status));
 			curl_easy_cleanup (curl_handle);
 			free (URL);
-			return (char *) ERR_CURL_PERFORM;
+			makaba_errno = ERR_CURL_PERFORM;
+			return NULL;
 		}
 
 		curl_easy_cleanup (curl_handle);
@@ -389,7 +409,8 @@ char *getCaptchaSettingsJSON (const char *board) {
 	}
 	else {
 		fprintf (stderr, "[getCaptchaSettings]! Error initializing curl handle\n");
-		return (char *) ERR_CURL_INIT;
+		makaba_errno = ERR_CURL_INIT;
+		return NULL;
 	}
 
 	fprintf(stderr, "]] Exiting getCaptchaSettings\n");
@@ -409,7 +430,8 @@ char *get2chaptchaIdJSON (const char *board, const char *thread) {
 		if (URL == NULL) {
 			fprintf (stderr, "[get2chaptchaIdJSON]! Error allocating memory (URL)\n");
 			curl_easy_cleanup (curl_handle);
-			return (char *) ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 		}
 		URL = strcpy (URL, BASE_URL);
 		URL = strcat (URL, CAPTCHA_2CHAPTCHA);
@@ -422,7 +444,8 @@ char *get2chaptchaIdJSON (const char *board, const char *thread) {
 			fprintf (stderr, "[get2chaptchaIdJSON]! Error allocating memory (POST data)\n");
 			curl_easy_cleanup (curl_handle);
 			free (URL);
-			return (char *) ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 		}
 		postfields = strcpy (postfields, "board=");
 		postfields = strcat (postfields, board);
@@ -434,7 +457,8 @@ char *get2chaptchaIdJSON (const char *board, const char *thread) {
 
 		if (CURL_BUFF_BODY == NULL) {
 			fprintf(stderr, "[get2chaptchaIdJSON]! Error: curl body buffer not allocated\n");
-			return (char *) ERR_MAKABA_SETUP;
+			makaba_errno = ERR_MAKABA_SETUP;
+			return NULL;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 
@@ -449,7 +473,8 @@ char *get2chaptchaIdJSON (const char *board, const char *thread) {
 			curl_easy_cleanup (curl_handle);
 			free (URL);
 			free (postfields);
-			return (char *) ERR_CURL_PERFORM;
+			makaba_errno = ERR_CURL_PERFORM;
+			return NULL;
 		}
 
 		curl_easy_cleanup (curl_handle);
@@ -458,7 +483,8 @@ char *get2chaptchaIdJSON (const char *board, const char *thread) {
 	}
 	else {
 		fprintf (stderr, "[get2chaptchaIdJSON]! Error initializing curl handle\n");
-		return (char *) ERR_CURL_INIT;
+		makaba_errno = ERR_CURL_INIT;
+		return NULL;
 	}
 
 	fprintf(stderr, "]] Exiting get2chaptchaIdJSON\n");
@@ -473,7 +499,8 @@ char *form2chaptchaPicURL (const char *id) {
 	char *URL = (char*) calloc (URL_length, sizeof(char));
 	if (URL == NULL) {
 			fprintf (stderr, "[get2chaptchaPicURL]! Error allocating memory (URL)\n");
-			return (char *) ERR_MEMORY;
+			makaba_errno = ERR_MEMORY;
+			return NULL;
 	}
 	URL = strcpy (URL, BASE_URL);
 	URL = strcat (URL, CAPTCHA_2CHAPTCHA);
@@ -495,7 +522,8 @@ char *get2chaptchaPicPNG (const char *URL, long int *pic_size) {
 
 		if (CURL_BUFF_BODY == NULL) {
 			fprintf(stderr, "[get2chaptchaPicPNG]! Error: curl body buffer not allocated\n");
-			return (char *) ERR_MAKABA_SETUP;
+			makaba_errno = ERR_MAKABA_SETUP;
+			return NULL;
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 
@@ -509,14 +537,16 @@ char *get2chaptchaPicPNG (const char *URL, long int *pic_size) {
 			fprintf (stderr, "[get2chaptchaPicPNG]! Error @ curl_easy_perform: %s\n",
 				curl_easy_strerror(request_status));
 			curl_easy_cleanup (curl_handle);
-			return (char *) ERR_CURL_PERFORM;
+			makaba_errno = ERR_CURL_PERFORM;
+			return NULL;
 		}
 
 		curl_easy_cleanup (curl_handle);
 	}
 	else {
 		fprintf (stderr, "[get2chaptchaPicPNG]! Error initializing curl handle\n");
-		return (char *) ERR_CURL_INIT;
+		makaba_errno = ERR_CURL_INIT;
+		return NULL;
 	}
 
 	fprintf(stderr, "]] Exiting get2chaptchaPicPNG\n");
@@ -573,7 +603,7 @@ int sendPost (const char *board, const char *thread,
 			fprintf(stderr, "[sendPost]! Error: board given as NULL\n");
 			curl_easy_cleanup(curl_handle);
 			free(URL);
-			return ERR_BAD_ARGS;
+			return ERR_ARGS;
 		}
 		if (thread != NULL) {
 			postfields_length += 8 + strlen(thread);
@@ -588,7 +618,7 @@ int sendPost (const char *board, const char *thread,
 			fprintf(stderr, "[sendPost]! Error: comment given as NULL\n");
 			curl_easy_cleanup(curl_handle);
 			free(URL);
-			return ERR_BAD_ARGS;
+			return ERR_ARGS;
 		}
 		if (subject != NULL) {
 			postfields_length += 9 + strlen(subject);
@@ -606,7 +636,7 @@ int sendPost (const char *board, const char *thread,
 			fprintf(stderr, "[sendPost]! Error: captcha_id given as NULL\n");
 			curl_easy_cleanup(curl_handle);
 			free(URL);
-			return ERR_BAD_ARGS;
+			return ERR_ARGS;
 		}
 		if (captcha_value != NULL) {
 			postfields_length += 15 + strlen(captcha_value);
@@ -615,7 +645,7 @@ int sendPost (const char *board, const char *thread,
 			fprintf(stderr, "[sendPost]! Error: captcha_value given as NULL\n");
 			curl_easy_cleanup(curl_handle);
 			free(URL);
-			return ERR_BAD_ARGS;
+			return ERR_ARGS;
 		}
 		char *postfields = (char *) calloc (postfields_length, sizeof(char));
 		if (postfields == NULL) {
@@ -710,7 +740,7 @@ size_t CURL_writeToBuff (const char *src, const size_t block_size, const size_t 
 		return 0;
 	}
 	else {
-		memcpy (dest+CURL_BUFF_POS, src, block_size*nmemb);
+		memcpy (dest + CURL_BUFF_POS, src, block_size * nmemb);
 		CURL_BUFF_POS += block_size*nmemb;
 		return block_size*nmemb;
 	}

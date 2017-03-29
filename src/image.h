@@ -9,8 +9,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <sys/types.h>
+#include <sys/wait.h>
 #include <caca.h>
 #include <stdbool.h>
+#include "error.h"
 
 #define Converter          "img2txt"
 #define Converter_width_i  140
@@ -27,4 +29,4 @@ const int Ret_show_create_display = 3;
 int show_img(const char *filename);
 //int convert_img(const char *filename, const bool v);
 void convert_img(const char *filename, const char *ofile, const bool v);
-int perf_exec(const char *args);
+int perf_exec(const char **args);
