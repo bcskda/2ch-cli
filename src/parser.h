@@ -13,28 +13,6 @@
 #include "error.h"
 #pragma once
 
-struct list {
-	void *data;
-	struct list *first;
-	struct list *next;
-};
-
-struct ref_reply {
-	char *link;
-	long int thread;
-	long int num;
-};
-
-struct post {
-	long int num;
-	char *comment;
-	char *date;
-	char *name;
-	char *email;
-	char *files;
-};
-typedef struct post makaba_post;
-
 struct post_cpp {
 	int banned; //bool
 	int closed; //bool
@@ -56,14 +34,6 @@ struct post_cpp {
 	long long unique_posters;
 };
 typedef struct post_cpp makaba_post_cpp;
-
-
-struct thread {
-	long int num;
-	long int nposts;
-	struct post **posts;
-};
-typedef struct thread makaba_thread;
 
 struct thread_cpp {
 	long int num;
@@ -204,12 +174,7 @@ int fill_as_int(makaba_post_cpp &post, const int expect, const char *data);    /
 
 int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v);
 
-struct thread *initThread (const char *thread_string, const long int thread_len, const bool v);
-long int *findPostsInJSON (const char *src, long int *postcount_res, const bool v);
-struct post *initPost (const char *post_string, const long int postlen, const bool v);
 char *parseComment (char *comment, const long long  comment_len, const bool v);
-struct ref_reply *parseRef_Reply (const char *ch_ref, const long int ref_len, const bool v);
-char *cleanupComment (const char *src, const int src_len, int *new_len, const bool v);
 
 char *parse2chaptchaId (const char *capid_string);
 
