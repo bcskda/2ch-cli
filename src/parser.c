@@ -7,9 +7,14 @@
 #pragma once
 #include "parser.h"
 
-char *parseComment (char *comment, const long long  comment_len, const bool v) { // Пока что игнорируем разметку
+char *parseComment (const char *comment, const long long  comment_len, const bool v) { // Пока что игнорируем разметку
 	fprintf (stderr, "]] Started parseComment\n");
 	fprintf(stderr, "Comment len: %d\n", comment_len);
+
+	if (v) {
+		fprintf(stderr, "Comment:\n%s\nEnd of comment\n", comment);
+	}
+
 	char *parsed = (char *) calloc(comment_len, sizeof(char));
 	int depth = 0;
 	long long parsed_len = 0;
@@ -23,6 +28,7 @@ char *parseComment (char *comment, const long long  comment_len, const bool v) {
 			else*/ {
 				depth ++;
 				if (strncmp(&(comment[i]), PATTERN_NEWLINE, strlen(PATTERN_NEWLINE)) == 0) { // <br>
+					if (v) fprintf(stderr, "NL ");
 					parsed[parsed_len] = '\n';
 					parsed_len ++;
 				}
@@ -34,17 +40,25 @@ char *parseComment (char *comment, const long long  comment_len, const bool v) {
 					if (depth > 0) { // HTML tag close
 						depth --;
 					}
-					else { // In-text '>'
+					else { // text '>'
 						parsed[parsed_len] = '>';
 						parsed_len ++;
 					}
 					i += strlen(PATTERN_TAG_CLOSE) - 1;
+			}
+			else {
+				if (strncmp(&(comment[i]), PATTERN_GT, strlen(PATTERN_GT)) == 0) { // In-text '>'
+					if(v) fprintf(stderr, "> ");
+					parsed[parsed_len] = '>';
+					parsed_len ++;
+					i += strlen(PATTERN_GT);
 				}
 				else
 					if (depth == 0) { // Ordinary character
 						parsed[parsed_len] = comment[i];
 						parsed_len ++;
 					}
+			}
 	}
 	fprintf(stderr, "]] Final length: %d\n", parsed_len);
 	fprintf(stderr, "]] Exiting parseComment\n");
@@ -260,11 +274,14 @@ int fill_as_int(makaba_post_cpp &post, const int expect, const char *data) {
 }
 
 int fill_as_string(makaba_post_cpp &post, const int expect, const char *data) {
-    switch (expect) {
+	switch (expect) {
         //fprintf(stderr, "Expect %d ...\n", expect);
         case Expect_comment:
-            post.comment = (char *) calloc(strlen(data) + 1, sizeof(char));
-            memcpy(post.comment, data, strlen(data));
+            post.comment = parseComment(data, strlen(data), true);
+			if (post.comment == NULL) {
+				fprintf(stderr, "[fill_as_string] ! Error @ parseComment()\n");
+				return 1;
+			}
             return 0;
         case Expect_date:
             post.date = (char *) calloc(strlen(data) + 1, sizeof(char));

@@ -140,26 +140,16 @@ typedef struct json_context json_context;
 // Ручной парсинг
 // ========================================
 
-const char *PATTERN_COMMENT = ",\"comment\":\"";
-const char *PATTERN_COMMENT_END = "\",\"date\":\"";
-const char *PATTERN_DATE = ",\"date\":\"";
-const char *PATTERN_SUBJECT = ",\"subject\":\"";
-const char *PATTERN_NAME = ",\"name\":\"";
-const char *PATTERN_NAME_END = "\",\"num\":\"";
-const char *PATTERN_EMAIL = ",\"email\":\"";
-const char *PATTERN_FILES = ",\"files\":[{";
-const char *PATTERN_NUM = ",\"num\":\"";
+const char *PATTERN_TAG_OPEN = "<";
+const char *PATTERN_TAG_CLOSE = ">";
 
-const char *PATTERN_TAG_OPEN = "\\u003c";
-const char *PATTERN_TAG_CLOSE = "\\u003e";
-
-const char *PATTERN_HREF_OPEN = "\\u003ca href=\\\"";
-const char *PATTERN_HREF_CLOSE = "\\u003c/a\\u003e";
-const char *PATTERN_REPLY_CLASS = "class=\\\"post-reply-link\\\"";
-const char *PATTERN_REPLY_THREAD = "data-thread=\\\"";
-const char *PATTERN_REPLY_NUM = "data-num=\\\"";
-const char *PATTERN_GREEN = "span class=\\\"unkfunc\\\"";
-const char *PATTERN_NEWLINE = "\\u003cbr\\u003e";
+const char *PATTERN_HREF_OPEN = "<a href=\"";
+const char *PATTERN_HREF_CLOSE = "</a>";
+const char *PATTERN_REPLY_CLASS = "class=\"post-reply-link\"";
+const char *PATTERN_REPLY_THREAD = "data-thread=\"";
+const char *PATTERN_REPLY_NUM = "data-num=\"";
+const char *PATTERN_NEWLINE = "<br>";
+const char *PATTERN_GT = "&gt";
 
 const char *PATTERN_CAPID = "\"id\":\"";
 
@@ -174,7 +164,7 @@ int fill_as_int(makaba_post_cpp &post, const int expect, const char *data);    /
 
 int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v);
 
-char *parseComment (char *comment, const long long  comment_len, const bool v);
+char *parseComment (const char *comment, const long long  comment_len, const bool v);
 
 char *parse2chaptchaId (const char *capid_string);
 
