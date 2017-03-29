@@ -754,6 +754,30 @@ int fill_as_string(makaba_post_cpp &post, const int expect, const char *data) {
     return 1;
 }
 
+int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v) {
+	json_context context;
+    context.type = thread_new;
+    context.status = Status_default;
+    context.memdest = &thread;
+
+	json_parser parser;
+    if (json_parser_init(&parser, NULL, json_callback, &context)) {
+        fprintf(stderr, "[initThread_cpp] ! Error: json_parser_init() failed\n");
+		makaba_errno = ERR_JSON_INIT;
+		return 1;
+    }
+
+	int ret = json_parser_string(&parser, thread_string, thread_lenght, NULL);
+	if (ret) {
+		printf("Error @ parse: %d\n", ret);
+        json_parser_free(&parser);
+		makaba_errno = ERR_JSON_PARSE;
+		return 1;
+    }
+
+	return 0;
+};
+
 // ========================================
 // Freeing functions
 // ========================================

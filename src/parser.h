@@ -202,6 +202,8 @@ int fill_expected(json_context *context, const char *data); // Определя�
 int fill_as_string(makaba_post_cpp &post, const int expect, const char *data); // Заполняют поле в структуре
 int fill_as_int(makaba_post_cpp &post, const int expect, const char *data);    // в соотв. с текущей переменной JSON
 
+int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v);
+
 struct thread *initThread (const char *thread_string, const long int thread_len, const bool v);
 long int *findPostsInJSON (const char *src, long int *postcount_res, const bool v);
 struct post *initPost (const char *post_string, const long int postlen, const bool v);

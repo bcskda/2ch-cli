@@ -77,8 +77,11 @@ int main (int argc, char **argv)
 	thread_ch[threadsize] = 0;
 	fprintf(stderr, "Get OK\n");
 
-	struct thread *thread = initThread(thread_ch, threadsize, true);
-	fprintf(stderr, "Init OK\n");
+	makaba_thread_cpp thread;
+	if (initThread_cpp(thread, thread_ch, threadsize, true)) {
+		fprintf(stderr, "[main] ! Error @ initThread_cpp()\n");
+		return RET_PARSE;
+	};
 
 	ncurses_init();
 	ncurses_print_help();
@@ -99,7 +102,7 @@ int main (int argc, char **argv)
 					ncurses_print_help();
 					break;
 				case KEY_RIGHT: case KEY_DOWN:
-					if (cur_post < thread->nposts - 1) {
+					if (cur_post < thread.nposts - 1) {
 						cur_post ++;
 						ncurses_print_post(thread, cur_post);
 					}
@@ -122,7 +125,7 @@ int main (int argc, char **argv)
 	}
 	ncurses_exit();
 
-	freeThread(thread);
+	//freeThread(thread);
 	free(thread_ch);
 	makabaCleanup();
 	if (comment != NULL)
@@ -132,34 +135,34 @@ int main (int argc, char **argv)
 	return RET_OK;
 }
 
-int printPost (struct post *post,const bool show_email,const bool show_files) {
-	if (post->comment == NULL) {
+int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files) {
+	if (post.comment == NULL) {
 		fprintf(stderr, "! ERROR @printPost: Null comment in struct post\n");
 		makaba_errno = ERR_POST_FORMAT;
 		return 1;
 	}
-	if (post->num == NULL) {
+	if (post.num == NULL) {
 		fprintf(stderr, "! ERROR @printPost: Null num in struct post\n");
 		makaba_errno = ERR_POST_FORMAT;
 		return 1;
 	}
-	if (post->date == NULL) {
+	if (post.date == NULL) {
 		fprintf(stderr, "! ERROR @printPost: Null date in struct post\n");
 		makaba_errno = ERR_POST_FORMAT;
 		return 1;
 	}
 
 	// Заголовок отдельно
-	if (show_email && (post->email != NULL)) {
+	if (show_email && (post.email != NULL)) {
 		printw ("[=== %s (%s) #%d %s ===]\n",
-			post->name, post->email, post->num, post->date);
+			post.name, post.email, post.num, post.date);
 	}
 	else {
 		printw ("[=== %s #%d %s ===]\n",
-			post->name, post->num, post->date);
+			post.name, post.num, post.date);
 	}
 	// Комментарий
-	printw("%s\n\n", post->comment);
+	printw("%s\n\n", post.comment);
 
 	return 0;
 }
@@ -257,9 +260,9 @@ void ncurses_print_help() {
 	printw(">>>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост, [H] помощь, [Q] выход\n");
 }
 
-void ncurses_print_post(const struct thread *thread, const int postnum) {
+void ncurses_print_post(const makaba_thread_cpp &thread, const int postnum) {
 	clear();
 	fprintf(stderr, "Printing post #%d\n", postnum);
-	printPost(thread->posts[postnum], true, true);
+	printPost(thread.posts[postnum], true, true);
 	refresh();
 }

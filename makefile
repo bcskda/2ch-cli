@@ -1,5 +1,5 @@
 CC = g++
-LIBS = -lcurl -lncursesw -lcaca
+LIBS = -lcurl -ljson -lncursesw -lcaca
 OPTS= -std=c++11 -Wno-format -fPIC
 
 all: default
