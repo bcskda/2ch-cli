@@ -108,8 +108,8 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
         switch (type) {
             case JSON_KEY:
                 if (context->status == Status_in_post) {
-                    if (fill_expected(context, (char *)data)) {
-                        printf("! Error @ fill_expected()\n");
+                    if (fill_post_expected(context, (char *)data)) {
+                        printf("! Error @ fill_post_expected()\n");
                         return 1;
                     }
                 }
@@ -161,8 +161,8 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
             case JSON_STRING:
                 if (context->status == Status_in_post) {
                     //fprintf(stderr, "Will fill as string %d\n", context->expect);
-                    if (fill_as_string(thread->posts[thread->posts.size() - 1], context->expect, data)) {
-                        fprintf(stderr, "! Error @ fill_as_string\n");
+                    if (fill_post_as_string(thread->posts[thread->posts.size() - 1], context->expect, data)) {
+                        fprintf(stderr, "! Error @ fill_post_as_string\n");
                         return 1;
                     }
                 }
@@ -171,8 +171,8 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
             case JSON_FLOAT:
                 if (context->status == Status_in_post) {
                     //fprintf(stderr, "Will fill as int %d\n", context->expect);
-                    if (fill_as_int(thread->posts[thread->posts.size() - 1], context->expect, data)) {
-                        fprintf(stderr, "! Error @ fill_as_int\n");
+                    if (fill_post_as_int(thread->posts[thread->posts.size() - 1], context->expect, data)) {
+                        fprintf(stderr, "! Error @ fill_post_as_int\n");
                         return 1;
                     }
                 }
@@ -185,7 +185,7 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
     }
 }
 
-int fill_expected(json_context *context, const char *data) {
+int fill_post_expected(json_context *context, const char *data) {
     //fprintf(stderr, "Will expect %s\n", data);
     if (strncmp(data, Key_banned, strlen(Key_banned)) == 0) {
         context->expect = Expect_banned;
@@ -242,13 +242,13 @@ int fill_expected(json_context *context, const char *data) {
         context->expect = Expect_unique_posters;
     }
     else {
-        fprintf(stderr, "! Error @ fill_expected: unknown key %s\n", data);
+        fprintf(stderr, "! Error @ fill_post_expected: unknown key %s\n", data);
         return 1;
     }
     return 0;
 }
 
-int fill_as_int(makaba_post_cpp &post, const int expect, const char *data) {
+int fill_post_as_int(makaba_post_cpp &post, const int expect, const char *data) {
     switch (expect) {
         case Expect_banned:
             post.banned = atoi(data);
@@ -260,7 +260,7 @@ int fill_as_int(makaba_post_cpp &post, const int expect, const char *data) {
             post.lasthit = atoi(data);
             return 0;
         // libjson определяет длинные номера постов как строки;
-        // парсятся в fill_as_string()
+        // парсятся в fill_post_as_string()
         /*
         case Expect_num:
         case Expect_parent:
@@ -282,13 +282,13 @@ int fill_as_int(makaba_post_cpp &post, const int expect, const char *data) {
     return 1;
 }
 
-int fill_as_string(makaba_post_cpp &post, const int expect, const char *data) {
+int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *data) {
 	switch (expect) {
         //fprintf(stderr, "Expect %d ...\n", expect);
         case Expect_comment:
             post.comment = parseComment(data, strlen(data), true);
 			if (post.comment == NULL) {
-				fprintf(stderr, "[fill_as_string] ! Error @ parseComment()\n");
+				fprintf(stderr, "[fill_post_as_string] ! Error @ parseComment()\n");
 				return 1;
 			}
             return 0;
@@ -330,7 +330,7 @@ int fill_as_string(makaba_post_cpp &post, const int expect, const char *data) {
             post.unique_posters = atoi(data);
             return 0;
     }
-    fprintf(stderr, "! Error @ fill_as_string: unknown context.expect value: %d\n", expect);
+    fprintf(stderr, "! Error @ fill_post_as_string: unknown context.expect value: %d\n", expect);
     return 1;
 }
 

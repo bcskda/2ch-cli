@@ -159,9 +159,9 @@ const char *PATTERN_CAPID = "\"id\":\"";
 // ========================================
 
 int json_callback(void *userdata, int type, const char *data, uint32_t length); // Вызывается парсером при событиях
-int fill_expected(json_context *context, const char *data); // Определяет текущую переменную JSON
-int fill_as_string(makaba_post_cpp &post, const int expect, const char *data); // Заполняют поле в структуре
-int fill_as_int(makaba_post_cpp &post, const int expect, const char *data);    // в соотв. с текущей переменной JSON
+int fill_post_expected(json_context *context, const char *data); // Определяет текущую переменную JSON
+int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *data); // Заполняют поле в структуре
+int fill_post_as_int(makaba_post_cpp &post, const int expect, const char *data);    // в соотв. с текущей переменной JSON
 
 int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v);
 
