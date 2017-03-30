@@ -42,6 +42,12 @@ struct thread_cpp {
 };
 typedef struct thread_cpp makaba_thread_cpp;
 
+struct captcha_2chaptcha {
+	char *id;
+	int result;
+};
+typedef struct captcha_2chaptcha makaba_2chaptcha;
+
 // ========================================
 // libjson
 // ========================================
@@ -88,6 +94,10 @@ const char *Key_trip = "trip";
 const char *Key_trip_type = "trip_type";
 const char *Key_unique_posters = "unique_posters";
 
+const char *Key_id = "id";
+const char *Key_result = "result";
+const char *Key_type = "type";
+
 const char *Keys_int[] = {
     Key_banned,
     Key_closed,
@@ -128,6 +138,9 @@ const int Expect_trip = 16;
 const int Expect_trip_type = 17;
 const int Expect_unique_posters = 18;
 
+const int Expect_id = 1;
+const int Expect_result = 2;
+
 struct json_context {
     context_type type;
     int status;
@@ -162,6 +175,8 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length); 
 int fill_post_expected(json_context *context, const char *data); // Определяет текущую переменную JSON
 int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *data); // Заполняют поле в структуре
 int fill_post_as_int(makaba_post_cpp &post, const int expect, const char *data);    // в соотв. с текущей переменной JSON
+int fill_captcha_id_expected(json_context *context, const char *data);
+int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect, const char *data);
 
 int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v);
 

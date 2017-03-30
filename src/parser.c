@@ -183,6 +183,26 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
         }
         return 0;
     }
+	else if (context->type == captcha_id) {
+		makaba_2chaptcha *captcha = (makaba_2chaptcha *)context->memdest;
+		switch (type) {
+			case JSON_KEY:
+				if (fill_captcha_id_expected(context, (char *)data)) {
+					fprintf(stderr, "! Error @ fill_captcha_id_expected()\n");
+					return 1;
+				}
+				return 0;
+			case JSON_INT:
+			case JSON_FLOAT:
+			case JSON_STRING:
+				if (fill_captcha_id_value(captcha, context->expect, (char *)data)) {
+					fprintf(stderr, "! Error @ fill_captcha_id_value\n");
+					return 1;
+				}
+				return 0;
+		}
+		return 0;
+	}
 }
 
 int fill_post_expected(json_context *context, const char *data) {
@@ -332,6 +352,37 @@ int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *dat
     }
     fprintf(stderr, "! Error @ fill_post_as_string: unknown context.expect value: %d\n", expect);
     return 1;
+}
+
+int fill_captcha_id_expected(json_context *context, const char *data) {
+	if (strncmp(data, Key_id, strlen(data)) == 0) {
+        context->expect = Expect_id;
+    }
+    else if (strncmp(data, Key_result, strlen(data)) == 0) {
+        context->expect = Expect_result;
+    }
+	else if (strncmp(data, Key_type, strlen(data)) == 0) {
+        // Игнорируем, и так знаем, что 2chaptcha
+    }
+	else {
+		fprintf(stderr, "! Error @ fill_captcha_expected: unknown key %s\n", data);
+        return 1;
+	}
+	return 0;
+}
+
+int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect, const char *data) {
+	switch (expect) {
+		case Expect_id:
+			captcha->id = (char *) calloc(strlen(data) + 1, sizeof(char));
+			memcpy(captcha->id, data, strlen(data));
+			return 0;
+		case Expect_result:
+			captcha->result = atoi(data);
+			return 0;
+	}
+	fprintf(stderr, "! Error @ fill_captcha_id_value: unknown context.expect value: %d\n", expect);
+	return 1;
 }
 
 int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v) {

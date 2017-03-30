@@ -38,6 +38,30 @@ int main (int argc, char **argv)
 	setlocale (LC_ALL, "");
 	makabaSetup();
 
+	#ifdef CAPTCHA_TEST_CPP
+	char *captcha_str = get2chaptchaIdJSON(board_name, lint2str(thread_number));
+	makaba_2chaptcha captcha;
+	json_context context;
+    context.type = captcha_id;
+    context.status = Status_default;
+    context.memdest = &captcha;
+	json_parser parser;
+    if (json_parser_init(&parser, NULL, json_callback, &context)) {
+        fprintf(stderr, "[initThread_cpp] ! Error: json_parser_init() failed\n");
+		makaba_errno = ERR_JSON_INIT;
+		return 100;
+    }
+	int ret = json_parser_string(&parser, captcha_str, strlen(captcha_str), NULL);
+	if (ret) {
+		printf("Error @ parse: %d\n", ret);
+        json_parser_free(&parser);
+		makaba_errno = ERR_JSON_PARSE;
+		return 200;
+    }
+	printf("id = \"%s\"\nresult = \"%d\"\n", captcha.id, captcha.result);
+	return RET_PREEXIT;
+	#endif
+
 	#ifdef CAPTCHA_TEST
 	printf("%s\n", getCaptchaSettingsJSON(board_name));
 	char *captcha_id = prepareCaptcha(board_name, lint2str(thread_number));
