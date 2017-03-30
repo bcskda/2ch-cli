@@ -145,7 +145,11 @@ const char *PATTERN_REPLY_NUM = "data-num=\"";
 const char *PATTERN_NEWLINE = "<br>";
 const char *PATTERN_GT = "&gt";
 const char *PATTERN_SLASH = "&#47";
+const char *PATTERN_BCKSLASH = "&#92";
 const char *PATTERN_NBSP = "&nbsp";
+const char *PATTERN_SINGLE_QUOT = "&#39";
+const char *PATTERN_DOUBLE_QUOT = "&quot";
+const char *PATTERN_AMP = "&amp";
 
 // ========================================
 // Прототипы

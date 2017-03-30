@@ -23,7 +23,7 @@ char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // Ð
 	for (i = 0; i < raw_len; i++) {
 		if (strncmp(&(raw[i]), PATTERN_TAG_OPEN, strlen(PATTERN_TAG_OPEN)) == 0) { // HTML tag open
 			/*if (strncmp(&(raw[i]), , strlen(PATTERN_NEWLINE)) == 0) { // Post answer
-
+				// @TODO
 			}
 			else*/ {
 				depth ++;
@@ -34,48 +34,74 @@ char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // Ð
 				}
 				i += strlen(PATTERN_TAG_OPEN) - 1;
 			}
+			continue;
 		}
-		else
-			if (strncmp(&(raw[i]), PATTERN_TAG_CLOSE, strlen(PATTERN_TAG_CLOSE)) == 0) { // '>' char
-					if (depth > 0) { // HTML tag close
-						depth --;
-					}
-					else { // text '>'
-						parsed[parsed_len] = '>';
-						parsed_len ++;
-					}
-					i += strlen(PATTERN_TAG_CLOSE) - 1;
+		if (strncmp(&(raw[i]), PATTERN_TAG_CLOSE, strlen(PATTERN_TAG_CLOSE)) == 0) { // '>' char
+			if (depth > 0) { // HTML tag close
+				depth --;
 			}
-			else {
-				if (strncmp(&(raw[i]), PATTERN_GT, strlen(PATTERN_GT)) == 0) { // In-text '>'
-					if (v) fprintf(stderr, "> ");
-					parsed[parsed_len] = '>';
-					parsed_len ++;
-					i += strlen(PATTERN_GT);
-				}
-				else {
-					if (strncmp(&(raw[i]), PATTERN_SLASH, strlen(PATTERN_SLASH)) == 0) { // '/' char
-						if (v) fprintf(stderr, "/ ");
-						parsed[parsed_len] = '/';
-						parsed_len ++;
-						i += strlen(PATTERN_SLASH);
-					}
-					else {
-						if (strncmp(&(raw[i]), PATTERN_NBSP, strlen(PATTERN_NBSP)) == 0) { // ' ' char
-							if (v) fprintf(stderr, "nbsp ");
-							parsed[parsed_len] = ' ';
-							parsed_len ++;
-							i += strlen(PATTERN_NBSP);
-						}
-						else {
-							if (depth == 0) { // Ordinary character
-								parsed[parsed_len] = raw[i];
-								parsed_len ++;
-							}
-						}
-					}
-				}
+			else { // text '>'
+				parsed[parsed_len] = '>';
+				parsed_len ++;
 			}
+			i += strlen(PATTERN_TAG_CLOSE) - 1;
+			continue;
+		}
+		if (depth == 0) {
+			if (strncmp(&(raw[i]), PATTERN_GT, strlen(PATTERN_GT)) == 0) { // '>' char
+				if (v) fprintf(stderr, "> ");
+				parsed[parsed_len] = '>';
+				parsed_len ++;
+				i += strlen(PATTERN_GT);
+				continue;
+			}
+			if (strncmp(&(raw[i]), PATTERN_SLASH, strlen(PATTERN_SLASH)) == 0) { // '/' char
+				if (v) fprintf(stderr, "/ ");
+				parsed[parsed_len] = '/';
+				parsed_len ++;
+				i += strlen(PATTERN_SLASH);
+				continue;
+			}
+			if (strncmp(&(raw[i]), PATTERN_BCKSLASH, strlen(PATTERN_BCKSLASH)) == 0) { // '\' char
+				if (v) fprintf(stderr, "\\ ");
+				parsed[parsed_len] = '\\';
+				parsed_len ++;
+				i += strlen(PATTERN_BCKSLASH);
+				continue;
+			}
+			if (strncmp(&(raw[i]), PATTERN_NBSP, strlen(PATTERN_NBSP)) == 0) { // ' ' char
+				if (v) fprintf(stderr, "nbsp ");
+				parsed[parsed_len] = ' ';
+				parsed_len ++;
+				i += strlen(PATTERN_NBSP);
+				continue;
+			}
+			if (strncmp(&(raw[i]), PATTERN_SINGLE_QUOT, strlen(PATTERN_SINGLE_QUOT)) == 0) { // '\'' char
+				if (v) fprintf(stderr, "\' ");
+				parsed[parsed_len] = '\'';
+				parsed_len ++;
+				i += strlen(PATTERN_SINGLE_QUOT);
+				continue;
+			}
+			if (strncmp(&(raw[i]), PATTERN_DOUBLE_QUOT, strlen(PATTERN_DOUBLE_QUOT)) == 0) { // '\"' char
+				if (v) fprintf(stderr, "\" ");
+				parsed[parsed_len] = '\"';
+				parsed_len ++;
+				i += strlen(PATTERN_DOUBLE_QUOT);
+				continue;
+			}
+			if (strncmp(&(raw[i]), PATTERN_AMP, strlen(PATTERN_AMP)) == 0) { // '&' char
+				if (v) fprintf(stderr, "& ");
+				parsed[parsed_len] = '&';
+				parsed_len ++;
+				i += strlen(PATTERN_AMP);
+				continue;
+			}
+			else { // Ordinary char
+				parsed[parsed_len] = raw[i];
+				parsed_len ++;
+			}
+		}
 	}
 	fprintf(stderr, "]] Final length: %d\n", parsed_len);
 	fprintf(stderr, "]] Exiting parseHTML\n");
