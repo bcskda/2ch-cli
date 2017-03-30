@@ -29,6 +29,7 @@ const int RET_INTERNAL = 5;
 
 const size_t Max_comment_len = 15000;
 //const size_t Thread_size = 10000000; // Размер буфера с тредом
+const int Skip_on_PG = 20;
 
 const char *CaptchaPngFilename = "/tmp/2ch-captcha.png";
 const char *CaptchaUtfFilename = "/tmp/2ch-captcha.utf8";

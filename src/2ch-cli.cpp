@@ -100,6 +100,7 @@ int main (int argc, char **argv)
 	ncurses_init();
 	ncurses_print_help();
 	bool should_exit = false;
+	ncurses_print_post(thread, 0);
 	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
 		while (done == false)
@@ -110,7 +111,7 @@ int main (int argc, char **argv)
 					should_exit = true;
 					break;
 				case 'P': case 'p':
-					printw(">>>> Открой капчу в другом терминале. Прости.\n\n");
+					printw(">>> Открой капчу в другом терминале. Прости.\n");
 					break;
 				case 'H': case 'h':
 					ncurses_print_help();
@@ -121,7 +122,7 @@ int main (int argc, char **argv)
 						ncurses_print_post(thread, cur_post);
 					}
 					else {
-						printw(">>>> Последний пост\n");
+						printw(">>> Последний пост\n");
 					}
 					done = 1;
 					break;
@@ -134,6 +135,34 @@ int main (int argc, char **argv)
 						printw(">>>> Первый пост\n");
 					}
 					done = 1;
+					break;
+				case KEY_NPAGE: // PageDown
+					if (cur_post < thread.nposts - 1) {
+						cur_post += Skip_on_PG;
+						if (cur_post > thread.nposts - 1)
+							cur_post = thread.nposts - 1;
+						ncurses_print_post(thread, cur_post);
+					}
+					break;
+				case KEY_PPAGE: // PageUp
+					if (cur_post > 0) {
+						cur_post -= Skip_on_PG;
+						if (cur_post < 0)
+							cur_post = 0;
+						ncurses_print_post(thread, cur_post);
+					}
+					break;
+				case KEY_HOME:
+					if (cur_post > 0) {
+						cur_post = 0;
+					ncurses_print_post(thread, cur_post);
+					}
+					break;
+				case KEY_END:
+					if (cur_post < thread.nposts - 1) {
+						cur_post = thread.nposts - 1;
+						ncurses_print_post(thread, cur_post);
+					}
 					break;
 			}
 	}
@@ -269,7 +298,10 @@ void ncurses_exit() {
 }
 
 void ncurses_print_help() {
-	printw(">>>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост, [H] помощь, [Q] выход\n");
+	printw(">>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост\n");
+	printw(">>> [PageUp] - %d постов назад, [PageDown] - %d постов вперёд\n", Skip_on_PG, Skip_on_PG);
+	printw(">>> [Home] - первый пост, [End] - последний пост\n");
+	printw(">>> [H] помощь, [Q] выход\n");
 }
 
 void ncurses_print_post(const makaba_thread_cpp &thread, const int postnum) {
