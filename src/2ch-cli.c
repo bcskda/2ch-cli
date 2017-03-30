@@ -153,7 +153,7 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 	}
 
 	// Заголовок отдельно
-	if (show_email && (post.email != NULL)) {
+	if (show_email == true && strlen(post.email) > 0) {
 		printw ("[=== %s (%s) #%d %s ===]\n",
 			post.name, post.email, post.num, post.date);
 	}
