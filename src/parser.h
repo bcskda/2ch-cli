@@ -45,6 +45,8 @@ typedef struct thread_cpp makaba_thread_cpp;
 struct captcha_2chaptcha {
 	char *id;
 	int result;
+	char value[6] = "";
+	char *png_url = NULL; // 108
 };
 typedef struct captcha_2chaptcha makaba_2chaptcha;
 
@@ -181,8 +183,6 @@ int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect, const cha
 int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v);
 
 char *parseComment (const char *comment, const long long  comment_len, const bool v);
-
-char *parse2chaptchaId (const char *capid_string);
 
 void freeRefReply (struct ref_reply *ref);
 void freePost (struct post *post);

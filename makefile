@@ -6,8 +6,8 @@ all: default
 
 default:
 	mkdir -p log/
-	$(CC)                src/2ch-cli.c ${OPTS} ${LIBS} -o 2ch-cli
-captcha-test:
-	$(CC) -DCAPTCHA_TEST src/2ch-cli.c ${OPTS}  ${LIBS} -o 2ch-cli
+	$(CC)                    src/2ch-cli.c ${OPTS} ${LIBS} -o 2ch-cli
+captcha-test-cpp:
+	$(CC) -DCAPTCHA_TEST_CPP src/2ch-cli.c ${OPTS} ${LIBS} -o 2ch-cli
 clean:
 	rm -rf log/ 2ch-cli

@@ -39,49 +39,28 @@ int main (int argc, char **argv)
 	makabaSetup();
 
 	#ifdef CAPTCHA_TEST_CPP
-	char *captcha_str = get2chaptchaIdJSON(board_name, lint2str(thread_number));
 	makaba_2chaptcha captcha;
-	json_context context;
-    context.type = captcha_id;
-    context.status = Status_default;
-    context.memdest = &captcha;
-	json_parser parser;
-    if (json_parser_init(&parser, NULL, json_callback, &context)) {
-        fprintf(stderr, "[initThread_cpp] ! Error: json_parser_init() failed\n");
-		makaba_errno = ERR_JSON_INIT;
-		return 100;
-    }
-	int ret = json_parser_string(&parser, captcha_str, strlen(captcha_str), NULL);
-	if (ret) {
-		printf("Error @ parse: %d\n", ret);
-        json_parser_free(&parser);
-		makaba_errno = ERR_JSON_PARSE;
-		return 200;
-    }
-	printf("id = \"%s\"\nresult = \"%d\"\n", captcha.id, captcha.result);
-	return RET_PREEXIT;
-	#endif
-
-	#ifdef CAPTCHA_TEST
-	printf("%s\n", getCaptchaSettingsJSON(board_name));
-	char *captcha_id = prepareCaptcha(board_name, lint2str(thread_number));
-	printf("captcha_id = %s\n", captcha_id);
+	prepareCaptcha_cpp(captcha, board_name, lint2str(thread_number));
+	printf("id = \"%s\"\nresult = \"%d\"\nurl = \"%s\"\n",
+		captcha.id, captcha.result, captcha.png_url);
 	system("cat captcha.utf8");
-	makabaCleanup();
 	return RET_PREEXIT;
 	#endif
 
 	if (send_post == true) {
-		char *captcha_id = prepareCaptcha(board_name, lint2str(thread_number));
-		char captcha_value[6];
+		makaba_2chaptcha captcha;
+		if (prepareCaptcha_cpp(captcha, board_name, lint2str(thread_number))) {
+			fprintf(stderr, "[main] ! Error @ prepareCaptcha_cpp\n");
+			return RET_INTERNAL;
+		}
 		system("cat captcha.utf8");
 		printf("Ответ на капчу: ");
-		scanf("%s", captcha_value);
+		scanf("%s", captcha.value);
 		long long answer_length;
 		char email[] = "sage";
 		sendPost(board_name, lint2str(thread_number),
 			comment, NULL, NULL, email,
-			captcha_id, captcha_value, &answer_length);
+			captcha.id, captcha.value, &answer_length);
 		printf("Ответ API: %s\n", CURL_BUFF_BODY); // По-хорошему так делать не надо
 		makabaCleanup();
 		return RET_OK;
@@ -191,27 +170,45 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 	return 0;
 }
 
-char *prepareCaptcha(const char *board, const char *thread) {
+int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const char *thread) {
 	if (CURL_BUFF_BODY == NULL)
 		makabaSetup();
+	char *captcha_str = get2chaptchaIdJSON(board, thread);
+	if (captcha_str == NULL) {
+		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ get2chaptchaIdJSON(): %d\n", makaba_errno);
+		return 1;
+	}
+	// Не заказываем еще раз, т.к. используется 1 раз
 
-	fprintf(stderr, ">> %s >> %s\n", board, thread);
+	json_context context;
+    context.type = captcha_id;
+    context.status = Status_default;
+    context.memdest = &captcha;
+	json_parser parser;
+    if (json_parser_init(&parser, NULL, json_callback, &context)) {
+        fprintf(stderr, "[prepareCaptcha_cpp] ! Error: json_parser_init() failed\n");
+		makaba_errno = ERR_JSON_INIT;
+		return 1;
+    }
+	int ret = json_parser_string(&parser, captcha_str, strlen(captcha_str), NULL);
+	if (ret) {
+		printf("Error @ parse: %d\n", ret);
+        json_parser_free(&parser);
+		makaba_errno = ERR_JSON_PARSE;
+		return 2;
+    }
 
-	char *captcha_id_raw = get2chaptchaIdJSON(board, thread);
-	char *captcha_id = parse2chaptchaId(captcha_id_raw);
-	char *captcha_png_url = form2chaptchaPicURL(captcha_id);
+	captcha.png_url = form2chaptchaPicURL(captcha.id);
+
 	long int pic_size;
-	char *captcha_png = get2chaptchaPicPNG(captcha_png_url, &pic_size);
-	captcha_png = (char *) calloc(pic_size + 1, sizeof(char));   // Крайне нежелательно доверять
-	captcha_png = (char *) memcpy(captcha_png, CURL_BUFF_BODY, pic_size); // буферу curl`а
+	char *captcha_png = get2chaptchaPicPNG(captcha.png_url, &pic_size);
 
 	FILE *captcha_png_file = fopen(CaptchaPngFilename, "w");
 	fwrite(captcha_png, sizeof(char), pic_size, captcha_png_file);
 	fclose(captcha_png_file);
 	convert_img(CaptchaPngFilename, CaptchaUtfFilename, true);
 
-	free(captcha_png);
-	return captcha_id;
+	return 0;
 }
 
 void parse_argv(const int argc, const char **argv,

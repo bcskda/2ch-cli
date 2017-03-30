@@ -75,29 +75,6 @@ char *parseComment (const char *comment, const long long  comment_len, const boo
 }
 
 // ========================================
-// Captcha
-// ========================================
-
-char *parse2chaptchaId (const char *capId_string) {
-	fprintf (stderr, "]] Starting parse2chaptchaId\n");
-
-	char *captcha_start = (char *) strstr (capId_string, PATTERN_CAPID);
-	if (captcha_start == NULL) {
-		fprintf(stderr, "[parse2chaptchaId]! Error: Bad captcha-JSON format\n");
-		makaba_errno = ERR_CAPTCHA_FORMAT;
-		return NULL;
-	}
-	captcha_start += strlen(PATTERN_CAPID);
-	short captcha_len = ((char *) strstr(captcha_start,"\"")) - captcha_start;
-	char *captcha_id = (char*) calloc (captcha_len, sizeof(char));
-	memcpy (captcha_id, captcha_start, captcha_len);
-
-	fprintf(stderr, "]] Exiting parse2chaptchaId\n");
-
-	return captcha_id;
-}
-
-// ========================================
 // libjson
 // ========================================
 

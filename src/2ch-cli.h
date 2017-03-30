@@ -25,6 +25,7 @@ const int RET_ARGS = 1;
 const int RET_PREEXIT = 2;
 const int RET_MEMORY = 3;
 const int RET_PARSE = 4;
+const int RET_INTERNAL = 5;
 
 const size_t Max_comment_len = 15000;
 //const size_t Thread_size = 10000000; // Размер буфера с тредом
@@ -33,7 +34,7 @@ const char *CaptchaPngFilename = "captcha.png";
 const char *CaptchaUtfFilename = "captcha.utf8";
 
 int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files);
-char *prepareCaptcha(const char *board, const char *thread);
+int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const char *thread);
 
 void parse_argv(const int argc, const char **arvg,
 	char *board_name, long long *thread_number, char **comment, char *passcode, bool *send_post);
