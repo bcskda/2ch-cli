@@ -161,7 +161,6 @@ int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect, const cha
 int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v);
 int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long long thread);
 
-char *parseComment (const char *comment, const long long  comment_len, const bool v);
 char *parseHTML (const char *raw, const long long  raw_len, const bool v);
 
 void freePost (struct post *post);
