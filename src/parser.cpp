@@ -1,5 +1,5 @@
 // ========================================
-// File: parser.c
+// File: parser.cpp
 // API answer parsing functions
 // (Implementation)
 // ========================================

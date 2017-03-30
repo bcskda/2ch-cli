@@ -1,6 +1,6 @@
 // ========================================
-// File: 2ch-cli.c
-// A CLI-client for 2ch.hk imageboard written on C
+// File: 2ch-cli.cpp
+// A CLI-client for 2ch.hk imageboard written on C/C++
 // (Implementation)
 // ========================================
 
@@ -20,6 +20,7 @@ void pomogite() // Справка
 
 int main (int argc, char **argv)
 {
+	freopen("/tmp/2ch-cli.log", "w", stderr);
 
 	#ifdef CONFIG_TEST
 	printf("CURL_UA = \"" CURL_UA "\"\n");
@@ -46,10 +47,12 @@ int main (int argc, char **argv)
 
 	#ifdef CAPTCHA_TEST_CPP
 	makaba_2chaptcha captcha;
-	prepareCaptcha_cpp(captcha, board_name, lint2str(thread_number));
+	prepareCaptcha_cpp(captcha, board_name, thread_number);
 	printf("id = \"%s\"\nresult = \"%d\"\nurl = \"%s\"\n",
 		captcha.id, captcha.result, captcha.png_url);
-	system("cat captcha.utf8");
+	char shcmd[40];
+	sprintf(shcmd, "cat %s", CaptchaUtfFilename);
+	system(shcmd);
 	return RET_PREEXIT;
 	#endif
 
@@ -59,7 +62,9 @@ int main (int argc, char **argv)
 			fprintf(stderr, "[main] ! Error @ prepareCaptcha_cpp\n");
 			return RET_INTERNAL;
 		}
-		system("cat captcha.utf8");
+		char shcmd[40];
+		sprintf(shcmd, "cat %s", CaptchaUtfFilename);
+		system(shcmd);
 		printf("Ответ на капчу: ");
 		scanf("%s", captcha.value);
 		long long answer_length;

@@ -1,6 +1,6 @@
 // ========================================
 // File: 2ch-cli.h
-// A CLI-client for 2ch.hk imageboard written on C
+// A CLI-client for 2ch.hk imageboard written on C/C++
 // (Headers)
 // ========================================
 
@@ -30,8 +30,8 @@ const int RET_INTERNAL = 5;
 const size_t Max_comment_len = 15000;
 //const size_t Thread_size = 10000000; // Размер буфера с тредом
 
-const char *CaptchaPngFilename = "captcha.png";
-const char *CaptchaUtfFilename = "captcha.utf8";
+const char *CaptchaPngFilename = "/tmp/2ch-captcha.png";
+const char *CaptchaUtfFilename = "/tmp/2ch-captcha.utf8";
 
 int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files);
 int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const long long thread);

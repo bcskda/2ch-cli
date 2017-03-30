@@ -1,3 +1,8 @@
+// ========================================
+// File: error.h
+// Global error codes
+// ========================================
+
 #pragma once
 enum makaba_error {
     ERR_MEMORY,
