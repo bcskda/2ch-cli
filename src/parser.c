@@ -48,16 +48,25 @@ char *parseComment (const char *comment, const long long  comment_len, const boo
 			}
 			else {
 				if (strncmp(&(comment[i]), PATTERN_GT, strlen(PATTERN_GT)) == 0) { // In-text '>'
-					if(v) fprintf(stderr, "> ");
+					if (v) fprintf(stderr, "> ");
 					parsed[parsed_len] = '>';
 					parsed_len ++;
 					i += strlen(PATTERN_GT);
 				}
-				else
-					if (depth == 0) { // Ordinary character
-						parsed[parsed_len] = comment[i];
+				else {
+					if (strncmp(&(comment[i]), PATTERN_SLASH, strlen(PATTERN_SLASH)) == 0) { // '/' char
+						if (v) fprintf(stderr, "/ ");
+						parsed[parsed_len] = '/';
 						parsed_len ++;
+						i += strlen(PATTERN_SLASH);
 					}
+					else {
+						if (depth == 0) { // Ordinary character
+							parsed[parsed_len] = comment[i];
+							parsed_len ++;
+						}
+					}
+				}
 			}
 	}
 	fprintf(stderr, "]] Final length: %d\n", parsed_len);
