@@ -100,27 +100,6 @@ const char *Key_id = "id";
 const char *Key_result = "result";
 const char *Key_type = "type";
 
-const char *Keys_int[] = {
-    Key_banned,
-    Key_closed,
-    Key_lasthit,
-    Key_op,
-    Key_sticky,
-    Key_timestamp,
-    Key_unique_posters
-};
-const char *Keys_string[] = {
-    Key_comment,
-    Key_date,
-    Key_email,
-    Key_name,
-    Key_num,
-    Key_parent,
-    Key_subject,
-    Key_trip,
-    Key_trip_type
-};
-
 const int Expect_banned = 1;
 const int Expect_closed = 2;
 const int Expect_comment = 3;
@@ -167,8 +146,6 @@ const char *PATTERN_NEWLINE = "<br>";
 const char *PATTERN_GT = "&gt";
 const char *PATTERN_SLASH = "&#47";
 
-const char *PATTERN_CAPID = "\"id\":\"";
-
 // ========================================
 // Прототипы
 // ========================================
@@ -184,7 +161,6 @@ int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const l
 
 char *parseComment (const char *comment, const long long  comment_len, const bool v);
 
-void freeRefReply (struct ref_reply *ref);
 void freePost (struct post *post);
 void freeComment (char *arg);
 void freeThread (struct thread *thread);

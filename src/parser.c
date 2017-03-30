@@ -184,58 +184,58 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
 
 int fill_post_expected(json_context *context, const char *data) {
     //fprintf(stderr, "Will expect %s\n", data);
-    if (strncmp(data, Key_banned, strlen(Key_banned)) == 0) {
+    if (strncmp(data, Key_banned, strlen(data))== 0) {
         context->expect = Expect_banned;
     }
-    else if (strncmp(data, Key_closed, strlen(Key_closed)) == 0) {
+    else if (strncmp(data, Key_closed, strlen(data))== 0) {
         context->expect = Expect_closed;
     }
-    else if (strncmp(data, Key_comment, strlen(Key_comment)) == 0) {
+    else if (strncmp(data, Key_comment, strlen(data))== 0) {
         context->expect = Expect_comment;
     }
-    else if (strncmp(data, Key_date, strlen(Key_date)) == 0) {
+    else if (strncmp(data, Key_date, strlen(data))== 0) {
         context->expect = Expect_date;
     }
-    else if (strncmp(data, Key_email, strlen(Key_email)) == 0) {
+    else if (strncmp(data, Key_email, strlen(data))== 0) {
         context->expect = Expect_email;
     }
-    else if (strncmp(data, Key_files, strlen(Key_files)) == 0) {
+    else if (strncmp(data, Key_files, strlen(data))== 0) {
         context->expect = Expect_files;
     }
-    else if (strncmp(data, Key_lasthit, strlen(Key_lasthit)) == 0) {
+    else if (strncmp(data, Key_lasthit, strlen(data))== 0) {
         context->expect = Expect_lasthit;
     }
-    else if (strncmp(data, Key_name, strlen(Key_name)) == 0) {
+    else if (strncmp(data, Key_name, strlen(data))== 0) {
         context->expect = Expect_name;
     }
-    else if (strncmp(data, Key_num, strlen(Key_num)) == 0) {
+    else if (strncmp(data, Key_num, strlen(data))== 0) {
         context->expect = Expect_num;
     }
-    else if (strncmp(data, Key_op, strlen(Key_op)) == 0) {
+    else if (strncmp(data, Key_op, strlen(data))== 0) {
         context->expect = Expect_op;
     }
-    else if (strncmp(data, Key_parent, strlen(Key_parent)) == 0) {
+    else if (strncmp(data, Key_parent, strlen(data))== 0) {
         context->expect = Expect_parent;
     }
-    else if (strncmp(data, Key_sticky, strlen(Key_sticky)) == 0) {
+    else if (strncmp(data, Key_sticky, strlen(data))== 0) {
         context->expect = Expect_sticky;
     }
-    else if (strncmp(data, Key_subject, strlen(Key_subject)) == 0) {
+    else if (strncmp(data, Key_subject, strlen(data))== 0) {
         context->expect = Expect_subject;
     }
-    else if (strncmp(data, Key_tags, strlen(Key_tags)) == 0) {
+    else if (strncmp(data, Key_tags, strlen(data))== 0) {
         context->expect = Expect_tags;
     }
-    else if (strncmp(data, Key_timestamp, strlen(Key_timestamp)) == 0) {
+    else if (strncmp(data, Key_timestamp, strlen(data))== 0) {
         context->expect = Expect_timestamp;
     }
-    else if (strncmp(data, Key_trip, strlen(Key_trip)) == 0) {
+    else if (strncmp(data, Key_trip, strlen(data))== 0) {
         context->expect = Expect_trip;
     }
-    else if (strncmp(data, Key_trip_type, strlen(Key_trip_type)) == 0) {
+    else if (strncmp(data, Key_trip_type, strlen(data))== 0) {
         context->expect = Expect_trip_type;
     }
-    else if (strncmp(data, Key_unique_posters, strlen(Key_unique_posters)) == 0) {
+    else if (strncmp(data, Key_unique_posters, strlen(data))== 0) {
         context->expect = Expect_unique_posters;
     }
     else {
