@@ -20,7 +20,7 @@ const char *CAPTCHA_SETTINGS = "api/captcha/settings/";
 const char *CAPTCHA_2CHAPTCHA = "api/captcha/2chaptcha/";
 const size_t CURL_BUFF_BODY_SIZE = 5000000;
 const size_t CURL_BUFF_HEADER_SIZE = 2000;
-const char *CURL_UA = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/57.0.2987.98 Safari/537.36";
+// Юзерагент - макрос в makefile
 char *CURL_BUFF_BODY = NULL;
 char *CURL_BUFF_HEADER = NULL;
 size_t CURL_BUFF_POS = 0;
