@@ -20,6 +20,12 @@ void pomogite() // Справка
 
 int main (int argc, char **argv)
 {
+
+	#ifdef CONFIG_TEST
+	printf("CURL_UA = \"" CURL_UA "\"\n");
+	return RET_PREEXIT;
+	#endif
+
 	char passcode[32] = "пасскода нет :("; // Пасскод
     char board_name[10] = "b"; // Имя борды
     long long thread_number = 0; // Номер треда в борде
@@ -49,7 +55,7 @@ int main (int argc, char **argv)
 
 	if (send_post == true) {
 		makaba_2chaptcha captcha;
-		if (prepareCaptcha_cpp(captcha, board_name, lint2str(thread_number))) {
+		if (prepareCaptcha_cpp(captcha, board_name, thread_number)) {
 			fprintf(stderr, "[main] ! Error @ prepareCaptcha_cpp\n");
 			return RET_INTERNAL;
 		}
@@ -57,7 +63,7 @@ int main (int argc, char **argv)
 		printf("Ответ на капчу: ");
 		scanf("%s", captcha.value);
 		long long answer_length;
-		char email[] = "sage";
+		char email[] = "";
 		sendPost(board_name, lint2str(thread_number),
 			comment, NULL, NULL, email,
 			captcha.id, captcha.value, &answer_length);
@@ -170,38 +176,18 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 	return 0;
 }
 
-int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const char *thread) {
-	if (CURL_BUFF_BODY == NULL)
-		makabaSetup();
-	char *captcha_str = get2chaptchaIdJSON(board, thread);
-	if (captcha_str == NULL) {
-		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ get2chaptchaIdJSON(): %d\n", makaba_errno);
+int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const long long thread) {
+	if (initCaptcha_cpp(captcha, board, thread)) {
+		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ initCaptcha_cpp: %d\n", makaba_errno);
 		return 1;
 	}
-	// Не заказываем еще раз, т.к. используется 1 раз
-
-	json_context context;
-    context.type = captcha_id;
-    context.status = Status_default;
-    context.memdest = &captcha;
-	json_parser parser;
-    if (json_parser_init(&parser, NULL, json_callback, &context)) {
-        fprintf(stderr, "[prepareCaptcha_cpp] ! Error: json_parser_init() failed\n");
-		makaba_errno = ERR_JSON_INIT;
-		return 1;
-    }
-	int ret = json_parser_string(&parser, captcha_str, strlen(captcha_str), NULL);
-	if (ret) {
-		printf("Error @ parse: %d\n", ret);
-        json_parser_free(&parser);
-		makaba_errno = ERR_JSON_PARSE;
-		return 2;
-    }
-
-	captcha.png_url = form2chaptchaPicURL(captcha.id);
 
 	long int pic_size;
 	char *captcha_png = get2chaptchaPicPNG(captcha.png_url, &pic_size);
+	if (captcha_png == NULL) {
+		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ get2chaptchaPicPNG: %d\n", makaba_errno);
+		return 1;
+	}
 
 	FILE *captcha_png_file = fopen(CaptchaPngFilename, "w");
 	fwrite(captcha_png, sizeof(char), pic_size, captcha_png_file);

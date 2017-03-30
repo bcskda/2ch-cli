@@ -362,6 +362,39 @@ int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect, const cha
 	return 1;
 }
 
+int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long long thread) {
+	if (CURL_BUFF_BODY == NULL)
+		makabaSetup();
+	char *captcha_str = get2chaptchaIdJSON(board, lint2str(thread));
+	if (captcha_str == NULL) {
+		fprintf(stderr, "[initCaptcha_cpp] ! Error @ get2chaptchaIdJSON(): %d\n", makaba_errno);
+		return 1;
+	}
+	// Не заказываем еще раз, т.к. используется 1 раз
+
+	json_context context;
+    context.type = captcha_id;
+    context.status = Status_default;
+    context.memdest = &captcha;
+	json_parser parser;
+    if (json_parser_init(&parser, NULL, json_callback, &context)) {
+        fprintf(stderr, "[initCaptcha_cpp] ! Error: json_parser_init() failed\n");
+		makaba_errno = ERR_JSON_INIT;
+		return 1;
+    }
+	int ret = json_parser_string(&parser, captcha_str, strlen(captcha_str), NULL);
+	if (ret) {
+		printf("Error @ parse: %d\n", ret);
+        json_parser_free(&parser);
+		makaba_errno = ERR_JSON_PARSE;
+		return 1;
+    }
+
+	captcha.png_url = form2chaptchaPicURL(captcha.id);
+
+	return 0;
+}
+
 int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v) {
 	json_context context;
     context.type = thread_new;

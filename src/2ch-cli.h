@@ -34,7 +34,7 @@ const char *CaptchaPngFilename = "captcha.png";
 const char *CaptchaUtfFilename = "captcha.utf8";
 
 int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files);
-int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const char *thread);
+int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const long long thread);
 
 void parse_argv(const int argc, const char **arvg,
 	char *board_name, long long *thread_number, char **comment, char *passcode, bool *send_post);
