@@ -61,9 +61,17 @@ char *parseComment (const char *comment, const long long  comment_len, const boo
 						i += strlen(PATTERN_SLASH);
 					}
 					else {
-						if (depth == 0) { // Ordinary character
-							parsed[parsed_len] = comment[i];
+						if (strncmp(&(comment[i]), PATTERN_NBSP, strlen(PATTERN_NBSP)) == 0) { // ' ' char
+							if (v) fprintf(stderr, "nbsp ");
+							parsed[parsed_len] = ' ';
 							parsed_len ++;
+							i += strlen(PATTERN_NBSP);
+						}
+						else {
+							if (depth == 0) { // Ordinary character
+								parsed[parsed_len] = comment[i];
+								parsed_len ++;
+							}
 						}
 					}
 				}
@@ -73,6 +81,88 @@ char *parseComment (const char *comment, const long long  comment_len, const boo
 	fprintf(stderr, "]] Exiting parseComment\n");
 	return parsed;
 }
+
+
+
+char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // Пока что игнорируем разметку
+	fprintf (stderr, "]] Started parseHTML\n");
+	fprintf(stderr, "Raw len: %d\n", raw_len);
+
+	if (v) {
+		fprintf(stderr, "Raw:\n%s\nEnd of raw\n", raw);
+	}
+
+	char *parsed = (char *) calloc(raw_len, sizeof(char));
+	int depth = 0;
+	long long parsed_len = 0;
+	long long i;
+
+	for (i = 0; i < raw_len; i++) {
+		if (strncmp(&(raw[i]), PATTERN_TAG_OPEN, strlen(PATTERN_TAG_OPEN)) == 0) { // HTML tag open
+			/*if (strncmp(&(raw[i]), , strlen(PATTERN_NEWLINE)) == 0) { // Post answer
+
+			}
+			else*/ {
+				depth ++;
+				if (strncmp(&(raw[i]), PATTERN_NEWLINE, strlen(PATTERN_NEWLINE)) == 0) { // <br>
+					if (v) fprintf(stderr, "NL ");
+					parsed[parsed_len] = '\n';
+					parsed_len ++;
+				}
+				i += strlen(PATTERN_TAG_OPEN) - 1;
+			}
+		}
+		else
+			if (strncmp(&(raw[i]), PATTERN_TAG_CLOSE, strlen(PATTERN_TAG_CLOSE)) == 0) { // '>' char
+					if (depth > 0) { // HTML tag close
+						depth --;
+					}
+					else { // text '>'
+						parsed[parsed_len] = '>';
+						parsed_len ++;
+					}
+					i += strlen(PATTERN_TAG_CLOSE) - 1;
+			}
+			else {
+				if (strncmp(&(raw[i]), PATTERN_GT, strlen(PATTERN_GT)) == 0) { // In-text '>'
+					if (v) fprintf(stderr, "> ");
+					parsed[parsed_len] = '>';
+					parsed_len ++;
+					i += strlen(PATTERN_GT);
+				}
+				else {
+					if (strncmp(&(raw[i]), PATTERN_SLASH, strlen(PATTERN_SLASH)) == 0) { // '/' char
+						if (v) fprintf(stderr, "/ ");
+						parsed[parsed_len] = '/';
+						parsed_len ++;
+						i += strlen(PATTERN_SLASH);
+					}
+					else {
+						if (strncmp(&(raw[i]), PATTERN_NBSP, strlen(PATTERN_NBSP)) == 0) { // ' ' char
+							if (v) fprintf(stderr, "nbsp ");
+							parsed[parsed_len] = ' ';
+							parsed_len ++;
+							i += strlen(PATTERN_NBSP);
+						}
+						else {
+							if (depth == 0) { // Ordinary character
+								parsed[parsed_len] = raw[i];
+								parsed_len ++;
+							}
+						}
+					}
+				}
+			}
+	}
+	fprintf(stderr, "]] Final length: %d\n", parsed_len);
+	fprintf(stderr, "]] Exiting parseHTML\n");
+	return parsed;
+}
+
+
+
+
+
 
 // ========================================
 // libjson
@@ -283,7 +373,7 @@ int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *dat
 	switch (expect) {
         //fprintf(stderr, "Expect %d ...\n", expect);
         case Expect_comment:
-            post.comment = parseComment(data, strlen(data), true);
+            post.comment = parseHTML(data, strlen(data), true);
 			if (post.comment == NULL) {
 				fprintf(stderr, "[fill_post_as_string] ! Error @ parseComment()\n");
 				return 1;
@@ -298,8 +388,11 @@ int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *dat
             memcpy(post.email, data, strlen(data));
             return 0;
         case Expect_name:
-            post.name = (char *) calloc(strlen(data) + 1, sizeof(char));
-            memcpy(post.name, data, strlen(data));
+            post.name = parseHTML(data, strlen(data), true);
+			if (post.comment == NULL) {
+				fprintf(stderr, "[fill_post_as_string] ! Error @ parseHTML()\n");
+				return 1;
+			}
             return 0;
         case Expect_num: // libjson определяет длинные номера постов как строки:
             post.num = atoi(data);

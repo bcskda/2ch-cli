@@ -145,6 +145,7 @@ const char *PATTERN_REPLY_NUM = "data-num=\"";
 const char *PATTERN_NEWLINE = "<br>";
 const char *PATTERN_GT = "&gt";
 const char *PATTERN_SLASH = "&#47";
+const char *PATTERN_NBSP = "&nbsp";
 
 // ========================================
 // Прототипы
@@ -161,6 +162,7 @@ int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const l
 int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long long thread);
 
 char *parseComment (const char *comment, const long long  comment_len, const bool v);
+char *parseHTML (const char *raw, const long long  raw_len, const bool v);
 
 void freePost (struct post *post);
 void freeComment (char *arg);
