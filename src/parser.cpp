@@ -319,7 +319,7 @@ int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *dat
         case Expect_comment:
             post.comment = parseHTML(data, strlen(data), true);
 			if (post.comment == NULL) {
-				fprintf(stderr, "[fill_post_as_string] ! Error @ parseComment()\n");
+				fprintf(stderr, "[fill_post_as_string] ! Error @ parseHTML()\n");
 				return 1;
 			}
             return 0;
@@ -333,7 +333,7 @@ int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *dat
             return 0;
         case Expect_name:
             post.name = parseHTML(data, strlen(data), true);
-			if (post.comment == NULL) {
+			if (post.name == NULL) {
 				fprintf(stderr, "[fill_post_as_string] ! Error @ parseHTML()\n");
 				return 1;
 			}
