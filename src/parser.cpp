@@ -170,20 +170,11 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
                 }
                 break;
             case JSON_STRING:
-                if (context->status == Status_in_post) {
-                    //fprintf(stderr, "Will fill as string %d\n", context->expect);
-                    if (fill_post_as_string(thread->posts[thread->posts.size() - 1], context->expect, data)) {
-                        fprintf(stderr, "! Error @ fill_post_as_string\n");
-                        return 1;
-                    }
-                }
-                break;
             case JSON_INT:
             case JSON_FLOAT:
                 if (context->status == Status_in_post) {
-                    //fprintf(stderr, "Will fill as int %d\n", context->expect);
-                    if (fill_post_as_int(thread->posts[thread->posts.size() - 1], context->expect, data)) {
-                        fprintf(stderr, "! Error @ fill_post_as_int\n");
+                    if (fill_post_value(thread->posts[thread->posts.size() - 1], context->expect, data)) {
+                        fprintf(stderr, "! Error @ fill_post_value\n");
                         return 1;
                     }
                 }
@@ -279,9 +270,10 @@ int fill_post_expected(json_context *context, const char *data) {
     return 0;
 }
 
-int fill_post_as_int(makaba_post_cpp &post, const int expect, const char *data) {
-    switch (expect) {
-        case Expect_banned:
+int fill_post_value(makaba_post_cpp &post, const int expect, const char *data) {
+	switch (expect) {
+        //fprintf(stderr, "Expect %d ...\n", expect);
+		case Expect_banned:
             post.banned = atoi(data);
             return 0;
         case Expect_closed:
@@ -290,13 +282,7 @@ int fill_post_as_int(makaba_post_cpp &post, const int expect, const char *data) 
         case Expect_lasthit:
             post.lasthit = atoi(data);
             return 0;
-        // libjson определяет длинные номера постов как строки;
-        // парсятся в fill_post_as_string()
-        /*
-        case Expect_num:
-        case Expect_parent:
-        */
-        case Expect_op:
+		case Expect_op:
             post.op = atoi(data);
             return 0;
         case Expect_sticky:
@@ -305,21 +291,10 @@ int fill_post_as_int(makaba_post_cpp &post, const int expect, const char *data) 
         case Expect_timestamp:
             post.timestamp = atoi(data);
             return 0;
-        // unique_posters тоже как string
-        /*
-        case Expect_unique_posters:
-        */
-    }
-    return 1;
-}
-
-int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *data) {
-	switch (expect) {
-        //fprintf(stderr, "Expect %d ...\n", expect);
-        case Expect_comment:
+		case Expect_comment:
             post.comment = parseHTML(data, strlen(data), true);
 			if (post.comment == NULL) {
-				fprintf(stderr, "[fill_post_as_string] ! Error @ parseHTML()\n");
+				fprintf(stderr, "[fill_post_value] ! Error @ parseHTML()\n");
 				return 1;
 			}
             return 0;
@@ -334,7 +309,7 @@ int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *dat
         case Expect_name:
             post.name = parseHTML(data, strlen(data), true);
 			if (post.name == NULL) {
-				fprintf(stderr, "[fill_post_as_string] ! Error @ parseHTML()\n");
+				fprintf(stderr, "[fill_post_value] ! Error @ parseHTML()\n");
 				return 1;
 			}
             return 0;
@@ -364,7 +339,7 @@ int fill_post_as_string(makaba_post_cpp &post, const int expect, const char *dat
             post.unique_posters = atoi(data);
             return 0;
     }
-    fprintf(stderr, "! Error @ fill_post_as_string: unknown context.expect value: %d\n", expect);
+    fprintf(stderr, "! Error @ fill_post_value: unknown context.expect value: %d\n", expect);
     return 1;
 }
 
@@ -460,4 +435,19 @@ int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const l
 // Freeing functions
 // ========================================
 
-// @TODO
+void freePost(makaba_post_cpp &post) {
+	free(post.comment);
+	free(post.date);
+	free(post.email);
+	free(post.name);
+	free(post.subject);
+	free(post.tags);
+	free(post.trip);
+	free(post.trip_type);
+}
+
+void freeThread(makaba_thread_cpp &thread) {
+	for (int i = 0; i < thread.nposts; i++) {
+		freePost(thread.posts[i]);
+	}
+}

@@ -80,7 +80,7 @@ int main (int argc, char **argv)
 
 	long int threadsize = 0;
 	char *thread_recv_ch = getThreadJSON(board_name, thread_number, &threadsize, false); // Получаем указатель на скачанный тред
-	fprintf(stderr, "threadsize = %u\n", threadsize);
+	fprintf(stderr, "threadsize = %ld\n", threadsize);
 	char *thread_ch = (char *) calloc(threadsize + 1, sizeof(char)); // Заказываем память под собственный буфер треда
 	if (thread_ch == NULL) {
 		fprintf(stderr, "[main]! Error: 'thread_ch' memory allocation\n");
@@ -94,8 +94,10 @@ int main (int argc, char **argv)
 	makaba_thread_cpp thread;
 	if (initThread_cpp(thread, thread_ch, threadsize, true)) {
 		fprintf(stderr, "[main] ! Error @ initThread_cpp()\n");
+		free(thread_ch);
 		return RET_PARSE;
 	};
+	free(thread_ch);
 
 	ncurses_init();
 	ncurses_print_help();
@@ -168,8 +170,7 @@ int main (int argc, char **argv)
 	}
 	ncurses_exit();
 
-	//freeThread(thread);
-	free(thread_ch);
+	freeThread(thread);
 	makabaCleanup();
 	if (comment != NULL)
 		free(comment);
