@@ -134,7 +134,7 @@ int main (int argc, char **argv)
 						ncurses_print_post(thread, cur_post);
 					}
 					else {
-						printw(">>>> Первый пост\n");
+						printw(">>> Первый пост\n");
 					}
 					done = 1;
 					break;
