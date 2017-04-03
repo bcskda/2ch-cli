@@ -8,8 +8,8 @@
 #include "parser.h"
 
 char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // Пока что игнорируем разметку
-	fprintf (stderr, "]] Started parseHTML\n");
-	fprintf(stderr, "Raw len: %d\n", raw_len);
+	if (v) fprintf (stderr, "]] Started parseHTML\n");
+	if (v) fprintf(stderr, "Raw len: %d\n", raw_len);
 
 	if (v) {
 		fprintf(stderr, "Raw:\n%s\nEnd of raw\n", raw);
@@ -103,8 +103,8 @@ char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // �
 			}
 		}
 	}
-	fprintf(stderr, "]] Final length: %d\n", parsed_len);
-	fprintf(stderr, "]] Exiting parseHTML\n");
+	if (v) fprintf(stderr, "]] Final length: %d\n", parsed_len);
+	if (v) fprintf(stderr, "]] Exiting parseHTML\n");
 	return parsed;
 }
 
@@ -180,7 +180,7 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
                 }
                 break;
             default:
-                printf("[unhandled] \"%s\"\n", (char *)userdata);
+                fprintf(stderr, "[unhandled] \"%s\"\n", (char *)userdata);
                 break;
         }
         return 0;
@@ -412,6 +412,7 @@ int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const l
     context.type = thread_new;
     context.status = Status_default;
     context.memdest = &thread;
+	thread.nposts = 0;
 
 	json_parser parser;
     if (json_parser_init(&parser, NULL, json_callback, &context)) {
