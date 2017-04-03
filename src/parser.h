@@ -143,6 +143,7 @@ const char *PATTERN_REPLY_CLASS = "class=\"post-reply-link\"";
 const char *PATTERN_REPLY_THREAD = "data-thread=\"";
 const char *PATTERN_REPLY_NUM = "data-num=\"";
 const char *PATTERN_NEWLINE = "<br>";
+const char *PATTERN_LT = "&lt";
 const char *PATTERN_GT = "&gt";
 const char *PATTERN_SLASH = "&#47";
 const char *PATTERN_BCKSLASH = "&#92";

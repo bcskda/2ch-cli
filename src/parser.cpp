@@ -48,6 +48,13 @@ char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // Ð
 			continue;
 		}
 		if (depth == 0) {
+			if (strncmp(&(raw[i]), PATTERN_LT, strlen(PATTERN_LT)) == 0) { // '<' char
+			    if (v) fprintf(stderr, "< ");
+			    parsed[parsed_len] = '<';
+			    parsed_len ++;
+			    i += strlen(PATTERN_LT);
+			    continue;
+			}
 			if (strncmp(&(raw[i]), PATTERN_GT, strlen(PATTERN_GT)) == 0) { // '>' char
 				if (v) fprintf(stderr, "> ");
 				parsed[parsed_len] = '>';
