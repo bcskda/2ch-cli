@@ -4,14 +4,13 @@
 // (Implementation)
 // ========================================
 
-#pragma once
 #include "parser.h"
 
 char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // Пока что игнорируем разметку
-	if (v) fprintf (stderr, "]] Started parseHTML\n");
-	if (v) fprintf(stderr, "Raw len: %d\n", raw_len);
 
 	if (v) {
+		fprintf(stderr, "]] Started parseHTML\n");
+		fprintf(stderr, "Raw len: %d\n", raw_len);
 		fprintf(stderr, "Raw:\n%s\nEnd of raw\n", raw);
 	}
 
@@ -180,7 +179,8 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
             case JSON_INT:
             case JSON_FLOAT:
                 if (context->status == Status_in_post) {
-                    if (fill_post_value(thread->posts[thread->posts.size() - 1], context->expect, data)) {
+                    if (fill_post_value(thread->posts[thread->posts.size() - 1],
+						context->expect, data, context->verbose)) {
                         fprintf(stderr, "! Error @ fill_post_value\n");
                         return 1;
                     }
@@ -277,7 +277,9 @@ int fill_post_expected(json_context *context, const char *data) {
     return 0;
 }
 
-int fill_post_value(makaba_post_cpp &post, const int expect, const char *data) {
+int fill_post_value(makaba_post_cpp &post, const int expect, const char *data,
+	const bool &verbose)
+{
 	switch (expect) {
         //fprintf(stderr, "Expect %d ...\n", expect);
 		case Expect_banned:
@@ -299,7 +301,7 @@ int fill_post_value(makaba_post_cpp &post, const int expect, const char *data) {
             post.timestamp = atoi(data);
             return 0;
 		case Expect_comment:
-            post.comment = parseHTML(data, strlen(data), true);
+            post.comment = parseHTML(data, strlen(data), verbose);
 			if (post.comment == NULL) {
 				fprintf(stderr, "[fill_post_value] ! Error @ parseHTML()\n");
 				return 1;
@@ -314,7 +316,7 @@ int fill_post_value(makaba_post_cpp &post, const int expect, const char *data) {
             memcpy(post.email, data, strlen(data));
             return 0;
         case Expect_name:
-            post.name = parseHTML(data, strlen(data), true);
+            post.name = parseHTML(data, strlen(data), verbose);
 			if (post.name == NULL) {
 				fprintf(stderr, "[fill_post_value] ! Error @ parseHTML()\n");
 				return 1;
@@ -381,7 +383,9 @@ int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect, const cha
 	return 1;
 }
 
-int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long long thread) {
+int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long long thread,
+	const bool &verbose)
+{
 	if (CURL_BUFF_BODY == NULL)
 		makabaSetup();
 	char *captcha_str = get2chaptchaIdJSON(board, lint2str(thread));
@@ -394,6 +398,7 @@ int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long lon
 	json_context context;
     context.type = captcha_id;
     context.status = Status_default;
+	context.verbose = verbose;
     context.memdest = &captcha;
 	json_parser parser;
     if (json_parser_init(&parser, NULL, json_callback, &context)) {
@@ -414,10 +419,13 @@ int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long lon
 	return 0;
 }
 
-int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v) {
+int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long &thread_lenght,
+	const bool &verbose)
+{
 	json_context context;
     context.type = thread_new;
     context.status = Status_default;
+	context.verbose = verbose;
     context.memdest = &thread;
 	thread.nposts = 0;
 

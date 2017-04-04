@@ -4,6 +4,9 @@
 // (Headers)
 // ========================================
 
+#pragma once
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -11,7 +14,7 @@
 #include <vector>
 #include <json.h>
 #include "error.h"
-#pragma once
+#include "makaba.h"
 
 struct post_cpp {
 	int banned; //bool
@@ -126,6 +129,7 @@ struct json_context {
     context_type type;
     int status;
     int expect;
+	bool verbose;
     void *memdest;
 };
 typedef struct json_context json_context;
@@ -158,12 +162,15 @@ const char *PATTERN_AMP = "&amp";
 
 int json_callback(void *userdata, int type, const char *data, uint32_t length); // Вызывается парсером при событиях
 int fill_post_expected(json_context *context, const char *data); // Определяет текущую переменную JSON
-int fill_post_value(makaba_post_cpp &post, const int expect, const char *data); // Заполняет соотв. поле структуры
+int fill_post_value(makaba_post_cpp &post, const int expect, const char *data,  // Заполняет соотв. поле структуры
+	const bool &verbose);
 int fill_captcha_id_expected(json_context *context, const char *data);
 int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect, const char *data);
 
-int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long thread_lenght, const bool v);
-int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long long thread);
+int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long &thread_lenght,
+	const bool &verbose);
+int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long long thread,
+	const bool &verbose);
 
 char *parseHTML (const char *raw, const long long  raw_len, const bool v);
 
