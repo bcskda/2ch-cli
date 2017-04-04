@@ -17,6 +17,7 @@
 #include "makaba.h"
 #include "parser.h"
 #include "image.h"
+#include "error.h"
 
 #define VERSION "v0.4test3"
 
