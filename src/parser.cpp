@@ -4,7 +4,6 @@
 // (Implementation)
 // ========================================
 
-#pragma once
 #include "parser.h"
 
 char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // Пока что игнорируем разметку

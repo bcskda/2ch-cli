@@ -4,6 +4,9 @@
 // (Headers)
 // ========================================
 
+#pragma once
+
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
@@ -11,7 +14,7 @@
 #include <vector>
 #include <json.h>
 #include "error.h"
-#pragma once
+#include "makaba.h"
 
 struct post_cpp {
 	int banned; //bool
