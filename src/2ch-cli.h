@@ -11,12 +11,12 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <getopt.h>
 
-#include "error.h"
-#include "makaba.c"
-#include "parser.cpp"
-#include "image.c"
+#include "makaba.h"
+#include "parser.h"
+#include "image.h"
 
 #define VERSION "v0.4test3"
 
