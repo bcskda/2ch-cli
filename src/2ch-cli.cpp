@@ -16,6 +16,7 @@ void pomogite() // Справка
 	printf(" -b - задать борду\n");
 	printf(" -n - задать номер треда\n");
 	printf(" -c - задать комментарий\n");
+	printf(" -v - подробный лог (для разработчиков) - /tmp/2ch-cli.log\n");
 }
 
 int main (int argc, char **argv)
@@ -31,14 +32,16 @@ int main (int argc, char **argv)
     char board_name[10] = "b"; // Имя борды
     long long thread_number = 0; // Номер треда в борде
 	char *comment = NULL; // Комментарий - не занимать память, если не указан
+	bool send_post = false;
+	bool verbose = false;
 
 	//getopt
-	bool send_post = false;
 	if (argc == 1) /* Если аргументов нет, вывод помощи */ {
 		pomogite();
 		return RET_ARGS;
 	}
-	parse_argv(argc, (const char **)argv, board_name, &thread_number, &comment, passcode, &send_post);
+	parse_argv(argc, (const char **)argv,
+		board_name, &thread_number, &comment, passcode, &send_post, &verbose);
 	printf("board_name = %s\n", board_name);
 	printf("comment = %s\n", comment);
 
@@ -58,7 +61,7 @@ int main (int argc, char **argv)
 
 	if (send_post == true) {
 		makaba_2chaptcha captcha;
-		if (prepareCaptcha_cpp(captcha, board_name, thread_number)) {
+		if (prepareCaptcha_cpp(captcha, board_name, thread_number, verbose)) {
 			fprintf(stderr, "[main] ! Error @ prepareCaptcha_cpp\n");
 			return RET_INTERNAL;
 		}
@@ -79,7 +82,7 @@ int main (int argc, char **argv)
 
 
 	long int threadsize = 0;
-	char *thread_recv_ch = getThreadJSON(board_name, thread_number, &threadsize, false); // Получаем указатель на скачанный тред
+	char *thread_recv_ch = getThreadJSON(board_name, thread_number, &threadsize, verbose); // Получаем указатель на скачанный тред
 	fprintf(stderr, "threadsize = %ld\n", threadsize);
 	char *thread_ch = (char *) calloc(threadsize + 1, sizeof(char)); // Заказываем память под собственный буфер треда
 	if (thread_ch == NULL) {
@@ -92,7 +95,7 @@ int main (int argc, char **argv)
 	fprintf(stderr, "Get OK\n");
 
 	makaba_thread_cpp thread;
-	if (initThread_cpp(thread, thread_ch, threadsize, true)) {
+	if (initThread_cpp(thread, thread_ch, threadsize, verbose)) {
 		fprintf(stderr, "[main] ! Error @ initThread_cpp()\n");
 		free(thread_ch);
 		return RET_PARSE;
@@ -211,8 +214,9 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 	return 0;
 }
 
-int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const long long thread) {
-	if (initCaptcha_cpp(captcha, board, thread)) {
+int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const long long thread,
+	const bool &verbose) {
+	if (initCaptcha_cpp(captcha, board, thread, verbose)) {
 		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ initCaptcha_cpp: %d\n", makaba_errno);
 		return 1;
 	}
@@ -227,16 +231,17 @@ int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const long
 	FILE *captcha_png_file = fopen(CaptchaPngFilename, "w");
 	fwrite(captcha_png, sizeof(char), pic_size, captcha_png_file);
 	fclose(captcha_png_file);
-	convert_img(CaptchaPngFilename, CaptchaUtfFilename, true);
+	convert_img(CaptchaPngFilename, CaptchaUtfFilename, verbose);
 
 	return 0;
 }
 
 void parse_argv(const int argc, const char **argv,
-	char *board_name, long long *thread_number, char **comment, char *passcode, bool *send_post)
+	char *board_name, long long *thread_number, char **comment, char *passcode,
+	bool *send_post, bool *verbose)
 {
 	int opt;
-	while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:sc:") ) != -1)
+	while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:sc:v") ) != -1)
 	{
 		switch (opt)
 		{
@@ -278,6 +283,9 @@ void parse_argv(const int argc, const char **argv,
 				break;
 			case 's':
 				*send_post = true;
+				break;
+			case 'v':
+				*verbose = true;
 				break;
 			default:
 				printf("Неизвестная опция %c\n", opt);

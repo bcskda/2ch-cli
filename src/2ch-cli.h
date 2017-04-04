@@ -35,10 +35,12 @@ const char *CaptchaPngFilename = "/tmp/2ch-captcha.png";
 const char *CaptchaUtfFilename = "/tmp/2ch-captcha.utf8";
 
 int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files);
-int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const long long thread);
+int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const long long thread,
+	const bool &verbose);
 
-void parse_argv(const int argc, const char **arvg,
-	char *board_name, long long *thread_number, char **comment, char *passcode, bool *send_post);
+void parse_argv(const int argc, const char **argv,
+	char *board_name, long long *thread_number, char **comment, char *passcode,
+	bool *send_post, bool *verbose);
 void ncurses_init();
 void ncurses_exit();
 void ncurses_print_help();
