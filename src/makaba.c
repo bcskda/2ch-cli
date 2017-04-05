@@ -242,7 +242,8 @@ char *getBoardCatalogJSON (const char *board, const bool v) {
 	return CURL_BUFF_BODY;
 }
 
-char *getThreadJSON (const char *board, const long int threadnum, long long *threadsize, const bool v) {
+char *getThreadJSON (const char *board, const long long threadnum,
+	const long long postnum_rel, long long *threadsize, const bool v) {
 	fprintf (stderr, "]] Starting getThread");
 	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 	if (v) fprintf (stderr, "] initializing curl handle\n");
@@ -251,7 +252,13 @@ char *getThreadJSON (const char *board, const long int threadnum, long long *thr
 	if (curl_handle) {
 		if (v) fprintf (stderr, "] curl handle initialized\n");
 		char *threadnum_string = lint2str (threadnum);
-		if (v) fprintf (stderr, "thread number (string) = %s\n", threadnum_string);
+		char *postnum_string = lint2str(postnum_rel);
+		if (v) {
+			fprintf (stderr, "thread number (string) = \"%s\", len %d\n",
+				threadnum_string, strlen(threadnum_string));
+			fprintf (stderr, "post number (string) = \"%s\", len %d\n",
+				postnum_string, strlen(postnum_string));
+		}
 		const short URL_length = strlen(BASE_URL)+strlen(MOBILE_API);
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
 		// API URL: 2ch.hk/makaba/mobile.fcgi
@@ -278,8 +285,9 @@ char *getThreadJSON (const char *board, const long int threadnum, long long *thr
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 		if (v) fprintf (stderr, "] option URL set\n");
 
-		const short postfields_length = 15+1+6+strlen(board)+1+7+strlen(threadnum_string)+1+6;
-		// POST data format: task=get_thread&board=$board&thread=$threadnum&post=0
+		const short postfields_length = 15+1+6+strlen(board)+
+			1+7+strlen(threadnum_string)+1+5+strlen(postnum_string);
+		// POST data format: task=get_thread&board=$board&thread=$threadnum&post=$post
 
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDSIZE, postfields_length);
 		if (v) fprintf (stderr, "] Option POSTFIELDSIZE set\n");
@@ -306,8 +314,10 @@ char *getThreadJSON (const char *board, const long int threadnum, long long *thr
 		if (v) fprintf (stderr, "POST data state 3: %s\n", postfields);
 		postfields = strcat (postfields, threadnum_string);
 		if (v) fprintf (stderr, "POST data state 4: %s\n", postfields);
-		postfields = strcat (postfields, "&post=0");
+		postfields = strcat (postfields, "&post=");
 		if (v) fprintf (stderr, "POST data state 5: %s\n", postfields);
+		postfields = strcat (postfields, postnum_string);
+		if (v) fprintf (stderr, "POST data state 6: %s\n", postfields);
 		if (v) fprintf (stderr, "] POST data formed\n");
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDS, postfields);
 		if (v) fprintf (stderr, "] Option POSTFIELDS set\n");
@@ -747,10 +757,16 @@ size_t CURL_writeToBuff (const char *src, const size_t block_size, const size_t 
 
 char *lint2str (const long int val) {
 	short length = 0;
-	for (int k = 1; k <= val; k*=10) {
-		length += 1;
+	if (val > 0) {
+		for (int k = 1; k <= val; k*=10) {
+			length += 1;
+		}
 	}
-	char *res = (char*) calloc (length+1, sizeof(char));
+	else {
+		length = 1;
+	}
+
+	char *res = (char*) calloc (length + 1, sizeof(char));
 	if (res != NULL) {
 	}
 	else {
@@ -766,7 +782,7 @@ char *lint2str (const long int val) {
 long int str2lint (const char *str, const long int len) {
 	long int res = 0;
 	for (long int i = 1, k = 1; i <= len; i+=1, k*=10) {
-		res += k  *(str[len-i] - '0');
+		res += k * (str[len-i] - '0');
 	}
 	return res;
 }

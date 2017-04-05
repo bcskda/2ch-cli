@@ -475,6 +475,7 @@ int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const l
 		makaba_errno = ERR_JSON_PARSE;
 		return 1;
     }
+	thread.num = thread.posts.front().num;
 
 	return 0;
 };
@@ -483,15 +484,45 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 	const long long threadnum, const bool &verbose)
 {
 	long long threadsize = 0;
-	char *thread_ch = getThreadJSON(board, threadnum, &threadsize, verbose);
+	char *thread_ch = getThreadJSON(board, threadnum, 1, &threadsize, verbose);
+	// Отсчет постов в треде с единицы, №1 - ОП-пост
 	if (thread_ch == NULL) {
 		fprintf(stderr, "[prepareThread_cpp]! Error @ getThreadJSON()\n");
 		return 1;
 	}
 
-	int ret = initThread_cpp(thread, thread_ch, threadsize, verbose);
-	if (ret) {
+	thread.board = (char *) calloc(strlen(board), sizeof(char));
+	if (thread.board == NULL) {
+		fprintf(stderr, "[prepareThread_cpp] ! Error: calloc() failed\n");
+		makaba_errno = ERR_MEMORY;
+		return 1;
+	}
+	memcpy(thread.board, board, strlen(board));
+
+	if (initThread_cpp(thread, thread_ch, threadsize, verbose)) {
 		fprintf(stderr, "[prepareThread_cpp]! Error @ initThread_cpp()\n");
+		free(thread.board);
+		return 1;
+	}
+
+	return 0;
+}
+
+int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose)
+{
+	long long threadsize = 0;
+	char *thread_ch = getThreadJSON(thread.board, thread.num,
+		thread.nposts + 1, &threadsize, verbose);
+	// Номер следующего поста - thread.nposts + 1
+	if (thread_ch == NULL) {
+		fprintf(stderr, "[updateThread_cpp] ! Error @ getThreadJSON()\n");
+		return 1;
+	}
+	if (verbose) fprintf(stderr, ">> Got update:\n%s\n>> End of raw update\n",
+		thread_ch);
+
+	if(initThread_cpp(thread, thread_ch, threadsize, verbose)) {
+		fprintf(stderr, "[updateThread_cpp] ! Error @ initThread_cpp()\n");
 		return 1;
 	}
 
@@ -517,4 +548,5 @@ void freeThread(makaba_thread_cpp &thread) {
 	for (int i = 0; i < thread.nposts; i++) {
 		freePost(thread.posts[i]);
 	}
+	free(thread.board);
 }

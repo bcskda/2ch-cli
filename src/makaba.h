@@ -32,7 +32,9 @@ void makabaCleanup();
 char *getBoardsListJSON (const bool v);
 char *getBoardPageJSON (const char *board, const long int page, bool v);
 char *getBoardCatalogJSON (const char *board, const bool v);
-char *getThreadJSON (const char *board, const long int threadnum, long long *threadsize, const bool v);
+char *getThreadJSON (const char *board, const long long threadnum,
+	const long long postnum_rel, long long *threadsize, const bool v);
+// Важно и неочевидно: postnum_rel - относительный номер поста в треде
 
 char *getCaptchaSettingsJSON (const char *board);
 char *get2chaptchaIdJSON (const char *board, const char *thread);

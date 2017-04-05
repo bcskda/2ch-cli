@@ -42,6 +42,7 @@ typedef struct post_cpp makaba_post_cpp;
 struct thread_cpp {
 	long int num;
 	long int nposts;
+	char *board;
 	std::vector<makaba_post_cpp> posts;
 	thread_cpp();
 };
@@ -175,6 +176,7 @@ int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect,
 
 int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string,
 	const long long &thread_lenght, const bool &verbose);
+int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose);
 int prepareThread_cpp(makaba_thread_cpp &thread, const char *board,
 	const long long threadnum, const bool &verbose);
 int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board,

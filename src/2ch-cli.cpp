@@ -42,8 +42,8 @@ int main (int argc, char **argv)
 	}
 	parse_argv(argc, (const char **)argv,
 		board_name, &thread_number, &comment, passcode, &send_post, &verbose);
-	printf("board_name = %s\n", board_name);
-	printf("comment = %s\n", comment);
+	fprintf(stderr, "board_name = %s\n", board_name);
+	fprintf(stderr, "comment = %s\n", comment);
 
 	setlocale (LC_ALL, "");
 	makabaSetup();
@@ -80,11 +80,21 @@ int main (int argc, char **argv)
 		return RET_OK;
 	}
 
+
+	fprintf(stderr, "Preparing thread\n");
 	makaba_thread_cpp thread;
 	if (prepareThread_cpp(thread, board_name, thread_number, verbose)) {
 		fprintf(stderr, "[main] ! Error @ prepareThread_cpp(): %d\n",
 			makaba_errno);
+		makabaCleanup();
 		return RET_INTERNAL;
+	}
+
+	if (thread.nposts == 0) {
+		printf(">>> Smth strange with thread at %s/%ld doen\'t exist, exiting\n",
+			board_name, thread_number);
+		makabaCleanup();
+		return RET_OK;
 	}
 
 	ncurses_init();
@@ -93,7 +103,8 @@ int main (int argc, char **argv)
 	ncurses_print_post(thread, 0);
 	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
-		while (done == false)
+		while (done == false) {
+			int nposts_old = thread.nposts;
 			switch (getch())
 			{
 				case 'Q': case 'q':
@@ -105,6 +116,15 @@ int main (int argc, char **argv)
 					break;
 				case 'H': case 'h':
 					ncurses_print_help();
+					break;
+				case 'U': case 'u':
+					printw(">>> Обновление треда ...");
+					if (updateThread_cpp(thread, verbose)) {
+						fprintf(stderr, "[main] ! Error @ updateThread_cpp()\n");
+						should_exit = true;
+					}
+					printw(" готово, %d новых постов\n",
+						thread.nposts - nposts_old);
 					break;
 				case KEY_RIGHT: case KEY_DOWN:
 					if (cur_post < thread.nposts - 1) {
@@ -155,6 +175,7 @@ int main (int argc, char **argv)
 					}
 					break;
 			}
+		}
 	}
 	ncurses_exit();
 
@@ -273,6 +294,7 @@ void ncurses_print_help() {
 	printw(">>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост\n");
 	printw(">>> [PageUp] - %d постов назад, [PageDown] - %d постов вперёд\n", Skip_on_PG, Skip_on_PG);
 	printw(">>> [Home] - первый пост, [End] - последний пост\n");
+	printw(">>> [U] - обновить тред\n");
 	printw(">>> [H] помощь, [Q] выход\n");
 }
 
