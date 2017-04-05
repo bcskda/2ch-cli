@@ -80,27 +80,12 @@ int main (int argc, char **argv)
 		return RET_OK;
 	}
 
-
-	long int threadsize = 0;
-	char *thread_recv_ch = getThreadJSON(board_name, thread_number, &threadsize, verbose); // Получаем указатель на скачанный тред
-	fprintf(stderr, "threadsize = %ld\n", threadsize);
-	char *thread_ch = (char *) calloc(threadsize + 1, sizeof(char)); // Заказываем память под собственный буфер треда
-	if (thread_ch == NULL) {
-		fprintf(stderr, "[main]! Error: 'thread_ch' memory allocation\n");
-		return RET_MEMORY;
-	}
-	// Копируем скачанный тред из буфера загрузок, т.к. хранить там ненадежно
-	thread_ch = (char *) memcpy(thread_ch, thread_recv_ch, threadsize);
-	thread_ch[threadsize] = 0;
-	fprintf(stderr, "Get OK\n");
-
 	makaba_thread_cpp thread;
-	if (initThread_cpp(thread, thread_ch, threadsize, verbose)) {
-		fprintf(stderr, "[main] ! Error @ initThread_cpp()\n");
-		free(thread_ch);
-		return RET_PARSE;
-	};
-	free(thread_ch);
+	if (prepareThread_cpp(thread, board_name, thread_number, verbose)) {
+		fprintf(stderr, "[main] ! Error @ prepareThread_cpp(): %d\n",
+			makaba_errno);
+		return RET_INTERNAL;
+	}
 
 	ncurses_init();
 	ncurses_print_help();
@@ -210,28 +195,6 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 	}
 	// Комментарий
 	printw("%s\n\n", post.comment);
-
-	return 0;
-}
-
-int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board, const long long thread,
-	const bool &verbose) {
-	if (initCaptcha_cpp(captcha, board, thread, verbose)) {
-		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ initCaptcha_cpp: %d\n", makaba_errno);
-		return 1;
-	}
-
-	long int pic_size;
-	char *captcha_png = get2chaptchaPicPNG(captcha.png_url, &pic_size);
-	if (captcha_png == NULL) {
-		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ get2chaptchaPicPNG: %d\n", makaba_errno);
-		return 1;
-	}
-
-	FILE *captcha_png_file = fopen(CaptchaPngFilename, "w");
-	fwrite(captcha_png, sizeof(char), pic_size, captcha_png_file);
-	fclose(captcha_png_file);
-	convert_img(CaptchaPngFilename, CaptchaUtfFilename, verbose);
 
 	return 0;
 }

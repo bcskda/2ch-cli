@@ -21,7 +21,7 @@ const char *CAPTCHA_SETTINGS = "api/captcha/settings/";
 const char *CAPTCHA_2CHAPTCHA = "api/captcha/2chaptcha/";
 const size_t CURL_BUFF_BODY_SIZE = 5000000;
 const size_t CURL_BUFF_HEADER_SIZE = 2000;
-// Юзерагент - макрос в makefile
+// Юзерагент  - макрос CURL_UA в мейкфайле
 char *CURL_BUFF_BODY = NULL;
 char *CURL_BUFF_HEADER = NULL;
 size_t CURL_BUFF_POS = 0;
@@ -32,12 +32,12 @@ void makabaCleanup();
 char *getBoardsListJSON (const bool v);
 char *getBoardPageJSON (const char *board, const long int page, bool v);
 char *getBoardCatalogJSON (const char *board, const bool v);
-char *getThreadJSON (const char *board, const long int threadnum, long int *threadsize, const bool v);
+char *getThreadJSON (const char *board, const long int threadnum, long long *threadsize, const bool v);
 
 char *getCaptchaSettingsJSON (const char *board);
 char *get2chaptchaIdJSON (const char *board, const char *thread);
 char *form2chaptchaPicURL (const char *id);
-char *get2chaptchaPicPNG (const char *URL, long int *pic_size);
+char *get2chaptchaPicPNG (const char *URL, long long *pic_size);
 
 int sendPost (const char *board, const char *thread,
 	const char *comment, const char *subject, const char *name, const char *email,

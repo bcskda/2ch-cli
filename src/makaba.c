@@ -242,7 +242,7 @@ char *getBoardCatalogJSON (const char *board, const bool v) {
 	return CURL_BUFF_BODY;
 }
 
-char *getThreadJSON (const char *board, const long int threadnum, long int *threadsize, const bool v) {
+char *getThreadJSON (const char *board, const long int threadnum, long long *threadsize, const bool v) {
 	fprintf (stderr, "]] Starting getThread");
 	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
 	if (v) fprintf (stderr, "] initializing curl handle\n");
@@ -511,7 +511,7 @@ char *form2chaptchaPicURL (const char *id) {
 	return URL;
 }
 
-char *get2chaptchaPicPNG (const char *URL, long int *pic_size) {
+char *get2chaptchaPicPNG (const char *URL, long long *pic_size) {
 	fprintf(stderr, "]] Starting get2chaptchaPicPNG\n");
 
 	CURL *curl_handle = curl_easy_init();
@@ -594,7 +594,7 @@ int sendPost (const char *board, const char *thread,
 		 * = - постоянные значения
 		 * ! - обязательные поля
 		 */
-		short postfields_length = strlen(POSTING_FIELDS);
+		short postfields_length = strlen(POSTING_FIELDS) + 10; // про запас
 		if (board != NULL) {
 			postfields_length += 7 + strlen(board);
 		}

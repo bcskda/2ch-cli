@@ -15,6 +15,7 @@
 #include <json.h>
 #include "error.h"
 #include "makaba.h"
+#include "image.h"
 
 struct post_cpp {
 	int banned; //bool
@@ -42,13 +43,14 @@ struct thread_cpp {
 	long int num;
 	long int nposts;
 	std::vector<makaba_post_cpp> posts;
+	thread_cpp();
 };
 typedef struct thread_cpp makaba_thread_cpp;
 
 struct captcha_2chaptcha {
 	char *id;
 	int result;
-	char value[6] = "";
+	char value[10] = "";
 	char *png_url = NULL; // 108
 };
 typedef struct captcha_2chaptcha makaba_2chaptcha;
@@ -156,6 +158,9 @@ const char *PATTERN_SINGLE_QUOT = "&#39";
 const char *PATTERN_DOUBLE_QUOT = "&quot";
 const char *PATTERN_AMP = "&amp";
 
+const char *CaptchaPngFilename = "/tmp/2ch-captcha.png";
+const char *CaptchaUtfFilename = "/tmp/2ch-captcha.utf8";
+
 // ========================================
 // Прототипы
 // ========================================
@@ -165,12 +170,17 @@ int fill_post_expected(json_context *context, const char *data); // Опреде
 int fill_post_value(makaba_post_cpp &post, const int expect, const char *data,  // Заполняет соотв. поле структуры
 	const bool &verbose);
 int fill_captcha_id_expected(json_context *context, const char *data);
-int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect, const char *data);
+int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect,
+		const char *data);
 
-int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long &thread_lenght,
-	const bool &verbose);
-int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long long thread,
-	const bool &verbose);
+int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string,
+	const long long &thread_lenght, const bool &verbose);
+int prepareThread_cpp(makaba_thread_cpp &thread, const char *board,
+	const long long threadnum, const bool &verbose);
+int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board,
+	const long long thread, const bool &verbose);
+int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board,
+	const long long thread, const bool &verbose);
 
 char *parseHTML (const char *raw, const long long  raw_len, const bool v);
 

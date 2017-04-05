@@ -383,8 +383,12 @@ int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect, const cha
 	return 1;
 }
 
-int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long long thread,
-	const bool &verbose)
+// =======
+// Captcha
+// =======
+
+int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board,
+	const long long thread, const bool &verbose)
 {
 	if (CURL_BUFF_BODY == NULL)
 		makabaSetup();
@@ -419,6 +423,35 @@ int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board, const long lon
 	return 0;
 }
 
+int prepareCaptcha_cpp(makaba_2chaptcha &captcha, const char *board,
+	const long long thread, const bool &verbose)
+{
+	if (initCaptcha_cpp(captcha, board, thread, verbose)) {
+		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ initCaptcha_cpp: %d\n", makaba_errno);
+		return 1;
+	}
+
+	long long pic_size;
+	char *captcha_png = get2chaptchaPicPNG(captcha.png_url, &pic_size);
+	if (captcha_png == NULL) {
+		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ get2chaptchaPicPNG: %d\n", makaba_errno);
+		return 1;
+	}
+
+	FILE *captcha_png_file = fopen(CaptchaPngFilename, "w");
+	fwrite(captcha_png, sizeof(char), pic_size, captcha_png_file);
+	fclose(captcha_png_file);
+	convert_img(CaptchaPngFilename, CaptchaUtfFilename, verbose);
+
+	return 0;
+}
+
+// ======
+// Thread
+// ======
+
+thread_cpp::thread_cpp(): num(0), nposts(0) {}
+
 int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long &thread_lenght,
 	const bool &verbose)
 {
@@ -427,7 +460,6 @@ int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const l
     context.status = Status_default;
 	context.verbose = verbose;
     context.memdest = &thread;
-	thread.nposts = 0;
 
 	json_parser parser;
     if (json_parser_init(&parser, NULL, json_callback, &context)) {
@@ -446,6 +478,25 @@ int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const l
 
 	return 0;
 };
+
+int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
+	const long long threadnum, const bool &verbose)
+{
+	long long threadsize = 0;
+	char *thread_ch = getThreadJSON(board, threadnum, &threadsize, verbose);
+	if (thread_ch == NULL) {
+		fprintf(stderr, "[prepareThread_cpp]! Error @ getThreadJSON()\n");
+		return 1;
+	}
+
+	int ret = initThread_cpp(thread, thread_ch, threadsize, verbose);
+	if (ret) {
+		fprintf(stderr, "[prepareThread_cpp]! Error @ initThread_cpp()\n");
+		return 1;
+	}
+
+	return 0;
+}
 
 // ========================================
 // Freeing functions
