@@ -6,12 +6,13 @@ C/C++
 ##### Юзабелен в данной версии, пытайся.
 
 ## Зависимости
-```
-libcurl
-libjson (https://github.com/vincenthz/libjson)
-libncursesw
-libcaca с поддержкой ncurses
-```
+- libcurl
+
+- [libjson](https://github.com/vincenthz/libjson)
+
+- libncursesw
+
+- [libcaca и caca-utils](https://github.com/cacalabs/libcaca) с поддержкой ncurses
 ## Установка
 ```
 cd /path/to/repo
