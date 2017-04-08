@@ -119,12 +119,14 @@ int main (int argc, char **argv)
 					break;
 				case 'U': case 'u':
 					printw(">>> Обновление треда ...");
+					refresh();
 					if (updateThread_cpp(thread, verbose)) {
 						fprintf(stderr, "[main] ! Error @ updateThread_cpp()\n");
 						should_exit = true;
 					}
 					printw(" готово, %d новых постов\n",
 						thread.nposts - nposts_old);
+					refresh();
 					break;
 				case KEY_RIGHT: case KEY_DOWN:
 					if (cur_post < thread.nposts - 1) {
