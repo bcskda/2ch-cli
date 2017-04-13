@@ -19,7 +19,7 @@ const char *POSTING_API = "makaba/posting.fcgi";
 const char *POSTING_FIELDS = "json=1&task=post&captcha_type=2chaptcha";
 const char *CAPTCHA_SETTINGS = "api/captcha/settings/";
 const char *CAPTCHA_2CHAPTCHA = "api/captcha/2chaptcha/";
-const size_t CURL_BUFF_BODY_SIZE = 5000000;
+const size_t CURL_BUFF_BODY_SIZE = 2e6;
 const size_t CURL_BUFF_HEADER_SIZE = 2000;
 // Юзерагент  - макрос CURL_UA в мейкфайле
 char *CURL_BUFF_BODY = NULL;

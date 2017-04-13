@@ -164,6 +164,7 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
                         context->status = Status_in_post;
                         thread->nposts++;
                         thread->posts.push_back({ });
+						thread->posts.back().rel_num = thread->nposts;
                         break;
                 }
                 break;
@@ -214,8 +215,8 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
 	}
 }
 
-int fill_post_expected(json_context *context, const char *data) {
-    //fprintf(stderr, "Will expect %s\n", data);
+int fill_post_expected(json_context *context, const char *data)
+{
     if (strncmp(data, Key_banned, strlen(data))== 0) {
         context->expect = Expect_banned;
     }
@@ -281,7 +282,6 @@ int fill_post_value(makaba_post_cpp &post, const int expect, const char *data,
 	const bool &verbose)
 {
 	switch (expect) {
-        //fprintf(stderr, "Expect %d ...\n", expect);
 		case Expect_banned:
             post.banned = atoi(data);
             return 0;
@@ -322,10 +322,10 @@ int fill_post_value(makaba_post_cpp &post, const int expect, const char *data,
 				return 1;
 			}
             return 0;
-        case Expect_num: // libjson определяет длинные номера постов как строки:
+        case Expect_num:
             post.num = atoi(data);
             return 0;
-        case Expect_parent: // это тоже номер поста
+        case Expect_parent:
             post.parent = atoi(data);
             return 0;
         case Expect_subject:
@@ -344,7 +344,7 @@ int fill_post_value(makaba_post_cpp &post, const int expect, const char *data,
             post.trip_type = (char *) calloc(strlen(data) + 1, sizeof(char));
             memcpy(post.trip_type, data, strlen(data));
             return 0;
-        case Expect_unique_posters: // unique_posters тоже как string
+        case Expect_unique_posters:
             post.unique_posters = atoi(data);
             return 0;
     }

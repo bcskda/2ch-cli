@@ -21,7 +21,7 @@ void pomogite() // Справка
 
 int main (int argc, char **argv)
 {
-	freopen("/tmp/2ch-cli.log", "w", stderr);
+	//freopen("/tmp/2ch-cli.log", "w", stderr);
 
 	#ifdef CONFIG_TEST
 	printf("CURL_UA = \"" CURL_UA "\"\n");
@@ -50,7 +50,7 @@ int main (int argc, char **argv)
 
 	#ifdef CAPTCHA_TEST_CPP
 	makaba_2chaptcha captcha;
-	prepareCaptcha_cpp(captcha, board_name, thread_number);
+	prepareCaptcha_cpp(captcha, board_name, thread_number, verbose);
 	printf("id = \"%s\"\nresult = \"%d\"\nurl = \"%s\"\n",
 		captcha.id, captcha.result, captcha.png_url);
 	char shcmd[40];
@@ -100,9 +100,10 @@ int main (int argc, char **argv)
 	ncurses_init();
 	ncurses_print_help();
 	bool should_exit = false;
-	ncurses_print_post(thread, 0);
+	ncurses_print_post(thread.posts[0]);
 	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
+		int int_input = 0;
 		while (done == false) {
 			int nposts_old = thread.nposts;
 			switch (getch())
@@ -112,10 +113,25 @@ int main (int argc, char **argv)
 					should_exit = true;
 					break;
 				case 'P': case 'p':
-					printw(">>> Открой капчу в другом терминале. Прости.\n");
+					printw(">>> Постинг без отдельного запуска еще не поддерживается\n\n");
 					break;
 				case 'H': case 'h':
 					ncurses_print_help();
+					break;
+				case 'G': case 'g':
+					printw("Перейти к посту: ");
+					refresh();
+					echo();
+					scanw("%d", &int_input);
+					noecho();
+					if (int_input < 1) {
+						int_input = 1;
+					}
+					if (int_input > thread.nposts) {
+						int_input = thread.nposts;
+					}
+					cur_post = int_input - 1;
+					ncurses_print_post(thread.posts[cur_post]);
 					break;
 				case 'U': case 'u':
 					printw(">>> Обновление треда ...");
@@ -131,7 +147,7 @@ int main (int argc, char **argv)
 				case KEY_RIGHT: case KEY_DOWN:
 					if (cur_post < thread.nposts - 1) {
 						cur_post ++;
-						ncurses_print_post(thread, cur_post);
+						ncurses_print_post(thread.posts[cur_post]);
 					}
 					else {
 						printw(">>> Последний пост\n");
@@ -141,7 +157,7 @@ int main (int argc, char **argv)
 				case KEY_LEFT: case KEY_UP:
 					if (cur_post > 0) {
 						cur_post --;
-						ncurses_print_post(thread, cur_post);
+						ncurses_print_post(thread.posts[cur_post]);
 					}
 					else {
 						printw(">>> Первый пост\n");
@@ -153,7 +169,7 @@ int main (int argc, char **argv)
 						cur_post += Skip_on_PG;
 						if (cur_post > thread.nposts - 1)
 							cur_post = thread.nposts - 1;
-						ncurses_print_post(thread, cur_post);
+						ncurses_print_post(thread.posts[cur_post]);
 					}
 					break;
 				case KEY_PPAGE: // PageUp
@@ -161,19 +177,19 @@ int main (int argc, char **argv)
 						cur_post -= Skip_on_PG;
 						if (cur_post < 0)
 							cur_post = 0;
-						ncurses_print_post(thread, cur_post);
+						ncurses_print_post(thread.posts[cur_post]);
 					}
 					break;
 				case KEY_HOME:
 					if (cur_post > 0) {
 						cur_post = 0;
-					ncurses_print_post(thread, cur_post);
+					ncurses_print_post(thread.posts[cur_post]);
 					}
 					break;
 				case KEY_END:
 					if (cur_post < thread.nposts - 1) {
 						cur_post = thread.nposts - 1;
-						ncurses_print_post(thread, cur_post);
+						ncurses_print_post(thread.posts[cur_post]);
 					}
 					break;
 			}
@@ -207,16 +223,16 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 		return 1;
 	}
 
-	// Заголовок отдельно
+	char header_1[150] = "";
+	char header_2[150] = "";
+	sprintf(header_1, "[[ %s", post.name);
 	if (show_email == true && strlen(post.email) > 0) {
-		printw ("[=== %s (%s) #%d %s ===]\n",
-			post.name, post.email, post.num, post.date);
+		sprintf(header_1, "%s @ %s", header_1, post.email);
 	}
-	else {
-		printw ("[=== %s #%d %s ===]\n",
-			post.name, post.num, post.date);
-	}
-	// Комментарий
+	sprintf(header_2, "[[ #%d (%d) %s", post.num, post.rel_num, post.date);
+	// @TODO Выравнивать строки заголовка по ширине
+	printw("%s\n%s\n", header_1, header_2);
+	// Выводим комментарий
 	printw("%s\n\n", post.comment);
 
 	return 0;
@@ -238,7 +254,7 @@ void parse_argv(const int argc, const char **argv,
 					exit(RET_ARGS);
 				}
 				memcpy(passcode, optarg, sizeof(passcode));
-                printf("Разраб хуй, ещё не запилил пасскоды\n");
+                printf("Разраб ещё не запилил пасскоды\n");
 				printf("Уже что-то могу: %s!\n", passcode);
 				break;
 			case 'b':
@@ -293,16 +309,16 @@ void ncurses_exit() {
 }
 
 void ncurses_print_help() {
+	printw("\n");
+	printw(">>> [G] - перейти по номеру поста, [U] - обновить тред\n");
 	printw(">>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост\n");
 	printw(">>> [PageUp] - %d постов назад, [PageDown] - %d постов вперёд\n", Skip_on_PG, Skip_on_PG);
 	printw(">>> [Home] - первый пост, [End] - последний пост\n");
-	printw(">>> [U] - обновить тред\n");
-	printw(">>> [H] помощь, [Q] выход\n");
+	printw(">>> [H] помощь, [Q] выход\n\n");
 }
 
-void ncurses_print_post(const makaba_thread_cpp &thread, const int postnum) {
+void ncurses_print_post(const makaba_post_cpp &post) {
 	clear();
-	fprintf(stderr, "Printing post #%d\n", postnum);
-	printPost(thread.posts[postnum], true, true);
+	printPost(post, true, true);
 	refresh();
 }

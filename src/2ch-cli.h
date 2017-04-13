@@ -6,6 +6,7 @@
 
 #pragma once
 
+#include <wchar.h>
 #include <ncurses.h>
 #include <locale.h>
 #include <unistd.h>
@@ -40,4 +41,4 @@ void parse_argv(const int argc, const char **argv,
 void ncurses_init();
 void ncurses_exit();
 void ncurses_print_help();
-void ncurses_print_post(const makaba_thread_cpp &thread, const int postnum);
+void ncurses_print_post(const makaba_post_cpp &post);

@@ -36,6 +36,7 @@ struct post_cpp {
 	char *trip;
 	char *trip_type; // enum?
 	long long unique_posters;
+	long long rel_num;
 };
 typedef struct post_cpp makaba_post_cpp;
 
