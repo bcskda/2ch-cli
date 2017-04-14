@@ -20,7 +20,10 @@ enum makaba_error {
     ERR_INTERNAL,
     ERR_POST_OUT_OF_RANGE,
     ERR_JSON_INIT,
-    ERR_JSON_PARSE
+    ERR_JSON_PARSE,
+    ERR_CACHE_NOENT,
+    ERR_CACHE_READ,
+    ERR_GETENV
 };
 typedef enum makaba_error t_makaba_error;
 

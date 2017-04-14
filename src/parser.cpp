@@ -149,7 +149,7 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
                     case Status_in_thread:
                         //fprintf(stderr, "<<< Exiting posts array, Status_default\n");
                         context->status = Status_default;
-                        fprintf(stderr, "==== Vector has %ld elements\n", thread->posts.size());
+                        //fprintf(stderr, "==== Vector has %ld elements\n", thread->posts.size());
                         break;
                     case Status_in_files:
                         //fprintf(stderr, "]\n<<< Exiting files array, Status_in_post\n");
@@ -483,13 +483,54 @@ int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const l
 int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 	const long long threadnum, const bool &verbose)
 {
+	fprintf(stderr, "[prepareThread_cpp] Started\n");
 	long long threadsize = 0;
-	char *thread_ch = getThreadJSON(board, threadnum, 1, &threadsize, verbose);
+	char *thread_ch = NULL;
+
+	#ifdef CACHE_JSON // Включено кэширование тредов
+	char filename[70] = "";
+	if (Json_cache_dir == NULL) {
+		// getenv()
+	}
+	sprintf(filename, "%s/thread-%d", Json_cache_dir, threadnum);
+
+	fprintf(stderr, "[prepareThread_cpp] Checking for cache file\n");
+	if (access(filename, F_OK) == 0) { // Тред есть в кэше
+		fprintf(stderr, "[prepareThread_cpp] Trying to read from cache\n");
+		thread_ch = readJsonCache(filename, &threadsize);
+		if (thread_ch == NULL) {
+			fprintf(stderr, "[prepareThread_cpp]! Warning: Error @ readJsonCache()\n");
+			fprintf(stderr, "[prepareThread_cpp]! Warning: Fallback to getThreadJSON()\n");
+			thread_ch = getThreadJSON(board, threadnum, 1, &threadsize, verbose);
+			if (thread_ch == NULL) {
+				fprintf(stderr, "[prepareThread_cpp]! Error @ getThreadJSON()\n");
+				return 1;
+			}
+		} // Избавиться бы от копипасты
+		fprintf(stderr, "[prepareThread_cpp] Read from cache\n");
+	}
+	else { // В кэше нет
+		fprintf(stderr, "[prepareThread_cpp] Not found in cache, loading\n");
+		thread_ch = getThreadJSON(board, threadnum, 1, &threadsize, verbose);
+		if (thread_ch == NULL) {
+			fprintf(stderr, "[prepareThread_cpp]! Error @ getThreadJSON()\n");
+			return 1;
+		}
+		fprintf(stderr, "[prepareThread_cpp] Writing to cache\n");
+		if (writeJsonCache(thread_ch, filename)) {
+			fprintf(stderr, "[prepareThread_cpp]! Error @ writeJsonCache()\n");
+			return 1;
+		}
+		fprintf(stderr, "[prepareThread_cpp] Written to cache\n");
+	}
+	#else
+	thread_ch = getThreadJSON(board, threadnum, 1, &threadsize, verbose);
 	// Отсчет постов в треде с единицы, №1 - ОП-пост
 	if (thread_ch == NULL) {
 		fprintf(stderr, "[prepareThread_cpp]! Error @ getThreadJSON()\n");
 		return 1;
 	}
+	#endif
 
 	thread.board = (char *) calloc(strlen(board), sizeof(char));
 	if (thread.board == NULL) {
@@ -504,6 +545,7 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 		free(thread.board);
 		return 1;
 	}
+	fprintf(stderr, "[prepareThread_cpp] Done, exiting\n");
 
 	return 0;
 }
@@ -514,6 +556,7 @@ int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose)
 	char *thread_ch = getThreadJSON(thread.board, thread.num,
 		thread.nposts + 1, &threadsize, verbose);
 	// Номер следующего поста - thread.nposts + 1
+
 	if (thread_ch == NULL) {
 		fprintf(stderr, "[updateThread_cpp] ! Error @ getThreadJSON()\n");
 		return 1;
@@ -521,13 +564,108 @@ int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose)
 	if (verbose) fprintf(stderr, ">> Got update:\n%s\n>> End of raw update\n",
 		thread_ch);
 
-	if(initThread_cpp(thread, thread_ch, threadsize, verbose)) {
+	#ifdef CACHE_JSON // Добавить в файл с кэшем
+	char filename[70] = "";
+	if (Json_cache_dir == NULL) {
+		// getenv()
+	}
+	sprintf(filename, "%s/thread-%d", Json_cache_dir, thread.num);
+	writeJsonCache(thread_ch, filename);
+	#endif
+
+	if (initThread_cpp(thread, thread_ch, threadsize, verbose)) {
 		fprintf(stderr, "[updateThread_cpp] ! Error @ initThread_cpp()\n");
 		return 1;
 	}
 
 	return 0;
 }
+
+// ========================================
+// JSON cache
+// ========================================
+#ifdef CACHE_JSON
+
+int initJsonCache()
+{
+	char *homedir = getenv("HOME");
+	if (homedir == NULL) {
+		fprintf(stderr, "[initJsonCache]! Error: can`t getenv() HOME\n");
+		makaba_errno = ERR_GETENV;
+		return -1;
+	}
+	sprintf(Json_cache_dir, "%s/.cache/2ch-cli", homedir);
+	fprintf(stderr, "[initJsonCache] Json_cache_dir = \"%s\"\n", Json_cache_dir);
+	if (access(Json_cache_dir, F_OK)) {
+		if (mkdir(Json_cache_dir, S_IRWXU) == -1) { // Директория -> 0700
+			fprintf(stderr, "[initJsonCache]! Error: mkdir() failed: %s\n",
+				strerror(errno));
+			makaba_errno = ERR_UNKNOWN;
+			return -1;
+		}
+	}
+	return 0;
+}
+
+char *readJsonCache(const char *filename, long long *threadsize)
+{
+	if (strlen(Json_cache_dir) == 0) {
+		if (initJsonCache() == -1) {
+			fprintf(stderr, "[readJsonCache]! Error: @ initJsonCache()\n");
+		}
+	}
+	if (access(filename, F_OK)) {
+		fprintf(stderr, "[readJsonCache]! Error: cache file %s doesn`t exist\n",
+				filename);
+		makaba_errno = ERR_CACHE_NOENT;
+		return NULL;
+	}
+
+	FILE *fd = fopen(filename, "r");
+	fseek(fd, 0, SEEK_END);
+	*threadsize = ftell(fd);
+	if (Json_cache_buf == NULL) {
+		Json_cache_buf = (char *) calloc(Json_cache_buf_size, sizeof(char));
+	}
+
+	Json_cache_buf[0] = '[';
+	fseek(fd, 0, SEEK_SET);
+	fread(Json_cache_buf + 1, sizeof(char), *threadsize, fd);
+	Json_cache_buf[*threadsize + 1] = ']';
+	if (ferror(fd)) {
+		fprintf(stderr, "[readJsonCache]! Error while reading cache file: %d\n",
+				ferror(fd));
+		fclose(fd);
+		makaba_errno = ERR_CACHE_READ;
+		return NULL;
+	}
+	fclose(fd);
+
+	return Json_cache_buf;
+}
+
+int writeJsonCache(const char *thread_ch, const char *filename)
+{
+	if (strlen(Json_cache_dir) == 0) {
+		if (initJsonCache() == -1) {
+			fprintf(stderr, "[writeJsonCache]! Error: @ initJsonCache()\n");
+		}
+	}
+	if (strlen(thread_ch) <= 2)
+		return 0;
+	FILE *fd = fopen(filename, "a+");
+	long long fsize = 0;
+	fseek(fd, 0, SEEK_END);
+	fsize = ftell(fd);
+	if (fsize > 0) {
+		fputc(',', fd);
+	}
+	fwrite(thread_ch + 1, sizeof(char), strlen(thread_ch) - 2, fd);
+	fclose(fd);
+	return 0;
+}
+
+#endif
 
 // ========================================
 // Freeing functions

@@ -11,6 +11,8 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include <vector>
 #include <json.h>
 #include "error.h"
@@ -56,6 +58,16 @@ struct captcha_2chaptcha {
 	char *png_url = NULL; // 108
 };
 typedef struct captcha_2chaptcha makaba_2chaptcha;
+
+// ========================================
+// JSON cache
+// ========================================
+
+#ifdef CACHE_JSON
+const size_t Json_cache_buf_size = 2e6;
+char *Json_cache_buf = NULL;
+char Json_cache_dir[50] = "";
+#endif
 
 // ========================================
 // libjson
@@ -186,6 +198,12 @@ int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board,
 	const long long thread, const bool &verbose);
 
 char *parseHTML (const char *raw, const long long  raw_len, const bool v);
+
+#ifdef CACHE_JSON
+int initJsonCache();
+char *readJsonCache(const char *filename, long long *threadsize);
+int writeJsonCache(const char *thread_ch, const char *filename);
+#endif
 
 void freePost (makaba_thread_cpp &post);
 void freeThread (makaba_thread_cpp &thread);

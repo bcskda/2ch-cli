@@ -21,7 +21,7 @@ void pomogite() // Справка
 
 int main (int argc, char **argv)
 {
-	//freopen("/tmp/2ch-cli.log", "w", stderr);
+	freopen("/tmp/2ch-cli.log", "w", stderr);
 
 	#ifdef CONFIG_TEST
 	printf("CURL_UA = \"" CURL_UA "\"\n");
@@ -47,6 +47,13 @@ int main (int argc, char **argv)
 
 	setlocale (LC_ALL, "");
 	makabaSetup();
+	#ifdef CACHE_JSON
+	if (initJsonCache() == -1) {
+		fprintf(stderr, "[writeJsonCache]! Error @ initJsonCache(): %d\n",
+			makaba_errno);
+		return RET_INTERNAL;
+	}
+	#endif
 
 	#ifdef CAPTCHA_TEST_CPP
 	makaba_2chaptcha captcha;
@@ -62,7 +69,8 @@ int main (int argc, char **argv)
 	if (send_post == true) {
 		makaba_2chaptcha captcha;
 		if (prepareCaptcha_cpp(captcha, board_name, thread_number, verbose)) {
-			fprintf(stderr, "[main] ! Error @ prepareCaptcha_cpp\n");
+			fprintf(stderr, "[main] ! Error @ prepareCaptcha_cpp: %d\n",
+				makaba_errno);
 			return RET_INTERNAL;
 		}
 		char shcmd[40];
@@ -80,8 +88,6 @@ int main (int argc, char **argv)
 		return RET_OK;
 	}
 
-
-	fprintf(stderr, "Preparing thread\n");
 	makaba_thread_cpp thread;
 	if (prepareThread_cpp(thread, board_name, thread_number, verbose)) {
 		fprintf(stderr, "[main] ! Error @ prepareThread_cpp(): %d\n",
