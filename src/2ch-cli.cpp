@@ -109,7 +109,7 @@ int main (int argc, char **argv)
 	}
 
 	if (thread.nposts == 0) {
-		printf(">>> Smth strange with thread at %s/%ld doen\'t exist, exiting\n",
+		printf(">>> Smth strange with thread at %s/%ld: doen\'t exist, exiting\n",
 			board_name, thread_number);
 		makabaCleanup();
 		return RET_OK;
@@ -157,11 +157,13 @@ int main (int argc, char **argv)
 					refresh();
 					if (updateThread_cpp(thread, verbose)) {
 						fprintf(stderr, "[main] ! Error @ updateThread_cpp()\n");
-						should_exit = true;
-						ret = RET_INTERNAL;
+						printw(" ошибка\n");
+						ncurses_print_error(makaba_strerror(makaba_errno));
 					}
+					else {
 					printw(" готово, %d новых постов\n",
 						thread.nposts - nposts_old);
+					}
 					refresh();
 					break;
 				case KEY_RIGHT: case KEY_DOWN:
@@ -344,4 +346,13 @@ void ncurses_print_post(const makaba_post_cpp &post) {
 	clear();
 	printPost(post, true, true);
 	refresh();
+}
+
+void ncurses_print_error(const char *mesg) {
+	int oldx = -1, oldy = -1;
+	getyx(stdscr, oldy, oldx);
+	attron(A_STANDOUT);
+	mvprintw(Err_pos_y , Err_pos_x, mesg);
+	attroff(A_STANDOUT);
+	move(oldy, oldx);
 }
