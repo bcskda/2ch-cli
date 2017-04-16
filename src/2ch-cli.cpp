@@ -234,11 +234,6 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 		makaba_errno = ERR_POST_FORMAT;
 		return 1;
 	}
-	if (post.num == NULL) {
-		fprintf(stderr, "! ERROR @printPost: Null num in struct post\n");
-		makaba_errno = ERR_POST_FORMAT;
-		return 1;
-	}
 	if (post.date == NULL) {
 		fprintf(stderr, "! ERROR @printPost: Null date in struct post\n");
 		makaba_errno = ERR_POST_FORMAT;
