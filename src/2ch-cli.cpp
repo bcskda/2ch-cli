@@ -118,7 +118,7 @@ int main (int argc, char **argv)
 	ncurses_init();
 	ncurses_print_help();
 	bool should_exit = false;
-	ncurses_print_post(thread.posts[0]);
+	ncurses_print_post(thread, 0);
 	int ret = RET_OK;
 	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
@@ -150,7 +150,7 @@ int main (int argc, char **argv)
 						int_input = thread.nposts;
 					}
 					cur_post = int_input - 1;
-					ncurses_print_post(thread.posts[cur_post]);
+					ncurses_print_post(thread, cur_post);
 					break;
 				case 'U': case 'u':
 					printw(">>> Обновление треда ...");
@@ -169,7 +169,7 @@ int main (int argc, char **argv)
 				case KEY_RIGHT: case KEY_DOWN:
 					if (cur_post < thread.nposts - 1) {
 						cur_post ++;
-						ncurses_print_post(thread.posts[cur_post]);
+						ncurses_print_post(thread, cur_post);
 					}
 					else {
 						printw(">>> Последний пост\n");
@@ -179,7 +179,7 @@ int main (int argc, char **argv)
 				case KEY_LEFT: case KEY_UP:
 					if (cur_post > 0) {
 						cur_post --;
-						ncurses_print_post(thread.posts[cur_post]);
+						ncurses_print_post(thread, cur_post);
 					}
 					else {
 						printw(">>> Первый пост\n");
@@ -191,7 +191,7 @@ int main (int argc, char **argv)
 						cur_post += Skip_on_PG;
 						if (cur_post > thread.nposts - 1)
 							cur_post = thread.nposts - 1;
-						ncurses_print_post(thread.posts[cur_post]);
+						ncurses_print_post(thread, cur_post);
 					}
 					break;
 				case KEY_PPAGE: // PageUp
@@ -199,19 +199,19 @@ int main (int argc, char **argv)
 						cur_post -= Skip_on_PG;
 						if (cur_post < 0)
 							cur_post = 0;
-						ncurses_print_post(thread.posts[cur_post]);
+						ncurses_print_post(thread, cur_post);
 					}
 					break;
 				case KEY_HOME:
 					if (cur_post > 0) {
 						cur_post = 0;
-					ncurses_print_post(thread.posts[cur_post]);
+					ncurses_print_post(thread, cur_post);
 					}
 					break;
 				case KEY_END:
 					if (cur_post < thread.nposts - 1) {
 						cur_post = thread.nposts - 1;
-						ncurses_print_post(thread.posts[cur_post]);
+						ncurses_print_post(thread, cur_post);
 					}
 					break;
 			}
@@ -228,6 +228,15 @@ int main (int argc, char **argv)
 	return ret;
 }
 
+int printThreadHeader(const makaba_thread_cpp &thread)
+{
+	move(Head_pos_y, Head_pos_x);
+	printw("%s", Headers_pref);
+	printw("/%s №%ld %s, %ld постов\n",
+		thread.board, thread.num, thread.posts[0].subject, thread.nposts);
+	return 0;
+}
+
 int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files) {
 	if (post.comment == NULL) {
 		fprintf(stderr, "! ERROR @printPost: Null comment in struct post\n");
@@ -242,15 +251,25 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 
 	char header_1[150] = "";
 	char header_2[150] = "";
-	sprintf(header_1, "[[ %s", post.name);
+	sprintf(header_1, "%s", post.name);
+	bool sage = false;
 	if (show_email == true && strlen(post.email) > 0) {
-		sprintf(header_1, "%s @ %s", header_1, post.email);
+		if (strcmp(post.email, "mailto:sage"))
+			sprintf(header_1, "%s @ %s", header_1, post.email);
+		else
+			sage = true;
 	}
-	sprintf(header_2, "[[ #%d (%d) %s", post.num, post.rel_num, post.date);
+	sprintf(header_2, "№%ld (%ld) %s", post.num, post.rel_num, post.date);
 	// @TODO Выравнивать строки заголовка по ширине
-	printw("%s\n%s\n", header_1, header_2);
+	printw("%s", Headers_pref);
+	if (sage)
+		attron(A_UNDERLINE);
+	printw("%s\n", header_1);
+	attroff(A_UNDERLINE);
+	printw("%s", Headers_pref);
+	printw("%s\n", header_2);
 	// Выводим комментарий
-	printw("%s\n\n", post.comment);
+	printw("\n%s\n\n", post.comment);
 
 	return 0;
 }
@@ -337,9 +356,10 @@ void ncurses_print_help() {
 	printw(">>> [H] помощь, [Q] выход\n\n");
 }
 
-void ncurses_print_post(const makaba_post_cpp &post) {
+void ncurses_print_post(const makaba_thread_cpp &thread, const long long num) {
 	clear();
-	printPost(post, true, true);
+	printThreadHeader(thread);
+	printPost(thread.posts[num], true, true);
 	refresh();
 }
 

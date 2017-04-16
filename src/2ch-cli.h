@@ -33,9 +33,15 @@ const size_t Max_comment_len = 15000;
 //const size_t Thread_size = 10000000; // Размер буфера с тредом
 const int Skip_on_PG = 20;
 
+const int Head_pos_x = 0;
+const int Head_pos_y = 0;
 const int Err_pos_x = 50;
 const int Err_pos_y = 0;
 
+char Headers_pref[] = "| ";
+char Headers_suff[] = " |";
+
+int printThreadHeader(const makaba_thread_cpp &thread);
 int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files);
 
 void parse_argv(const int argc, const char **argv,
@@ -44,5 +50,5 @@ void parse_argv(const int argc, const char **argv,
 void ncurses_init();
 void ncurses_exit();
 void ncurses_print_help();
-void ncurses_print_post(const makaba_post_cpp &post);
+void ncurses_print_post(const makaba_thread_cpp &thread, const long long num);
 void ncurses_print_error(const char *mesg);
