@@ -20,7 +20,7 @@
 #include "image.h"
 #include "error.h"
 
-#define VERSION "v0.4test4"
+#define VERSION "v0.4test5"
 
 const int RET_OK = 0;
 const int RET_ARGS = 1;
@@ -37,7 +37,7 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 
 void parse_argv(const int argc, const char **argv,
 	char *board_name, long long *thread_number, char **comment, char *passcode,
-	bool *send_post, bool *verbose);
+	bool *send_post, bool *verbose, bool *clean_cache);
 void ncurses_init();
 void ncurses_exit();
 void ncurses_print_help();

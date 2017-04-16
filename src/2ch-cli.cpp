@@ -16,6 +16,7 @@ void pomogite() // Справка
 	printf(" -b - задать борду\n");
 	printf(" -n - задать номер треда\n");
 	printf(" -c - задать комментарий\n");
+	printf(" -C - очистить кэш тредов\n");
 	printf(" -v - подробный лог (для разработчиков) - /tmp/2ch-cli.log\n");
 }
 
@@ -34,6 +35,7 @@ int main (int argc, char **argv)
 	char *comment = NULL; // Комментарий - не занимать память, если не указан
 	bool send_post = false;
 	bool verbose = false;
+	bool clean_cache = false;
 
 	//getopt
 	if (argc == 1) /* Если аргументов нет, вывод помощи */ {
@@ -41,19 +43,29 @@ int main (int argc, char **argv)
 		return RET_ARGS;
 	}
 	parse_argv(argc, (const char **)argv,
-		board_name, &thread_number, &comment, passcode, &send_post, &verbose);
+		board_name, &thread_number, &comment, passcode,
+		&send_post, &verbose, &clean_cache);
 	fprintf(stderr, "board_name = %s\n", board_name);
 	fprintf(stderr, "comment = %s\n", comment);
 
+	if (clean_cache == true) {
+		if (cleanJsonCache()) {
+			fprintf(stderr, "[main] ! Error @ cleanJsonCache()\n");
+			return RET_INTERNAL;
+		}
+		else {
+			printf("Кэш тредов очищен\n");
+		}
+		return RET_OK;
+	}
+
 	setlocale (LC_ALL, "");
 	makabaSetup();
-	#ifdef CACHE_JSON
 	if (initJsonCache() == -1) {
-		fprintf(stderr, "[writeJsonCache]! Error @ initJsonCache(): %d\n",
+		fprintf(stderr, "[main]! Error @ initJsonCache(): %d\n",
 			makaba_errno);
 		return RET_INTERNAL;
 	}
-	#endif
 
 	#ifdef CAPTCHA_TEST_CPP
 	makaba_2chaptcha captcha;
@@ -107,6 +119,7 @@ int main (int argc, char **argv)
 	ncurses_print_help();
 	bool should_exit = false;
 	ncurses_print_post(thread.posts[0]);
+	int ret = RET_OK;
 	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
 		int int_input = 0;
@@ -145,6 +158,7 @@ int main (int argc, char **argv)
 					if (updateThread_cpp(thread, verbose)) {
 						fprintf(stderr, "[main] ! Error @ updateThread_cpp()\n");
 						should_exit = true;
+						ret = RET_INTERNAL;
 					}
 					printw(" готово, %d новых постов\n",
 						thread.nposts - nposts_old);
@@ -209,7 +223,7 @@ int main (int argc, char **argv)
 		free(comment);
 	fprintf(stderr, "Cleanup done, exiting\n");
 
-	return RET_OK;
+	return ret;
 }
 
 int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files) {
@@ -246,10 +260,10 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 
 void parse_argv(const int argc, const char **argv,
 	char *board_name, long long *thread_number, char **comment, char *passcode,
-	bool *send_post, bool *verbose)
+	bool *send_post, bool *verbose, bool *clean_cache)
 {
 	int opt;
-	while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:sc:v") ) != -1)
+	while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:sc:vC") ) != -1)
 	{
 		switch (opt)
 		{
@@ -294,6 +308,9 @@ void parse_argv(const int argc, const char **argv,
 				break;
 			case 'v':
 				*verbose = true;
+				break;
+			case 'C':
+				*clean_cache = true;
 				break;
 			default:
 				printf("Неизвестная опция %c\n", opt);

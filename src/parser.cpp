@@ -487,7 +487,6 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 	long long threadsize = 0;
 	char *thread_ch = NULL;
 
-	#ifdef CACHE_JSON // Включено кэширование тредов
 	char filename[70] = "";
 	if (Json_cache_dir == NULL) {
 		// getenv()
@@ -523,14 +522,6 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 		}
 		fprintf(stderr, "[prepareThread_cpp] Written to cache\n");
 	}
-	#else
-	thread_ch = getThreadJSON(board, threadnum, 1, &threadsize, verbose);
-	// Отсчет постов в треде с единицы, №1 - ОП-пост
-	if (thread_ch == NULL) {
-		fprintf(stderr, "[prepareThread_cpp]! Error @ getThreadJSON()\n");
-		return 1;
-	}
-	#endif
 
 	thread.board = (char *) calloc(strlen(board), sizeof(char));
 	if (thread.board == NULL) {
@@ -564,14 +555,12 @@ int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose)
 	if (verbose) fprintf(stderr, ">> Got update:\n%s\n>> End of raw update\n",
 		thread_ch);
 
-	#ifdef CACHE_JSON // Добавить в файл с кэшем
 	char filename[70] = "";
 	if (Json_cache_dir == NULL) {
 		// getenv()
 	}
 	sprintf(filename, "%s/thread-%d", Json_cache_dir, thread.num);
 	writeJsonCache(thread_ch, filename);
-	#endif
 
 	if (initThread_cpp(thread, thread_ch, threadsize, verbose)) {
 		fprintf(stderr, "[updateThread_cpp] ! Error @ initThread_cpp()\n");
@@ -584,8 +573,6 @@ int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose)
 // ========================================
 // JSON cache
 // ========================================
-#ifdef CACHE_JSON
-
 int initJsonCache()
 {
 	char *homedir = getenv("HOME");
@@ -665,8 +652,47 @@ int writeJsonCache(const char *thread_ch, const char *filename)
 	return 0;
 }
 
-#endif
+int cleanJsonCache() {
+    if (strlen(Json_cache_dir) == 0) {
+		if (initJsonCache() == -1) {
+			fprintf(stderr, "[cleanJsonCache]! Error: @ initJsonCache()\n");
+		}
+	}
 
+    if (chdir(Json_cache_dir)) {
+        switch(errno) {
+            case ENOENT:
+                fprintf(stderr, "[cleanJsonCache]! Error: cache directory %s doesn`t exist after initJsonCache()\n");
+                return 0;
+            default:
+                fprintf(stderr, "[cleanJsonCache]! Error: can`t chdir() to %s: %s\n",
+                    Json_cache_dir, strerror(errno));
+                return -1;
+        }
+    }
+
+    DIR *dir;
+    struct dirent *entry;
+    dir = opendir("./");
+
+    if (dir != NULL) {
+        for (int i = 0; entry = readdir(dir); i++) {
+            if (i > 1) {
+                fprintf(stderr, "[cleanJsonCache] Delete %s/%s\n",
+                    Json_cache_dir, entry->d_name);
+                remove(entry->d_name);
+            }
+        }
+       closedir(dir);
+    }
+    else {
+        fprintf(stderr, "[cleanJsonCache]! Error: Can`t open cache directory: %s\n",
+            Json_cache_dir);
+        return -1;
+    }
+
+    return 0;
+}
 // ========================================
 // Freeing functions
 // ========================================
