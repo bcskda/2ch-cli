@@ -8,11 +8,13 @@ TARGETS = src/{2ch-cli.cpp,makaba.c,parser.cpp,image.c}
 
 all: default
 
-default:
+release:
 	$(CC)                    $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli 2>build-log
+default:
+	$(CC)                    $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli
 config-test:
-	$(CC) -DCONFIG_TEST      $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli 2>build-log
+	$(CC) -DCONFIG_TEST      $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli
 captcha-test-cpp:
-	$(CC) -DCAPTCHA_TEST_CPP $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli 2>build-log
+	$(CC) -DCAPTCHA_TEST_CPP $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli
 clean:
 	rm -f 2ch-cli
