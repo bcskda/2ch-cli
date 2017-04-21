@@ -486,17 +486,29 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 	fprintf(stderr, "[prepareThread_cpp] Started\n");
 	long long threadsize = 0;
 	char *thread_ch = NULL;
+	thread.num = threadnum;
 
-	char filename[70] = "";
-	if (Json_cache_dir == NULL) {
-		// getenv()
+	thread.board = (char *) calloc(strlen(board), sizeof(char));
+	if (thread.board == NULL) {
+		fprintf(stderr, "[prepareThread_cpp] ! Error: calloc() failed\n");
+		makaba_errno = ERR_MEMORY;
+		return 1;
 	}
-	sprintf(filename, "%s/thread-%d", Json_cache_dir, threadnum);
+	memcpy(thread.board, board, strlen(board));
+
+	bool fallback = false;
+	if (Json_cache_dir == NULL) {
+		if (initJsonCache()) {
+			fprintf(stderr, "[prepareThread_cpp] ! Error @ initJsonCache()\n");
+			fprintf(stderr, "[prepareThread_cpp]! Warning: Fallback to getThreadJSON()\n");
+			fallback = true;
+		}
+	}
 
 	fprintf(stderr, "[prepareThread_cpp] Checking for cache file\n");
-	if (access(filename, F_OK) == 0) { // Тред есть в кэше
+	if (fallback == false && checkJsonCache(thread)) { // Тред есть в кэше
 		fprintf(stderr, "[prepareThread_cpp] Trying to read from cache\n");
-		thread_ch = readJsonCache(filename, &threadsize);
+		thread_ch = readJsonCache(thread, &threadsize);
 		if (thread_ch == NULL) {
 			fprintf(stderr, "[prepareThread_cpp]! Warning: Error @ readJsonCache()\n");
 			fprintf(stderr, "[prepareThread_cpp]! Warning: Fallback to getThreadJSON()\n");
@@ -507,8 +519,9 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 			}
 		} // Избавиться бы от копипасты
 		fprintf(stderr, "[prepareThread_cpp] Read from cache\n");
+		armJsonCache(thread);
 	}
-	else { // В кэше нет
+	else { // В кэше нет или что-то пошло не так
 		fprintf(stderr, "[prepareThread_cpp] Not found in cache, loading\n");
 		thread_ch = getThreadJSON(board, threadnum, 1, &threadsize, verbose);
 		if (thread_ch == NULL) {
@@ -516,20 +529,13 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 			return 1;
 		}
 		fprintf(stderr, "[prepareThread_cpp] Writing to cache\n");
-		if (writeJsonCache(thread_ch, filename)) {
+		if (writeJsonCache(thread, thread_ch)) {
 			fprintf(stderr, "[prepareThread_cpp]! Error @ writeJsonCache()\n");
 			return 1;
 		}
 		fprintf(stderr, "[prepareThread_cpp] Written to cache\n");
+		armJsonCache(thread);
 	}
-
-	thread.board = (char *) calloc(strlen(board), sizeof(char));
-	if (thread.board == NULL) {
-		fprintf(stderr, "[prepareThread_cpp] ! Error: calloc() failed\n");
-		makaba_errno = ERR_MEMORY;
-		return 1;
-	}
-	memcpy(thread.board, board, strlen(board));
 
 	if (initThread_cpp(thread, thread_ch, threadsize, verbose)) {
 		fprintf(stderr, "[prepareThread_cpp]! Error @ initThread_cpp()\n");
@@ -555,12 +561,16 @@ int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose)
 	if (verbose) fprintf(stderr, ">> Got update:\n%s\n>> End of raw update\n",
 		thread_ch);
 
-	char filename[70] = "";
+	bool write_cache = true;
 	if (Json_cache_dir == NULL) {
-		// getenv()
+		if (initJsonCache()) {
+			write_cache = false;
+			fprintf(stderr, "[prepareThread_cpp] Error @ initJsonCache()\n");
+			fprintf(stderr, "[prepareThread_cpp] Warning: Fallback to getThreadJSON()\n");
+		}
 	}
-	sprintf(filename, "%s/thread-%d", Json_cache_dir, thread.num);
-	writeJsonCache(thread_ch, filename);
+	if (write_cache)
+		writeJsonCache(thread, thread_ch);
 
 	if (initThread_cpp(thread, thread_ch, threadsize, verbose)) {
 		fprintf(stderr, "[updateThread_cpp] ! Error @ initThread_cpp()\n");
@@ -594,14 +604,45 @@ int initJsonCache()
 	return 0;
 }
 
-char *readJsonCache(const char *filename, long long *threadsize)
+bool checkJsonCache(const makaba_thread_cpp &thread)
 {
+	char filename[70] = "";
+	sprintf(filename, "%s/thread-%s-%d",
+		Json_cache_dir, thread.board, thread.num);
+	return access(filename, F_OK) == 0;
+}
+
+void armJsonCache(const makaba_thread_cpp &thread)
+{
+	char filename_old[70] = "";
+	sprintf(filename_old, "%s/thread-%s-%d",
+		Json_cache_dir, thread.board, thread.num);
+	char filename_new[70] = "";
+	sprintf(filename_new, "%s-%s", filename_old, Json_cache_suff_armed);
+	rename(filename_old, filename_new);
+}
+
+void disarmJsonCache(const makaba_thread_cpp &thread)
+{
+	char filename_new[70] = "";
+	sprintf(filename_new, "%s/thread-%s-%d",
+		Json_cache_dir, thread.board, thread.num);
+	char filename_old[70] = "";
+	sprintf(filename_old, "%s-%s", filename_new, Json_cache_suff_armed);
+	rename(filename_old, filename_new);
+}
+
+char *readJsonCache(const makaba_thread_cpp &thread, long long *threadsize)
+{
+	char filename[70] = "";
+	sprintf(filename, "%s/thread-%s-%d",
+		Json_cache_dir, thread.board, thread.num);
 	if (strlen(Json_cache_dir) == 0) {
 		if (initJsonCache() == -1) {
 			fprintf(stderr, "[readJsonCache]! Error: @ initJsonCache()\n");
 		}
 	}
-	if (access(filename, F_OK)) {
+	if (! checkJsonCache(thread)) {
 		fprintf(stderr, "[readJsonCache]! Error: cache file %s doesn`t exist\n",
 				filename);
 		makaba_errno = ERR_CACHE_NOENT;
@@ -631,7 +672,7 @@ char *readJsonCache(const char *filename, long long *threadsize)
 	return Json_cache_buf;
 }
 
-int writeJsonCache(const char *thread_ch, const char *filename)
+int writeJsonCache(const makaba_thread_cpp &thread, const char *thread_ch)
 {
 	if (strlen(Json_cache_dir) == 0) {
 		if (initJsonCache() == -1) {
@@ -640,6 +681,11 @@ int writeJsonCache(const char *thread_ch, const char *filename)
 	}
 	if (strlen(thread_ch) <= 2)
 		return 0;
+
+	char filename[70] = "";
+	sprintf(filename, "%s/thread-%s-%d-%s",
+		Json_cache_dir, thread.board, thread.num, Json_cache_suff_armed);
+
 	FILE *fd = fopen(filename, "a+");
 	long long fsize = 0;
 	fseek(fd, 0, SEEK_END);
@@ -678,9 +724,11 @@ int cleanJsonCache() {
     if (dir != NULL) {
         for (int i = 0; entry = readdir(dir); i++) {
             if (i > 1) {
-                fprintf(stderr, "[cleanJsonCache] Delete %s/%s\n",
-                    Json_cache_dir, entry->d_name);
-                remove(entry->d_name);
+				if (! strstr(entry->d_name, Json_cache_suff_armed)) {
+					fprintf(stderr, "[cleanJsonCache] Delete %s/%s\n",
+	                    Json_cache_dir, entry->d_name);
+	                remove(entry->d_name);
+				}
             }
         }
        closedir(dir);

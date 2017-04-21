@@ -65,6 +65,7 @@ typedef struct captcha_2chaptcha makaba_2chaptcha;
 // ========================================
 
 const size_t Json_cache_buf_size = 2e6;
+const char *Json_cache_suff_armed = "active";
 char *Json_cache_buf = NULL;
 char Json_cache_dir[50] = "";
 
@@ -199,8 +200,11 @@ int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board,
 char *parseHTML (const char *raw, const long long  raw_len, const bool v);
 
 int initJsonCache();
-char *readJsonCache(const char *filename, long long *threadsize);
-int writeJsonCache(const char *thread_ch, const char *filename);
+bool checkJsonCache(const makaba_thread_cpp &thread);
+void armJsonCache(const makaba_thread_cpp &thread);
+void disarmJsonCache(const makaba_thread_cpp &thread);
+char *readJsonCache(const makaba_thread_cpp &thread, long long *threadsize);
+int writeJsonCache(const makaba_thread_cpp &thread, const char *thread_ch);
 int cleanJsonCache();
 
 void freePost (makaba_thread_cpp &post);

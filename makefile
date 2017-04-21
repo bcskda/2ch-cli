@@ -17,4 +17,4 @@ config-test:
 captcha-test-cpp:
 	$(CC) -DCAPTCHA_TEST_CPP $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli
 clean:
-	rm -f 2ch-cli
+	rm -f 2ch-cli build-log

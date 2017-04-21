@@ -11,13 +11,13 @@ void pomogite() // Справка
 	printf("2ch-cli " VERSION " - консольный клиент двача\n");
 	printf("Использование:\n");
 	printf(" -h - помощь\n");
-	printf(" -s - отправить пост\n");
-	printf(" -p - задать пасскод\n");
 	printf(" -b - задать борду\n");
 	printf(" -n - задать номер треда\n");
+	printf(" -s - отправить пост\n");
 	printf(" -c - задать комментарий\n");
 	printf(" -C - очистить кэш тредов\n");
-	printf(" -v - подробный лог (для разработчиков) - /tmp/2ch-cli.log\n");
+	printf(" -v - подробный лог (для разработчиков)\n");
+	printf(" -p - задать пасскод (не поддерживается)\n");
 }
 
 int main (int argc, char **argv)
@@ -104,6 +104,12 @@ int main (int argc, char **argv)
 	if (prepareThread_cpp(thread, board_name, thread_number, verbose)) {
 		fprintf(stderr, "[main] ! Error @ prepareThread_cpp(): %d\n",
 			makaba_errno);
+		switch(makaba_errno) {
+			case ERR_CURL_PERFORM:
+				printf("Ошибка соединения с сервером\n");
+			case ERR_JSON_PARSE:
+				printf("Ошибка обработки ответа сервера\n");
+		}
 		makabaCleanup();
 		return RET_INTERNAL;
 	}
@@ -219,6 +225,7 @@ int main (int argc, char **argv)
 	}
 	ncurses_exit();
 
+	disarmJsonCache(thread);
 	freeThread(thread);
 	makabaCleanup();
 	if (comment != NULL)
@@ -232,8 +239,8 @@ int printThreadHeader(const makaba_thread_cpp &thread)
 {
 	move(Head_pos_y, Head_pos_x);
 	printw("%s", Headers_pref);
-	printw("/%s №%ld %s, %ld постов\n",
-		thread.board, thread.num, thread.posts[0].subject, thread.nposts);
+	printw("/%s %s, %ld постов\n",
+		thread.board, thread.posts[0].subject, thread.nposts);
 	return 0;
 }
 
@@ -272,6 +279,42 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 	printw("\n%s\n\n", post.comment);
 
 	return 0;
+}
+
+void ncurses_init() {
+	initscr();
+	raw();
+	keypad (stdscr, TRUE);
+	noecho();
+}
+
+void ncurses_exit() {
+	endwin();
+}
+
+void ncurses_print_help() {
+	printw("\n");
+	printw(">>> [G] - перейти по номеру поста, [U] - обновить тред\n");
+	printw(">>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост\n");
+	printw(">>> [PageUp] - %d постов назад, [PageDown] - %d постов вперёд\n", Skip_on_PG, Skip_on_PG);
+	printw(">>> [Home] - первый пост, [End] - последний пост\n");
+	printw(">>> [H] помощь, [Q] выход\n\n");
+}
+
+void ncurses_print_post(const makaba_thread_cpp &thread, const long long num) {
+	clear();
+	printThreadHeader(thread);
+	printPost(thread.posts[num], true, true);
+	refresh();
+}
+
+void ncurses_print_error(const char *mesg) {
+	int oldx = -1, oldy = -1;
+	getyx(stdscr, oldy, oldx);
+	attron(A_STANDOUT);
+	mvprintw(Err_pos_y , Err_pos_x, mesg);
+	attroff(A_STANDOUT);
+	move(oldy, oldx);
 }
 
 void parse_argv(const int argc, const char **argv,
@@ -334,40 +377,4 @@ void parse_argv(const int argc, const char **argv,
 				exit(RET_ARGS);
 		}
 	}
-}
-
-void ncurses_init() {
-	initscr();
-	raw();
-	keypad (stdscr, TRUE);
-	noecho();
-}
-
-void ncurses_exit() {
-	endwin();
-}
-
-void ncurses_print_help() {
-	printw("\n");
-	printw(">>> [G] - перейти по номеру поста, [U] - обновить тред\n");
-	printw(">>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост\n");
-	printw(">>> [PageUp] - %d постов назад, [PageDown] - %d постов вперёд\n", Skip_on_PG, Skip_on_PG);
-	printw(">>> [Home] - первый пост, [End] - последний пост\n");
-	printw(">>> [H] помощь, [Q] выход\n\n");
-}
-
-void ncurses_print_post(const makaba_thread_cpp &thread, const long long num) {
-	clear();
-	printThreadHeader(thread);
-	printPost(thread.posts[num], true, true);
-	refresh();
-}
-
-void ncurses_print_error(const char *mesg) {
-	int oldx = -1, oldy = -1;
-	getyx(stdscr, oldy, oldx);
-	attron(A_STANDOUT);
-	mvprintw(Err_pos_y , Err_pos_x, mesg);
-	attroff(A_STANDOUT);
-	move(oldy, oldx);
 }

@@ -38,8 +38,8 @@ const int Head_pos_y = 0;
 const int Err_pos_x = 50;
 const int Err_pos_y = 0;
 
-char Headers_pref[] = "| ";
-char Headers_suff[] = " |";
+const char Headers_pref[] = "| ";
+const char Headers_suff[] = " |";
 
 int printThreadHeader(const makaba_thread_cpp &thread);
 int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files);
