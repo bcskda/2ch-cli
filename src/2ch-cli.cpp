@@ -143,6 +143,9 @@ int main (int argc, char **argv)
 				case 'H': case 'h':
 					ncurses_print_help();
 					break;
+				case 'C': case 'c':
+					ncurses_print_post(thread, cur_post);
+					break;
 				case 'G': case 'g':
 					printw("Перейти к посту: ");
 					refresh();
@@ -294,6 +297,7 @@ void ncurses_exit() {
 
 void ncurses_print_help() {
 	printw("\n");
+	printw(">>> [C] - очистить экран\n");
 	printw(">>> [G] - перейти по номеру поста, [U] - обновить тред\n");
 	printw(">>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост\n");
 	printw(">>> [PageUp] - %d постов назад, [PageDown] - %d постов вперёд\n", Skip_on_PG, Skip_on_PG);
