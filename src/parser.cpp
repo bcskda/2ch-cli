@@ -392,9 +392,9 @@ int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board,
 {
 	if (CURL_BUFF_BODY == NULL)
 		makabaSetup();
-	char *captcha_str = get2chaptchaIdJSON(board, lint2str(thread));
+	char *captcha_str = get2chaptchaId(board, thread, verbose);
 	if (captcha_str == NULL) {
-		fprintf(stderr, "[initCaptcha_cpp] ! Error @ get2chaptchaIdJSON(): %d\n", makaba_errno);
+		fprintf(stderr, "[initCaptcha_cpp] ! Error @ get2chaptchaId(): %d\n", makaba_errno);
 		return 1;
 	}
 	// Не заказываем еще раз, т.к. используется 1 раз
@@ -500,7 +500,7 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 	if (Json_cache_dir == NULL) {
 		if (initJsonCache()) {
 			fprintf(stderr, "[prepareThread_cpp] ! Error @ initJsonCache()\n");
-			fprintf(stderr, "[prepareThread_cpp]! Warning: Fallback to getThreadJSON()\n");
+			fprintf(stderr, "[prepareThread_cpp]! Warning: Fallback to getThread()\n");
 			fallback = true;
 		}
 	}
@@ -511,10 +511,10 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 		thread_ch = readJsonCache(thread, &threadsize);
 		if (thread_ch == NULL) {
 			fprintf(stderr, "[prepareThread_cpp]! Warning: Error @ readJsonCache()\n");
-			fprintf(stderr, "[prepareThread_cpp]! Warning: Fallback to getThreadJSON()\n");
-			thread_ch = getThreadJSON(board, threadnum, 1, &threadsize, verbose);
+			fprintf(stderr, "[prepareThread_cpp]! Warning: Fallback to getThread()\n");
+			thread_ch = getThread(board, threadnum, 1, &threadsize, verbose);
 			if (thread_ch == NULL) {
-				fprintf(stderr, "[prepareThread_cpp]! Error @ getThreadJSON()\n");
+				fprintf(stderr, "[prepareThread_cpp]! Error @ getThread()\n");
 				return 1;
 			}
 		} // Избавиться бы от копипасты
@@ -523,9 +523,9 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 	}
 	else { // В кэше нет или что-то пошло не так
 		fprintf(stderr, "[prepareThread_cpp] Not found in cache, loading\n");
-		thread_ch = getThreadJSON(board, threadnum, 1, &threadsize, verbose);
+		thread_ch = getThread(board, threadnum, 1, &threadsize, verbose);
 		if (thread_ch == NULL) {
-			fprintf(stderr, "[prepareThread_cpp]! Error @ getThreadJSON()\n");
+			fprintf(stderr, "[prepareThread_cpp]! Error @ getThread()\n");
 			return 1;
 		}
 		fprintf(stderr, "[prepareThread_cpp] Writing to cache\n");
@@ -550,12 +550,12 @@ int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
 int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose)
 {
 	long long threadsize = 0;
-	char *thread_ch = getThreadJSON(thread.board, thread.num,
+	char *thread_ch = getThread(thread.board, thread.num,
 		thread.nposts + 1, &threadsize, verbose);
 	// Номер следующего поста - thread.nposts + 1
 
 	if (thread_ch == NULL) {
-		fprintf(stderr, "[updateThread_cpp] ! Error @ getThreadJSON()\n");
+		fprintf(stderr, "[updateThread_cpp] ! Error @ getThread()\n");
 		return 1;
 	}
 	if (verbose) fprintf(stderr, ">> Got update:\n%s\n>> End of raw update\n",
@@ -566,7 +566,7 @@ int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose)
 		if (initJsonCache()) {
 			write_cache = false;
 			fprintf(stderr, "[prepareThread_cpp] Error @ initJsonCache()\n");
-			fprintf(stderr, "[prepareThread_cpp] Warning: Fallback to getThreadJSON()\n");
+			fprintf(stderr, "[prepareThread_cpp] Warning: Fallback to getThread()\n");
 		}
 	}
 	if (write_cache)

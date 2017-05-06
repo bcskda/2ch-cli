@@ -20,7 +20,7 @@
 #include "image.h"
 #include "error.h"
 
-#define VERSION "v0.4test5"
+#define VERSION "v0.4test6"
 
 const int RET_OK = 0;
 const int RET_ARGS = 1;
@@ -29,7 +29,6 @@ const int RET_MEMORY = 3;
 const int RET_PARSE = 4;
 const int RET_INTERNAL = 5;
 
-const size_t Max_comment_len = 15000;
 //const size_t Thread_size = 10000000; // Размер буфера с тредом
 const int Skip_on_PG = 20;
 

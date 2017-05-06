@@ -92,10 +92,10 @@ int main (int argc, char **argv)
 		scanf("%s", captcha.value);
 		long long answer_length;
 		char email[] = "";
-		sendPost(board_name, lint2str(thread_number),
+		char *result = sendPost(board_name, thread_number,
 			comment, NULL, NULL, email,
 			captcha.id, captcha.value, &answer_length);
-		printf("Ответ API: %s\n", CURL_BUFF_BODY); // По-хорошему так делать не надо
+		printf("Ответ API: %s\n", result); // По-хорошему так делать не надо
 		makabaCleanup();
 		return RET_OK;
 	}
@@ -107,8 +107,10 @@ int main (int argc, char **argv)
 		switch(makaba_errno) {
 			case ERR_CURL_PERFORM:
 				printf("Ошибка соединения с сервером\n");
+                break;
 			case ERR_JSON_PARSE:
 				printf("Ошибка обработки ответа сервера\n");
+                break;
 		}
 		makabaCleanup();
 		return RET_INTERNAL;
@@ -353,7 +355,7 @@ void parse_argv(const int argc, const char **argv,
 				break;
 			case 'c':
 				if (*comment == NULL) {
-					if ( sizeof(optarg) > Max_comment_len ) {
+					if ( sizeof(optarg) > COMMENT_LEN_MAX ) {
 						printf("Комментарий не длиннее 15к знаков\n");
 						exit(RET_ARGS);
 					}
