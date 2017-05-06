@@ -7,17 +7,61 @@
 #include "makaba.h"
 
 // ========================================
+// API general
+// ========================================
+
+char *callAPI(const char *url, const char *post, const bool v) {
+	fprintf(stderr, "[callAPI] Start");
+	if (url == NULL) {
+		fprintf(stderr, "[callAPI] Error: URL = null\n");
+		makaba_errno = ERR_ARGS;
+		return NULL;
+	}
+	if (CURL_BUFF_BODY == NULL) {
+		fprintf(stderr, "[callAPI] Error: curl body buffer not allocated\n");
+		makaba_errno = ERR_MAKABA_SETUP;
+		return NULL;
+	}
+	CURL *curl_handle = curl_easy_init();
+	if (! curl_handle) {
+		fprintf(stderr, "[callAPI] Error: curl_easy_init() failed\n");
+		makaba_errno = ERR_CURL_INIT;
+		return NULL;
+    }
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
+	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, CURL_writeToBuff);
+	curl_easy_setopt(curl_handle, CURLOPT_URL, url);
+	if (post != NULL) {
+		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, post);
+	}
+	CURLcode request_status = curl_easy_perform(curl_handle);
+	if (v) fprintf(stderr, "[callAPI] request performed\n");
+	CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
+	CURL_BUFF_POS = 0;
+	if (request_status != CURLE_OK) {
+		fprintf(stderr, "[callAPI] Error: curl_easy_perform() failed: %s\n",
+				curl_easy_strerror(request_status));
+		curl_easy_cleanup(curl_handle);
+		makaba_errno = ERR_CURL_PERFORM;
+		return NULL;
+	}
+	curl_easy_cleanup(curl_handle);
+	
+    fprintf(stderr, "[callAPI] Exit\n");
+
+	return CURL_BUFF_BODY;
+}
+
+
+// ========================================
 // General info getting
 // ========================================
 
 char *getBoardsListJSON (const bool v) {
 	fprintf (stderr, "]] Starting getBoardsList");
-	if (v) fprintf (stderr, " (verbose)"); fprintf (stderr, "\n");
-	if (v) fprintf (stderr, "] initializing curl handle\n");
 	CURL *curl_handle = curl_easy_init();
 	CURLcode request_status;
 	if (curl_handle) {
-		if (v) fprintf (stderr, "] curl handle initialized\n");
 		short URL_length = strlen(BASE_URL)+strlen(MOBILE_API)+16+1;
 		if (v) fprintf (stderr, "URL length = %d\n", URL_length);
 		// URL: 2ch.hk/makaba/mobile.fcgi?task=get_boards
