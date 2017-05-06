@@ -33,12 +33,8 @@ char *getBoardsListJSON (const bool v) {
 		}
 
 		if (v) fprintf (stderr, "] Forming URL\n");
-		URL = strcpy (URL, BASE_URL);
-		if (v) fprintf (stderr, "URL state 0: %s\n", URL);
-		URL = strcat (URL, MOBILE_API);
-		if (v) fprintf (stderr, "URL state 1: %s\n", URL);
-		URL = strcat (URL, "?task=get_boards");
-		if (v) fprintf (stderr, "URL state 2: %s\n", URL);
+		sprintf(URL, "%s%s?task=get_boards", 
+				BASE_URL, MOBILE_API);
 		if (v) fprintf (stderr, "] URL formed\n");
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 		if (v) fprintf (stderr, "] option URL set\n");
@@ -111,16 +107,8 @@ char *getBoardPageJSON (const char *board, const long int page, const bool v) {
 		}
 
 		if (v) fprintf (stderr, "] Forming URL\n");
-		URL = strcpy (URL, BASE_URL);
-		if (v) fprintf (stderr, "URL state 0: %s\n", URL);
-		URL = strcat (URL, board);
-		if (v) fprintf (stderr, "URL state 1: %s\n", URL);
-		URL = strcat (URL, "/");
-		if (v) fprintf (stderr, "URL state 2: %s\n", URL);
-		URL = strcat (URL, page_string);
-		if (v) fprintf (stderr, "URL state 3: %s\n", URL);
-		URL = strcat (URL, ".json");
-		if (v) fprintf (stderr, "URL state 4: %s\n", URL);
+		sprintf(URL, "%s%s/%s.json", 
+				BASE_URL, board, page_string);
 		if (v) fprintf (stderr, "] URL formed\n");
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 		if (v) fprintf (stderr, "] option URL set\n");
@@ -191,12 +179,8 @@ char *getBoardCatalogJSON (const char *board, const bool v) {
 		}
 
 		if (v) fprintf (stderr, "] Forming URL\n");
-		URL = strcpy (URL, BASE_URL);
-		if (v) fprintf (stderr, "URL state 0: %s\n", URL);
-		URL = strcat (URL, board);
-		if (v) fprintf (stderr, "URL state 1: %s\n", URL);
-		URL = strcat (URL, "/catalog.json");
-		if (v) fprintf (stderr, "URL state 2: %s\n", URL);
+		sprintf(URL, "%s%s/catalog.json", 
+				BASE_URL, board);
 		if (v) fprintf (stderr, "] URL formed\n");
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 		if (v) fprintf (stderr, "] option URL set\n");
@@ -277,10 +261,8 @@ char *getThreadJSON (const char *board, const long long threadnum,
 		if (v) fprintf (stderr, "] option POST set\n");
 
 		if (v) fprintf (stderr, "] Forming URL\n");
-		URL = strcpy (URL, BASE_URL);
-		if (v) fprintf (stderr, "URL state 0: %s\n", URL);
-		URL = strcat (URL, MOBILE_API);
-		if (v) fprintf (stderr, "URL state 1: %s\n", URL);
+		sprintf(URL, "%s%s", 
+				BASE_URL, MOBILE_API);
 		if (v) fprintf (stderr, "] URL formed\n");
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 		if (v) fprintf (stderr, "] option URL set\n");
@@ -288,6 +270,7 @@ char *getThreadJSON (const char *board, const long long threadnum,
 		const short postfields_length = 15+1+6+strlen(board)+
 			1+7+strlen(threadnum_string)+1+5+strlen(postnum_string);
 		// POST data format: task=get_thread&board=$board&thread=$threadnum&post=$post
+		// @TODO Тут бы без строк обойтись
 
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDSIZE, postfields_length);
 		if (v) fprintf (stderr, "] Option POSTFIELDSIZE set\n");
@@ -304,20 +287,8 @@ char *getThreadJSON (const char *board, const long long threadnum,
 			return NULL;
 		}
 		if (v) fprintf (stderr, "] Forming POST data\n");
-		postfields = strcpy (postfields, "task=get_thread");
-		if (v) fprintf (stderr, "POST data state 0: %s\n", postfields);
-		postfields = strcat (postfields, "&board=");
-		if (v) fprintf (stderr, "POST data state 1: %s\n", postfields);
-		postfields = strcat (postfields, board);
-		if (v) fprintf (stderr, "POST data state 2: %s\n", postfields);
-		postfields = strcat (postfields, "&thread=");
-		if (v) fprintf (stderr, "POST data state 3: %s\n", postfields);
-		postfields = strcat (postfields, threadnum_string);
-		if (v) fprintf (stderr, "POST data state 4: %s\n", postfields);
-		postfields = strcat (postfields, "&post=");
-		if (v) fprintf (stderr, "POST data state 5: %s\n", postfields);
-		postfields = strcat (postfields, postnum_string);
-		if (v) fprintf (stderr, "POST data state 6: %s\n", postfields);
+		sprintf(postfields, "task=get_thread&board=%s&thread=%s&post=%s", 
+				board, threadnum_string, postnum_string);
 		if (v) fprintf (stderr, "] POST data formed\n");
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDS, postfields);
 		if (v) fprintf (stderr, "] Option POSTFIELDS set\n");
@@ -387,9 +358,8 @@ char *getCaptchaSettingsJSON (const char *board) {
 			makaba_errno = ERR_MEMORY;
 			return NULL;
 		}
-		URL = strcpy (URL, BASE_URL);
-		URL = strcat (URL, CAPTCHA_SETTINGS);
-		URL = strcat (URL, board);
+		sprintf(URL, "%s%s%s", 
+				BASE_URL, CAPTCHA_SETTINGS, board);
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 
 		if (CURL_BUFF_BODY == NULL) {
@@ -442,11 +412,12 @@ char *get2chaptchaIdJSON (const char *board, const char *thread) {
 			makaba_errno = ERR_MEMORY;
 			return NULL;
 		}
-		URL = strcpy (URL, BASE_URL);
-		URL = strcat (URL, CAPTCHA_2CHAPTCHA);
-		URL = strcat (URL, "id");
+		
+		sprintf(URL, "%s%sid", 
+				BASE_URL, CAPTCHA_2CHAPTCHA);
+        fprintf(stderr, "[TEMP] URL = %s\n", URL);
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
-
+        
 		const short postfields_length = 6+strlen(board)+8+strlen(thread)+1;
 		char *postfields = (char*) calloc (postfields_length, sizeof(char));
 		if (postfields == NULL) {
@@ -456,11 +427,11 @@ char *get2chaptchaIdJSON (const char *board, const char *thread) {
 			makaba_errno = ERR_MEMORY;
 			return NULL;
 		}
-		postfields = strcpy (postfields, "board=");
-		postfields = strcat (postfields, board);
+		sprintf(postfields, "board=%s",
+				board);
 		if (thread != NULL) {
-			postfields = strcat (postfields, "&thread=");
-			postfields = strcat (postfields, thread);
+			sprintf(postfields, "%s&thread=%s",
+				postfields, thread);
 		}
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDS, postfields);
 
@@ -511,11 +482,9 @@ char *form2chaptchaPicURL (const char *id) {
 			makaba_errno = ERR_MEMORY;
 			return NULL;
 	}
-	URL = strcpy (URL, BASE_URL);
-	URL = strcat (URL, CAPTCHA_2CHAPTCHA);
-	URL = strcat (URL, "image/");
-	URL = strcat (URL, id);
-
+	sprintf(URL, "%s%simage/%s",
+			BASE_URL, CAPTCHA_2CHAPTCHA, id);
+	fprintf(stderr, "[TEMP] URL = %s\n", URL);
 	fprintf(stderr, "]] Exiting get2chaptchaPicURL\n");
 
 	return URL;
@@ -584,8 +553,8 @@ int sendPost (const char *board, const char *thread,
 			curl_easy_cleanup (curl_handle);
 			return ERR_MEMORY;
 		}
-		URL = strcpy (URL, BASE_URL);
-		URL = strcat (URL, POSTING_API);
+		sprintf(URL, "%s%s",
+				BASE_URL, POSTING_API);
 		fprintf(stderr, "url = %s\n", URL);
 		curl_easy_setopt (curl_handle, CURLOPT_URL, URL);
 
@@ -663,34 +632,30 @@ int sendPost (const char *board, const char *thread,
 			free (URL);
 			return ERR_MEMORY;
 		}
-		postfields = strcpy (postfields, POSTING_FIELDS);
-		postfields = strcat (postfields, "&board=");
-		postfields = strcat (postfields, board);
-		postfields = strcat (postfields, "&thread=");
+		sprintf(postfields, "%s&board=%s&thread=",
+				POSTING_FIELDS, board);
 		if (thread != NULL) {
-			postfields = strcat (postfields, thread);
+			postfields = strcat(postfields, thread);
 		}
 		else {
-			postfields = strcat (postfields, "0");
+			postfields = strcat(postfields, "0");
 		}
-		postfields = strcat (postfields, "&comment=");
-		postfields = strcat (postfields, comment);
+		sprintf(postfields, "%s&comment=%s",
+				postfields, comment);
 		if (subject != NULL) {
-			postfields = strcat (postfields, "&subject=");
-			postfields = strcat (postfields, subject);
+			sprintf(postfields, "%s&subject=%s",
+				postfields, subject);
 		}
 		if (name != NULL) {
-			postfields = strcat (postfields, "&name=");
-			postfields = strcat (postfields, name);
+			sprintf(postfields, "%s&name=%s",
+				postfields, name);
 		}
 		if (email != NULL) {
-			postfields = strcat (postfields, "&email=");
-			postfields = strcat (postfields, email);
+			sprintf(postfields, "%s&email=%s",
+				postfields, email);
 		}
-		postfields = strcat (postfields, "&2chaptcha_id=");
-		postfields = strcat (postfields, captcha_id);
-		postfields = strcat (postfields, "&2chaptcha_value=");
-		postfields = strcat (postfields, captcha_value);
+		sprintf(postfields, "%s&2chaptcha_id=%s&2chaptcha_value=%s",
+				postfields, captcha_id, captcha_value);
 		fprintf(stderr, "postfields = %s\n", postfields);
 		curl_easy_setopt (curl_handle, CURLOPT_POSTFIELDS, postfields);
 
