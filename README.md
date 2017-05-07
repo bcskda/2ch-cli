@@ -10,6 +10,8 @@ C/C++
 
 - [libjson](https://github.com/vincenthz/libjson)
 
+- jsoncpp
+
 - libncursesw
 
 - [libcaca и caca-utils](https://github.com/cacalabs/libcaca) с поддержкой ncurses
