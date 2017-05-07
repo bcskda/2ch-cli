@@ -6,49 +6,56 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <stdbool.h>
-#include <stddef.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <cstddef>
+#include <memory>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
 #include <vector>
 #include <json.h>
+#include <jsoncpp/json/json.h>
 #include "error.h"
 #include "makaba.h"
 #include "image.h"
 
 struct post_cpp {
-	int banned; //bool
-	int closed; //bool
-	char *comment;
-	char *date;
-	char *email;
-	// files
+	bool isNull;
+	bool banned; //bool
+	bool closed; //bool
+	std::string comment;
+	std::string date;
+	std::string email;
+	Json::Value files;
 	long long lasthit;
-	char *name;
+	std::string name;
 	long long num;
 	int op; //bool
 	long long parent;
-	int sticky; //bool
-	char *subject;
-	char *tags;
+	bool sticky; //bool
+	std::string subject;
+	std::string tags;
 	long long timestamp;
-	char *trip;
-	char *trip_type; // enum?
+	std::string trip;
+	std::string trip_type; // enum?
 	long long unique_posters;
 	long long rel_num;
+	post_cpp();
+	post_cpp(Json::Value &val);
 };
 typedef struct post_cpp makaba_post_cpp;
 
 struct thread_cpp {
+	bool isNull;
 	long int num;
 	long int nposts;
-	char *board;
+	std::string board;
 	std::vector<makaba_post_cpp> posts;
 	thread_cpp();
+	thread_cpp(const char *raw, const char *board);
 };
 typedef struct thread_cpp makaba_thread_cpp;
 

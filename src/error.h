@@ -13,6 +13,7 @@ enum makaba_error {
     ERR_ARGS,
     ERR_POST_FORMAT,
     ERR_REF_FORMAT,
+    ERR_GENERAL_FORMAT,
     ERR_INTERNAL,
     ERR_JSON_INIT,
     ERR_JSON_PARSE,

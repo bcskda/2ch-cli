@@ -762,3 +762,65 @@ void freeThread(makaba_thread_cpp &thread) {
 	}
 	free(thread.board);
 }
+
+// ========================================
+// jsoncpp
+// ========================================
+
+thread_cpp::thread_cpp():
+	isNull(true),
+	nposts(0),
+	num   (0)
+	{} 
+
+thread_cpp::thread_cpp(const char *raw, const char *board):
+	isNull(true)
+{
+	Json::CharReaderBuilder rbuilder;
+	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
+	std::string errs;
+	Json::Value array;
+	if (! reader->parse(raw, raw + strlen(raw), &array, &errs)) {
+		fprintf(stderr, "[thread::thread(const char *)] Error:\n  Json::CharReader::parse():\n  %s\n",
+				errs.data());
+		makaba_errno = ERR_GENERAL_FORMAT;
+	}
+
+	for (auto obj : array) {
+		makaba_post_cpp post(obj);
+		this->posts.push_back(post);
+	}
+	for (auto post : this->posts) {
+		std::cout << post.comment << std::endl;
+	}
+	this->isNull = false;
+}
+
+post_cpp::post_cpp():
+	isNull(true)
+	{}
+
+post_cpp::post_cpp(Json::Value &val):
+	isNull        (false),
+	banned        ( atoi(       val["banned"        ].asString().data()) ),
+	closed        ( atoi(       val["closed"        ].asString().data()) ),
+	comment       ( std::string(val["comment"       ].asString()       ) ),
+	date          ( std::string(val["date"          ].asString()       ) ),
+	email         ( std::string(val["email"         ].asString()       ) ),
+	files         (             val["files"         ]                    ),
+	lasthit       ( atoi(       val["lasthit"       ].asString().data()) ),
+	name          ( std::string(val["name"          ].asString()       ) ),
+	num           ( atoi(       val["num"           ].asString().data()) ),
+	op            ( atoi(       val["op"            ].asString().data()) ),
+	parent        ( atoi(       val["parent"        ].asString().data()) ),
+	sticky        ( atoi(       val["sticky"        ].asString().data()) ),
+	subject       ( std::string(val["subject"       ].asString()       ) ),
+	tags          ( std::string(val["tags"          ].asString()       ) ),
+	timestamp     ( atoi(       val["timestamp"     ].asString().data()) ),
+	trip          ( std::string(val["trip"          ].asString()       ) ),
+	trip_type     ( std::string(val["trip_type"     ].asString()       ) ),
+	unique_posters( atoi(       val["unique_posters"].asString().data()) ),
+	rel_num       ( atoi(       val["rel_num"       ].asString().data()) )
+	{
+		fprintf(stderr, "<init post #%8lld>\n", this->num);
+	}
