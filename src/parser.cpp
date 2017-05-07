@@ -5,6 +5,7 @@
 // ========================================
 
 #include "parser.h"
+#include <iostream>
 
 char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // Пока что игнорируем разметку
 
@@ -120,80 +121,7 @@ char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // �
 
 int json_callback(void *userdata, int type, const char *data, uint32_t length) {
     json_context *context = (json_context *) userdata;
-    if (context->type == thread_new) {
-        makaba_thread_cpp *thread = (makaba_thread_cpp *)context->memdest;
-        switch (type) {
-            case JSON_KEY:
-                if (context->status == Status_in_post) {
-                    if (fill_post_expected(context, (char *)data)) {
-                        printf("! Error @ fill_post_expected()\n");
-                        return 1;
-                    }
-                }
-                // fill files later
-                break;
-            case JSON_ARRAY_BEGIN:
-                switch(context->status) {
-                    case Status_default:
-                        //fprintf(stderr, ">>> Entering posts array, Status_in_thread\n");
-                        context->status = Status_in_thread;
-                        break;
-                    case Status_in_post:
-                        //fprintf(stderr, ">>> Entering files array, Status_in_files\n");
-                        context->status = Status_in_files;
-                        break;
-                }
-                break;
-            case JSON_ARRAY_END:
-                switch(context->status) {
-                    case Status_in_thread:
-                        //fprintf(stderr, "<<< Exiting posts array, Status_default\n");
-                        context->status = Status_default;
-                        //fprintf(stderr, "==== Vector has %ld elements\n", thread->posts.size());
-                        break;
-                    case Status_in_files:
-                        //fprintf(stderr, "]\n<<< Exiting files array, Status_in_post\n");
-                        context->status = Status_in_post;
-                        break;
-                }
-                break;
-            case JSON_OBJECT_BEGIN:
-                switch (context->status) {
-                    case Status_in_thread:
-                        //fprintf(stderr, ">>> Entering post, Status_in_post\n");
-                        context->status = Status_in_post;
-                        thread->nposts++;
-                        thread->posts.push_back({ });
-						thread->posts.back().rel_num = thread->nposts;
-                        break;
-                }
-                break;
-            case JSON_OBJECT_END:
-                switch (context->status) {
-                    case Status_in_post:
-                        //printf("<<< Exiting post, Status_in_thread\n");
-                        context->status = Status_in_thread;
-                        break;
-                }
-                break;
-            case JSON_STRING:
-            case JSON_INT:
-            case JSON_FLOAT:
-                if (context->status == Status_in_post) {
-                    if (fill_post_value(thread->posts[thread->posts.size() - 1],
-						context->expect, data, context->verbose)) {
-                        fprintf(stderr, "! Error @ fill_post_value\n");
-                        return 1;
-                    }
-                }
-                break;
-            default:
-                fprintf(stderr, "[unhandled] \"%s\"\n", (char *)userdata);
-                break;
-        }
-        return 0;
-    }
-	else if (context->type == captcha_id) {
+	if (context->type == captcha_id) {
 		makaba_2chaptcha *captcha = (makaba_2chaptcha *)context->memdest;
 		switch (type) {
 			case JSON_KEY:
@@ -213,143 +141,6 @@ int json_callback(void *userdata, int type, const char *data, uint32_t length) {
 		}
 		return 0;
 	}
-}
-
-int fill_post_expected(json_context *context, const char *data)
-{
-    if (strncmp(data, Key_banned, strlen(data))== 0) {
-        context->expect = Expect_banned;
-    }
-    else if (strncmp(data, Key_closed, strlen(data))== 0) {
-        context->expect = Expect_closed;
-    }
-    else if (strncmp(data, Key_comment, strlen(data))== 0) {
-        context->expect = Expect_comment;
-    }
-    else if (strncmp(data, Key_date, strlen(data))== 0) {
-        context->expect = Expect_date;
-    }
-    else if (strncmp(data, Key_email, strlen(data))== 0) {
-        context->expect = Expect_email;
-    }
-    else if (strncmp(data, Key_files, strlen(data))== 0) {
-        context->expect = Expect_files;
-    }
-    else if (strncmp(data, Key_lasthit, strlen(data))== 0) {
-        context->expect = Expect_lasthit;
-    }
-    else if (strncmp(data, Key_name, strlen(data))== 0) {
-        context->expect = Expect_name;
-    }
-    else if (strncmp(data, Key_num, strlen(data))== 0) {
-        context->expect = Expect_num;
-    }
-    else if (strncmp(data, Key_op, strlen(data))== 0) {
-        context->expect = Expect_op;
-    }
-    else if (strncmp(data, Key_parent, strlen(data))== 0) {
-        context->expect = Expect_parent;
-    }
-    else if (strncmp(data, Key_sticky, strlen(data))== 0) {
-        context->expect = Expect_sticky;
-    }
-    else if (strncmp(data, Key_subject, strlen(data))== 0) {
-        context->expect = Expect_subject;
-    }
-    else if (strncmp(data, Key_tags, strlen(data))== 0) {
-        context->expect = Expect_tags;
-    }
-    else if (strncmp(data, Key_timestamp, strlen(data))== 0) {
-        context->expect = Expect_timestamp;
-    }
-    else if (strncmp(data, Key_trip, strlen(data))== 0) {
-        context->expect = Expect_trip;
-    }
-    else if (strncmp(data, Key_trip_type, strlen(data))== 0) {
-        context->expect = Expect_trip_type;
-    }
-    else if (strncmp(data, Key_unique_posters, strlen(data))== 0) {
-        context->expect = Expect_unique_posters;
-    }
-    else {
-        fprintf(stderr, "! Error @ fill_post_expected: unknown key %s\n", data);
-        return 1;
-    }
-    return 0;
-}
-
-int fill_post_value(makaba_post_cpp &post, const int expect, const char *data,
-	const bool &verbose)
-{
-	switch (expect) {
-		case Expect_banned:
-            post.banned = atoi(data);
-            return 0;
-        case Expect_closed:
-            post.closed = atoi(data);
-            return 0;
-        case Expect_lasthit:
-            post.lasthit = atoi(data);
-            return 0;
-		case Expect_op:
-            post.op = atoi(data);
-            return 0;
-        case Expect_sticky:
-            post.sticky = atoi(data);
-            return 0;
-        case Expect_timestamp:
-            post.timestamp = atoi(data);
-            return 0;
-		case Expect_comment:
-            post.comment = parseHTML(data, strlen(data), verbose);
-			if (post.comment == NULL) {
-				fprintf(stderr, "[fill_post_value] ! Error @ parseHTML()\n");
-				return 1;
-			}
-            return 0;
-        case Expect_date:
-            post.date = (char *) calloc(strlen(data) + 1, sizeof(char));
-            memcpy(post.date, data, strlen(data));
-            return 0;
-        case Expect_email:
-            post.email = (char *) calloc(strlen(data) + 1, sizeof(char));
-            memcpy(post.email, data, strlen(data));
-            return 0;
-        case Expect_name:
-            post.name = parseHTML(data, strlen(data), verbose);
-			if (post.name == NULL) {
-				fprintf(stderr, "[fill_post_value] ! Error @ parseHTML()\n");
-				return 1;
-			}
-            return 0;
-        case Expect_num:
-            post.num = atoi(data);
-            return 0;
-        case Expect_parent:
-            post.parent = atoi(data);
-            return 0;
-        case Expect_subject:
-            post.subject = (char *) calloc(strlen(data) + 1, sizeof(char));
-            memcpy(post.subject, data, strlen(data));
-            return 0;
-        case Expect_tags:
-            post.tags = (char *) calloc(strlen(data) + 1, sizeof(char));
-            memcpy(post.tags, data, strlen(data));
-            return 0;
-        case Expect_trip:
-            post.trip = (char *) calloc(strlen(data) + 1, sizeof(char));
-            memcpy(post.trip, data, strlen(data));
-            return 0;
-        case Expect_trip_type:
-            post.trip_type = (char *) calloc(strlen(data) + 1, sizeof(char));
-            memcpy(post.trip_type, data, strlen(data));
-            return 0;
-        case Expect_unique_posters:
-            post.unique_posters = atoi(data);
-            return 0;
-    }
-    fprintf(stderr, "! Error @ fill_post_value: unknown context.expect value: %d\n", expect);
-    return 1;
 }
 
 int fill_captcha_id_expected(json_context *context, const char *data) {
@@ -446,138 +237,174 @@ int prepareCaptcha_cpp(makaba_2chaptcha &captcha, const char *board,
 	return 0;
 }
 
-// ======
-// Thread
-// ======
+// ========================================
+// Треды, посты
+// ========================================
 
-thread_cpp::thread_cpp(): num(0), nposts(0) {}
+thread::thread(): // private
+	isNull_(true)
+	{} 
 
-int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string, const long long &thread_lenght,
-	const bool &verbose)
+thread::thread(const std::string nboard, const long long nnum):
+	isNull_(true),
+	num   (nnum),
+	board (nboard),
+	nposts(0)
 {
-	json_context context;
-    context.type = thread_new;
-    context.status = Status_default;
-	context.verbose = verbose;
-    context.memdest = &thread;
-
-	json_parser parser;
-    if (json_parser_init(&parser, NULL, json_callback, &context)) {
-        fprintf(stderr, "[initThread_cpp] ! Error: json_parser_init() failed\n");
-		makaba_errno = ERR_JSON_INIT;
-		return 1;
-    }
-
-	int ret = json_parser_string(&parser, thread_string, thread_lenght, NULL);
-	if (ret) {
-		printf("Error @ parse: %d\n", ret);
-        json_parser_free(&parser);
-		makaba_errno = ERR_JSON_PARSE;
-		return 1;
-    }
-	thread.num = thread.posts.front().num;
-
-	return 0;
-};
-
-int prepareThread_cpp (makaba_thread_cpp &thread, const char *board,
-	const long long threadnum, const bool &verbose)
-{
-	fprintf(stderr, "[prepareThread_cpp] Started\n");
-	long long threadsize = 0;
-	char *thread_ch = NULL;
-	thread.num = threadnum;
-
-	thread.board = (char *) calloc(strlen(board), sizeof(char));
-	if (thread.board == NULL) {
-		fprintf(stderr, "[prepareThread_cpp] ! Error: calloc() failed\n");
-		makaba_errno = ERR_MEMORY;
-		return 1;
-	}
-	memcpy(thread.board, board, strlen(board));
-
+	char *raw;
 	bool fallback = false;
 	if (Json_cache_dir == NULL) {
 		if (initJsonCache()) {
-			fprintf(stderr, "[prepareThread_cpp] ! Error @ initJsonCache()\n");
-			fprintf(stderr, "[prepareThread_cpp]! Warning: Fallback to getThread()\n");
+			fprintf(stderr, "[thread::thread(const std::string, const long long)] "
+							"Error @ initJsonCache()\n");
+			fprintf(stderr, "[thread::thread(const std::string, const long long)] "
+							"Warning: Fallback to getThread()\n");
 			fallback = true;
 		}
 	}
-
-	fprintf(stderr, "[prepareThread_cpp] Checking for cache file\n");
-	if (fallback == false && checkJsonCache(thread)) { // Тред есть в кэше
-		fprintf(stderr, "[prepareThread_cpp] Trying to read from cache\n");
-		thread_ch = readJsonCache(thread, &threadsize);
-		if (thread_ch == NULL) {
-			fprintf(stderr, "[prepareThread_cpp]! Warning: Error @ readJsonCache()\n");
-			fprintf(stderr, "[prepareThread_cpp]! Warning: Fallback to getThread()\n");
-			thread_ch = getThread(board, threadnum, 1, &threadsize, verbose);
-			if (thread_ch == NULL) {
-				fprintf(stderr, "[prepareThread_cpp]! Error @ getThread()\n");
-				return 1;
+	long long size;
+	if (fallback == false && checkJsonCache(*this)) { // Тред есть в кэше
+		raw = readJsonCache(*this, &size);
+		if (raw == NULL) {
+			fprintf(stderr, "[thread::thread(const std::string, const long long)] "
+							"Warning: Fallback to getThread()\n");
+			raw = getThread(this->board.data(), this->num,
+							1, &size, false);
+			if (raw == NULL) {
+				fprintf(stderr, "[thread::thread(const std::string, const long long)] "
+								"Error @ getThread()\n");
+				return;
 			}
 		} // Избавиться бы от копипасты
-		fprintf(stderr, "[prepareThread_cpp] Read from cache\n");
-		armJsonCache(thread);
+		armJsonCache(*this);
 	}
 	else { // В кэше нет или что-то пошло не так
-		fprintf(stderr, "[prepareThread_cpp] Not found in cache, loading\n");
-		thread_ch = getThread(board, threadnum, 1, &threadsize, verbose);
-		if (thread_ch == NULL) {
-			fprintf(stderr, "[prepareThread_cpp]! Error @ getThread()\n");
-			return 1;
+		raw = getThread(this->board.data(), this->num,
+						1, &size, false);
+		if (raw == NULL) {
+			fprintf(stderr, "[thread::thread(const std::string, const long long)] "
+							"Error @ getThread()\n");
+			return;
 		}
-		fprintf(stderr, "[prepareThread_cpp] Writing to cache\n");
-		if (writeJsonCache(thread, thread_ch)) {
-			fprintf(stderr, "[prepareThread_cpp]! Error @ writeJsonCache()\n");
-			return 1;
+		if (writeJsonCache(*this, raw)) {
+			fprintf(stderr, "[thread::thread(const std::string, const long long)] "
+							"Error @ writeJsonCache()\n");
+			return;
 		}
-		fprintf(stderr, "[prepareThread_cpp] Written to cache\n");
-		armJsonCache(thread);
+		armJsonCache(*this);
 	}
 
-	if (initThread_cpp(thread, thread_ch, threadsize, verbose)) {
-		fprintf(stderr, "[prepareThread_cpp]! Error @ initThread_cpp()\n");
-		free(thread.board);
-		return 1;
+	if (! this->append(raw)) {
+		fprintf(stderr, "[thread::thread(const std::string, const long long)] "
+						"Error @ thread::append(const char *)\n");
+		makaba_errno = ERR_GENERAL_FORMAT;
 	}
-	fprintf(stderr, "[prepareThread_cpp] Done, exiting\n");
-
-	return 0;
+	this->isNull_ = false;
 }
 
-int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose)
+bool thread::isNull()
 {
-	long long threadsize = 0;
-	char *thread_ch = getThread(thread.board, thread.num,
-		thread.nposts + 1, &threadsize, verbose);
-	// Номер следующего поста - thread.nposts + 1
+	return this->isNull_;
+}
 
-	if (thread_ch == NULL) {
-		fprintf(stderr, "[updateThread_cpp] ! Error @ getThread()\n");
-		return 1;
+bool thread::append(const char *raw)
+{
+	Json::CharReaderBuilder rbuilder;
+	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
+	std::string errs;
+	Json::Value array;
+	if (! reader->parse(raw, raw + strlen(raw), &array, &errs)) {
+		fprintf(stderr, "[thread::append(const char *)] Error:\n"
+						"Json::CharReader::parse():\n  %s\n",
+				errs.data());
+		makaba_errno = ERR_GENERAL_FORMAT;
+		return false;
 	}
-	if (verbose) fprintf(stderr, ">> Got update:\n%s\n>> End of raw update\n",
-		thread_ch);
+
+	for (auto obj : array) {
+		this->nposts++;
+		makaba_post post(obj);
+		post.rel_num = this->nposts;
+		this->posts.push_back(post);
+	}
+	return true;
+}
+
+bool thread::update()
+{
+	if (this->isNull()) {
+		fprintf(stderr, "[bool thread::update()] Error: is null\n");
+		makaba_errno = ERR_INTERNAL;
+		return false;
+	}
+
+	long long size;
+	char *raw = getThread(this->board.data(), this->num,
+						  this->nposts + 1, &size, false);
+	if (raw == NULL) {
+		fprintf(stderr, "[bool thread::update()] Error @ getThread()\n");
+		return false;
+	}
 
 	bool write_cache = true;
 	if (Json_cache_dir == NULL) {
 		if (initJsonCache()) {
 			write_cache = false;
-			fprintf(stderr, "[prepareThread_cpp] Error @ initJsonCache()\n");
-			fprintf(stderr, "[prepareThread_cpp] Warning: Fallback to getThread()\n");
+			fprintf(stderr, "[bool thread::update()] Error @ initJsonCache()"
+							"[bool thread::update()] Warning: Can`t write cache\n");
 		}
 	}
 	if (write_cache)
-		writeJsonCache(thread, thread_ch);
+		writeJsonCache(*this, raw);
 
-	if (initThread_cpp(thread, thread_ch, threadsize, verbose)) {
-		fprintf(stderr, "[updateThread_cpp] ! Error @ initThread_cpp()\n");
-		return 1;
+	if (! this->append(raw)) {
+		fprintf(stderr, "[bool thread::update()] Error @ thread::append()\n");
+		return false;
 	}
 
-	return 0;
+	return true;
+}
+
+post::post():
+	isNull_(true)
+	{}
+
+post::post(Json::Value &val):
+	isNull_        (false),
+	banned        ( atoi(       val["banned"        ].asString().data()) ),
+	closed        ( atoi(       val["closed"        ].asString().data()) ),
+	comment       ( ""                                                   ),
+	date          ( std::string(val["date"          ].asString()       ) ),
+	email         ( std::string(val["email"         ].asString()       ) ),
+	files         (             val["files"         ]                    ),
+	lasthit       ( atoi(       val["lasthit"       ].asString().data()) ),
+	name          ( ""                                                   ),
+	num           ( atoi(       val["num"           ].asString().data()) ),
+	op            ( atoi(       val["op"            ].asString().data()) ),
+	parent        ( atoi(       val["parent"        ].asString().data()) ),
+	sticky        ( atoi(       val["sticky"        ].asString().data()) ),
+	subject       ( std::string(val["subject"       ].asString()       ) ),
+	tags          ( std::string(val["tags"          ].asString()       ) ),
+	timestamp     ( atoi(       val["timestamp"     ].asString().data()) ),
+	trip          ( std::string(val["trip"          ].asString()       ) ),
+	trip_type     ( std::string(val["trip_type"     ].asString()       ) ),
+	unique_posters( atoi(       val["unique_posters"].asString().data()) ),
+	rel_num       ( 0                                                    )
+{
+	const char *comment_raw = val["comment"].asCString();
+	char *comment_parsed = parseHTML(comment_raw, strlen(comment_raw), true);
+	this->comment = std::string(comment_parsed);
+	free(comment_parsed);
+	const char *name_raw = val["name"].asCString();
+	char *name_parsed = parseHTML(name_raw, strlen(name_raw), true);
+	this->name = std::string(name_parsed);
+	free(name_parsed);
+	fprintf(stderr, "<init post #%8lld>\n", this->num);
+}
+
+bool post::isNull()
+{
+	return this->isNull_;
 }
 
 // ========================================
@@ -604,7 +431,7 @@ int initJsonCache()
 	return 0;
 }
 
-bool checkJsonCache(const makaba_thread_cpp &thread)
+bool checkJsonCache(const makaba_thread &thread)
 {
 	char filename[70] = "";
 	sprintf(filename, "%s/thread-%s-%d",
@@ -612,7 +439,7 @@ bool checkJsonCache(const makaba_thread_cpp &thread)
 	return access(filename, F_OK) == 0;
 }
 
-void armJsonCache(const makaba_thread_cpp &thread)
+void armJsonCache(const makaba_thread &thread)
 {
 	char filename_old[70] = "";
 	sprintf(filename_old, "%s/thread-%s-%d",
@@ -622,7 +449,7 @@ void armJsonCache(const makaba_thread_cpp &thread)
 	rename(filename_old, filename_new);
 }
 
-void disarmJsonCache(const makaba_thread_cpp &thread)
+void disarmJsonCache(const makaba_thread &thread)
 {
 	char filename_new[70] = "";
 	sprintf(filename_new, "%s/thread-%s-%d",
@@ -632,7 +459,7 @@ void disarmJsonCache(const makaba_thread_cpp &thread)
 	rename(filename_old, filename_new);
 }
 
-char *readJsonCache(const makaba_thread_cpp &thread, long long *threadsize)
+char *readJsonCache(const makaba_thread &thread, long long *threadsize)
 {
 	char filename[70] = "";
 	sprintf(filename, "%s/thread-%s-%d",
@@ -672,7 +499,7 @@ char *readJsonCache(const makaba_thread_cpp &thread, long long *threadsize)
 	return Json_cache_buf;
 }
 
-int writeJsonCache(const makaba_thread_cpp &thread, const char *thread_ch)
+int writeJsonCache(const makaba_thread &thread, const char *thread_ch)
 {
 	if (strlen(Json_cache_dir) == 0) {
 		if (initJsonCache() == -1) {
@@ -741,86 +568,8 @@ int cleanJsonCache() {
 
     return 0;
 }
-// ========================================
-// Freeing functions
-// ========================================
-
-void freePost(makaba_post_cpp &post) {
-	free(post.comment);
-	free(post.date);
-	free(post.email);
-	free(post.name);
-	free(post.subject);
-	free(post.tags);
-	free(post.trip);
-	free(post.trip_type);
-}
-
-void freeThread(makaba_thread_cpp &thread) {
-	for (int i = 0; i < thread.nposts; i++) {
-		freePost(thread.posts[i]);
-	}
-	free(thread.board);
-}
 
 // ========================================
 // jsoncpp
 // ========================================
 
-thread_cpp::thread_cpp():
-	isNull(true),
-	nposts(0),
-	num   (0)
-	{} 
-
-thread_cpp::thread_cpp(const char *raw, const char *board):
-	isNull(true)
-{
-	Json::CharReaderBuilder rbuilder;
-	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
-	std::string errs;
-	Json::Value array;
-	if (! reader->parse(raw, raw + strlen(raw), &array, &errs)) {
-		fprintf(stderr, "[thread::thread(const char *)] Error:\n  Json::CharReader::parse():\n  %s\n",
-				errs.data());
-		makaba_errno = ERR_GENERAL_FORMAT;
-	}
-
-	for (auto obj : array) {
-		makaba_post_cpp post(obj);
-		this->posts.push_back(post);
-	}
-	for (auto post : this->posts) {
-		std::cout << post.comment << std::endl;
-	}
-	this->isNull = false;
-}
-
-post_cpp::post_cpp():
-	isNull(true)
-	{}
-
-post_cpp::post_cpp(Json::Value &val):
-	isNull        (false),
-	banned        ( atoi(       val["banned"        ].asString().data()) ),
-	closed        ( atoi(       val["closed"        ].asString().data()) ),
-	comment       ( std::string(val["comment"       ].asString()       ) ),
-	date          ( std::string(val["date"          ].asString()       ) ),
-	email         ( std::string(val["email"         ].asString()       ) ),
-	files         (             val["files"         ]                    ),
-	lasthit       ( atoi(       val["lasthit"       ].asString().data()) ),
-	name          ( std::string(val["name"          ].asString()       ) ),
-	num           ( atoi(       val["num"           ].asString().data()) ),
-	op            ( atoi(       val["op"            ].asString().data()) ),
-	parent        ( atoi(       val["parent"        ].asString().data()) ),
-	sticky        ( atoi(       val["sticky"        ].asString().data()) ),
-	subject       ( std::string(val["subject"       ].asString()       ) ),
-	tags          ( std::string(val["tags"          ].asString()       ) ),
-	timestamp     ( atoi(       val["timestamp"     ].asString().data()) ),
-	trip          ( std::string(val["trip"          ].asString()       ) ),
-	trip_type     ( std::string(val["trip_type"     ].asString()       ) ),
-	unique_posters( atoi(       val["unique_posters"].asString().data()) ),
-	rel_num       ( atoi(       val["rel_num"       ].asString().data()) )
-	{
-		fprintf(stderr, "<init post #%8lld>\n", this->num);
-	}

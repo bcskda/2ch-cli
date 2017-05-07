@@ -40,8 +40,8 @@ const int Err_pos_y = 0;
 const char Headers_pref[] = "| ";
 const char Headers_suff[] = " |";
 
-int printThreadHeader(const makaba_thread_cpp &thread);
-int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files);
+int printThreadHeader(const makaba_thread &thread);
+int printPost (const makaba_post &post, const bool show_email, const bool show_files);
 
 void parse_argv(const int argc, const char **argv,
 	char *board_name, long long *thread_number, char **comment, char *passcode,
@@ -49,5 +49,5 @@ void parse_argv(const int argc, const char **argv,
 void ncurses_init();
 void ncurses_exit();
 void ncurses_print_help();
-void ncurses_print_post(const makaba_thread_cpp &thread, const long long num);
+void ncurses_print_post(const makaba_thread &thread, const long long num);
 void ncurses_print_error(const char *mesg);

@@ -22,10 +22,9 @@
 #include "makaba.h"
 #include "image.h"
 
-struct post_cpp {
-	bool isNull;
-	bool banned; //bool
-	bool closed; //bool
+struct post {
+	bool banned;
+	bool closed;
 	std::string comment;
 	std::string date;
 	std::string email;
@@ -33,9 +32,9 @@ struct post_cpp {
 	long long lasthit;
 	std::string name;
 	long long num;
-	int op; //bool
+	bool op;
 	long long parent;
-	bool sticky; //bool
+	bool sticky;
 	std::string subject;
 	std::string tags;
 	long long timestamp;
@@ -43,21 +42,28 @@ struct post_cpp {
 	std::string trip_type; // enum?
 	long long unique_posters;
 	long long rel_num;
-	post_cpp();
-	post_cpp(Json::Value &val);
+	post(Json::Value &val);
+	bool isNull();
+private:
+	bool isNull_;
+	post();
 };
-typedef struct post_cpp makaba_post_cpp;
+typedef struct post makaba_post;
 
-struct thread_cpp {
-	bool isNull;
+struct thread {
 	long int num;
 	long int nposts;
 	std::string board;
-	std::vector<makaba_post_cpp> posts;
-	thread_cpp();
-	thread_cpp(const char *raw, const char *board);
+	std::vector<makaba_post> posts;
+	thread(const std::string nboard, const long long nnum);
+	bool update();
+	bool isNull();
+private:
+	bool isNull_;
+	thread();
+	bool append(const char *raw);
 };
-typedef struct thread_cpp makaba_thread_cpp;
+typedef struct thread makaba_thread;
 
 struct captcha_2chaptcha {
 	char *id;
@@ -91,12 +97,6 @@ enum context_type {
     send_post
 };
 typedef enum context_type context_type;
-
-enum parser_status_thread {
-    in_post,
-    in_files
-};
-typedef enum parser_status_thread parser_status_thread;
 
 const int Status_default = -1;
 const int Status_in_thread = 0;
@@ -188,31 +188,31 @@ const char *CaptchaUtfFilename = "/tmp/2ch-captcha.utf8";
 
 int json_callback(void *userdata, int type, const char *data, uint32_t length); // Вызывается парсером при событиях
 int fill_post_expected(json_context *context, const char *data); // Определяет текущую переменную JSON
-int fill_post_value(makaba_post_cpp &post, const int expect, const char *data,  // Заполняет соотв. поле структуры
+int fill_post_value(makaba_post &post, const int expect, const char *data,  // Заполняет соотв. поле структуры
 	const bool &verbose);
 int fill_captcha_id_expected(json_context *context, const char *data);
 int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect,
 		const char *data);
 
-int initThread_cpp(makaba_thread_cpp &thread, const char *thread_string,
+int initThread_cpp(makaba_thread &thread, const char *thread_string,
 	const long long &thread_lenght, const bool &verbose);
-int updateThread_cpp(makaba_thread_cpp &thread, const bool &verbose);
-int prepareThread_cpp(makaba_thread_cpp &thread, const char *board,
+int updateThread_cpp(makaba_thread &thread, const bool &verbose);
+int prepareThread_cpp(makaba_thread &thread, const char *board,
 	const long long threadnum, const bool &verbose);
 int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board,
 	const long long thread, const bool &verbose);
 int prepareCaptcha_cpp (makaba_2chaptcha &captcha, const char *board,
 	const long long thread, const bool &verbose);
 
-char *parseHTML (const char *raw, const long long  raw_len, const bool v);
+char *parseHTML (const char *raw, const long long raw_len, const bool v);
 
 int initJsonCache();
-bool checkJsonCache(const makaba_thread_cpp &thread);
-void armJsonCache(const makaba_thread_cpp &thread);
-void disarmJsonCache(const makaba_thread_cpp &thread);
-char *readJsonCache(const makaba_thread_cpp &thread, long long *threadsize);
-int writeJsonCache(const makaba_thread_cpp &thread, const char *thread_ch);
+bool checkJsonCache(const makaba_thread &thread);
+void armJsonCache(const makaba_thread &thread);
+void disarmJsonCache(const makaba_thread &thread);
+char *readJsonCache(const makaba_thread &thread, long long *threadsize);
+int writeJsonCache(const makaba_thread &thread, const char *thread_ch);
 int cleanJsonCache();
 
-void freePost (makaba_thread_cpp &post);
-void freeThread (makaba_thread_cpp &thread);
+void freePost (makaba_thread &post);
+void freeThread (makaba_thread &thread);

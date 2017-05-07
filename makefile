@@ -1,5 +1,5 @@
 CC = g++
-LIBS = -lm -lcurl -ljson -lncursesw -lcaca
+LIBS = -lm -lcurl -ljsoncpp -ljson -lncursesw -lcaca
 OPTS = -std=c++11 -Wno-format -fPIC
 LOPTS = -Xlinker -z -Xlinker muldefs
 CURL_USERAGENT = "\"Linux x86_64\""

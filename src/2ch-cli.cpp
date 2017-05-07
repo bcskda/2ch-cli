@@ -100,10 +100,9 @@ int main (int argc, char **argv)
 		return RET_OK;
 	}
 
-	makaba_thread_cpp thread;
-	if (prepareThread_cpp(thread, board_name, thread_number, verbose)) {
-		fprintf(stderr, "[main] ! Error @ prepareThread_cpp(): %d\n",
-			makaba_errno);
+	std::string board(board_name);
+	makaba_thread thread(board, thread_number);
+	if (makaba_errno) {
 		switch(makaba_errno) {
 			case ERR_CURL_PERFORM:
 				printf("Ошибка соединения с сервером\n");
@@ -166,8 +165,8 @@ int main (int argc, char **argv)
 				case 'U': case 'u':
 					printw(">>> Обновление треда ...");
 					refresh();
-					if (updateThread_cpp(thread, verbose)) {
-						fprintf(stderr, "[main] ! Error @ updateThread_cpp()\n");
+					if (! thread.update()) {
+						fprintf(stderr, "[main] Error @ thread::update()\n");
 						printw(" ошибка\n");
 						ncurses_print_error(makaba_strerror(makaba_errno));
 					}
@@ -231,7 +230,6 @@ int main (int argc, char **argv)
 	ncurses_exit();
 
 	disarmJsonCache(thread);
-	freeThread(thread);
 	makabaCleanup();
 	if (comment != NULL)
 		free(comment);
@@ -240,22 +238,22 @@ int main (int argc, char **argv)
 	return ret;
 }
 
-int printThreadHeader(const makaba_thread_cpp &thread)
+int printThreadHeader(const makaba_thread &thread)
 {
 	move(Head_pos_y, Head_pos_x);
 	printw("%s", Headers_pref);
 	printw("/%s %s, %ld постов\n",
-		thread.board, thread.posts[0].subject, thread.nposts);
+		thread.board.data(), thread.posts[0].subject.data(), thread.nposts);
 	return 0;
 }
 
-int printPost (const makaba_post_cpp &post, const bool show_email, const bool show_files) {
-	if (post.comment == NULL) {
+int printPost (const makaba_post &post, const bool show_email, const bool show_files) {
+	if (post.comment.length() == 0) {
 		fprintf(stderr, "! ERROR @printPost: Null comment in struct post\n");
 		makaba_errno = ERR_POST_FORMAT;
 		return 1;
 	}
-	if (post.date == NULL) {
+	if (post.date.length() == 0) {
 		fprintf(stderr, "! ERROR @printPost: Null date in struct post\n");
 		makaba_errno = ERR_POST_FORMAT;
 		return 1;
@@ -263,15 +261,15 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 
 	char header_1[150] = "";
 	char header_2[150] = "";
-	sprintf(header_1, "%s", post.name);
+	sprintf(header_1, "%s", post.name.data());
 	bool sage = false;
-	if (show_email == true && strlen(post.email) > 0) {
-		if (strcmp(post.email, "mailto:sage"))
-			sprintf(header_1, "%s @ %s", header_1, post.email);
+	if (show_email == true && post.email.length() > 0) {
+		if (strcmp(post.email.data(), "mailto:sage"))
+			sprintf(header_1, "%s @ %s", header_1, post.email.data());
 		else
 			sage = true;
 	}
-	sprintf(header_2, "№%ld (%ld) %s", post.num, post.rel_num, post.date);
+	sprintf(header_2, "№%ld (%ld) %s", post.num, post.rel_num, post.date.data());
 	// @TODO Выравнивать строки заголовка по ширине
 	printw("%s", Headers_pref);
 	if (sage)
@@ -281,7 +279,7 @@ int printPost (const makaba_post_cpp &post, const bool show_email, const bool sh
 	printw("%s", Headers_pref);
 	printw("%s\n", header_2);
 	// Выводим комментарий
-	printw("\n%s\n\n", post.comment);
+	printw("\n%s\n\n", post.comment.data());
 
 	return 0;
 }
@@ -307,7 +305,7 @@ void ncurses_print_help() {
 	printw(">>> [H] помощь, [Q] выход\n\n");
 }
 
-void ncurses_print_post(const makaba_thread_cpp &thread, const long long num) {
+void ncurses_print_post(const makaba_thread &thread, const long long num) {
 	clear();
 	printThreadHeader(thread);
 	printPost(thread.posts[num], true, true);
