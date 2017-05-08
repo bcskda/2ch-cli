@@ -5,7 +5,6 @@
 // ========================================
 
 #include "parser.h"
-#include <iostream>
 
 char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // Пока что игнорируем разметку
 
@@ -116,125 +115,120 @@ char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // �
 }
 
 // ========================================
-// libjson
+// Captcha
 // ========================================
 
-int json_callback(void *userdata, int type, const char *data, uint32_t length) {
-    json_context *context = (json_context *) userdata;
-	if (context->type == captcha_id) {
-		makaba_2chaptcha *captcha = (makaba_2chaptcha *)context->memdest;
-		switch (type) {
-			case JSON_KEY:
-				if (fill_captcha_id_expected(context, (char *)data)) {
-					fprintf(stderr, "! Error @ fill_captcha_id_expected()\n");
-					return 1;
-				}
-				return 0;
-			case JSON_INT:
-			case JSON_FLOAT:
-			case JSON_STRING:
-				if (fill_captcha_id_value(captcha, context->expect, (char *)data)) {
-					fprintf(stderr, "! Error @ fill_captcha_id_value\n");
-					return 1;
-				}
-				return 0;
-		}
-		return 0;
-	}
-}
-
-int fill_captcha_id_expected(json_context *context, const char *data) {
-	if (strncmp(data, Key_id, strlen(data)) == 0) {
-        context->expect = Expect_id;
-    }
-    else if (strncmp(data, Key_result, strlen(data)) == 0) {
-        context->expect = Expect_result;
-    }
-	else if (strncmp(data, Key_type, strlen(data)) == 0) {
-        // Игнорируем, и так знаем, что 2chaptcha
-    }
-	else {
-		fprintf(stderr, "! Error @ fill_captcha_expected: unknown key %s\n", data);
-        return 1;
-	}
-	return 0;
-}
-
-int fill_captcha_id_value(makaba_2chaptcha *captcha, const int expect, const char *data) {
-	switch (expect) {
-		case Expect_id:
-			captcha->id = (char *) calloc(strlen(data) + 1, sizeof(char));
-			memcpy(captcha->id, data, strlen(data));
-			return 0;
-		case Expect_result:
-			captcha->result = atoi(data);
-			return 0;
-	}
-	fprintf(stderr, "! Error @ fill_captcha_id_value: unknown context.expect value: %d\n", expect);
-	return 1;
-}
-
-// =======
-// Captcha
-// =======
-
-int initCaptcha_cpp(makaba_2chaptcha &captcha, const char *board,
-	const long long thread, const bool &verbose)
+bool captcha_2chaptcha::isNull()
 {
-	if (CURL_BUFF_BODY == NULL)
-		makabaSetup();
-	char *captcha_str = get2chaptchaId(board, thread, verbose);
-	if (captcha_str == NULL) {
-		fprintf(stderr, "[initCaptcha_cpp] ! Error @ get2chaptchaId(): %d\n", makaba_errno);
-		return 1;
-	}
-	// Не заказываем еще раз, т.к. используется 1 раз
-
-	json_context context;
-    context.type = captcha_id;
-    context.status = Status_default;
-	context.verbose = verbose;
-    context.memdest = &captcha;
-	json_parser parser;
-    if (json_parser_init(&parser, NULL, json_callback, &context)) {
-        fprintf(stderr, "[initCaptcha_cpp] ! Error: json_parser_init() failed\n");
-		makaba_errno = ERR_JSON_INIT;
-		return 1;
-    }
-	int ret = json_parser_string(&parser, captcha_str, strlen(captcha_str), NULL);
-	if (ret) {
-		printf("Error @ parse: %d\n", ret);
-        json_parser_free(&parser);
-		makaba_errno = ERR_JSON_PARSE;
-		return 1;
-    }
-
-	captcha.png_url = form2chaptchaPicURL(captcha.id);
-
-	return 0;
+	return this->isNull_;
 }
 
-int prepareCaptcha_cpp(makaba_2chaptcha &captcha, const char *board,
-	const long long thread, const bool &verbose)
-{
-	if (initCaptcha_cpp(captcha, board, thread, verbose)) {
-		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ initCaptcha_cpp: %d\n", makaba_errno);
-		return 1;
-	}
+captcha_2chaptcha::captcha_2chaptcha():
+	isNull_(true),
+	id     (std::string())
+	{}
 
+captcha_2chaptcha::captcha_2chaptcha(const std::string &board, const long long &threadnum):
+	isNull_(true),
+	id     (std::string())
+{
+	if (! this->get_id(board, threadnum)) {
+		fprintf(stderr, "[captcha_2chaptcha::captcha_2chaptcha(const std::string &, const long long &)]: "
+						"Error: captcha_2chaptcha::get_id() failed\n");
+		return;
+	}
+	if (! this->form_url()) {
+		fprintf(stderr, "[captcha_2chaptcha::captcha_2chaptcha(const std::string &, const long long &)]: "
+						"Error: captcha_2chaptcha::form_url() failed\n");
+		return;
+	}
+	isNull_ = false;
+}
+
+bool captcha_2chaptcha::get_id(const std::string &board, const long long &threadnum)
+{
+	if (this->id.length()) {
+		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Note: already has ID\n"
+						"  board = %s, thread = %lld\n", board.data(), threadnum);
+		return true;
+	}
+	char *id_raw = get2chaptchaId(board.data(), threadnum, false);
+	if (id_raw == NULL) {
+		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Error: "
+						"get2chaptchaId(): %d\n", makaba_errno);
+		return false;
+	}
+	Json::CharReaderBuilder rbuilder;
+	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
+	std::string errs;
+	Json::Value ans;
+	if (! reader->parse(id_raw, id_raw + strlen(id_raw), &ans, &errs)) {
+		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Error:\n"
+						"Json::CharReader::parse():\n  %s\n",
+				errs.data());
+		makaba_errno = ERR_GENERAL_FORMAT;
+		return false;
+	}
+	fprintf(stderr, "btw ans:\n");
+    std::cerr << ans << std::endl;
+	if (! ans["error"].isNull()) {
+		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Error: "
+						"API returned \"error\":\"%d\"\n");
+		this->error = ans["description"].asString();
+		return false;
+	}
+	this->id = ans["id"].asString();
+	return true;
+}
+
+bool captcha_2chaptcha::form_url()
+{
+	if (this->id.length() == 0) {
+		fprintf(stderr, "[bool captcha_2chaptcha::form_url] Error: "
+						"ID is null\n");
+		return false;
+	}
+	if (this->png_url.length()) {
+		fprintf(stderr, "[bool captcha_2chaptcha::form_url] Note: "
+						"already has png_url\n");
+		return true;
+	}
+	this->png_url.resize(strlen(BASE_URL) + strlen(CAPTCHA_2CHAPTCHA) +
+						this->id.length() + 10);
+	this->png_url = BASE_URL;
+	this->png_url += '/';
+	this->png_url += CAPTCHA_2CHAPTCHA;
+	this->png_url += "/image/";
+	this->png_url += this->id;
+	return true;
+}
+
+bool captcha_2chaptcha::get_png() {
+	if (this->id.length() == 0) {
+		fprintf(stderr, "[bool captcha_2chaptcha::get_png] Error: "
+						"ID is null\n");
+		return false;
+	}
+	if (this->png_url.length() == 0) {
+		fprintf(stderr, "[bool captcha_2chaptcha::get_png] Error: "
+						"png_url is null\n");
+		return false;
+	}
+	
 	long long pic_size;
-	char *captcha_png = get2chaptchaPicPNG(captcha.png_url, &pic_size);
-	if (captcha_png == NULL) {
-		fprintf(stderr, "[prepareCaptcha_cpp] ! Error @ get2chaptchaPicPNG: %d\n", makaba_errno);
-		return 1;
+	char *pic = get2chaptchaPicPNG(this->png_url.data(), &pic_size);
+	if (pic == NULL) {
+		fprintf(stderr, "[bool captcha_2chaptcha::get_png] Error: "
+						"get2chaptchaPicPNG() failed: %d\n", makaba_errno);
+		return false;
 	}
+	FILE *pic_file = fopen(CaptchaPngFilename, "w");
+	fwrite(pic, sizeof(char), pic_size, pic_file);
+	fclose(pic_file);
+	
+	convert_img(CaptchaPngFilename, CaptchaUtfFilename, false);
 
-	FILE *captcha_png_file = fopen(CaptchaPngFilename, "w");
-	fwrite(captcha_png, sizeof(char), pic_size, captcha_png_file);
-	fclose(captcha_png_file);
-	convert_img(CaptchaPngFilename, CaptchaUtfFilename, verbose);
-
-	return 0;
+	return true;
 }
 
 // ========================================
@@ -245,11 +239,11 @@ thread::thread(): // private
 	isNull_(true)
 	{} 
 
-thread::thread(const std::string nboard, const long long nnum):
+thread::thread(const std::string &board, const long long &num):
 	isNull_(true),
-	num   (nnum),
-	board (nboard),
-	nposts(0)
+	num    (num),
+	board  (board),
+	nposts (0)
 {
 	char *raw;
 	bool fallback = false;
@@ -410,6 +404,7 @@ bool post::isNull()
 // ========================================
 // JSON cache
 // ========================================
+
 int initJsonCache()
 {
 	char *homedir = getenv("HOME");
@@ -435,7 +430,7 @@ bool checkJsonCache(const makaba_thread &thread)
 {
 	char filename[70] = "";
 	sprintf(filename, "%s/thread-%s-%d",
-		Json_cache_dir, thread.board, thread.num);
+		Json_cache_dir, thread.board.data(), thread.num);
 	return access(filename, F_OK) == 0;
 }
 
@@ -443,7 +438,7 @@ void armJsonCache(const makaba_thread &thread)
 {
 	char filename_old[70] = "";
 	sprintf(filename_old, "%s/thread-%s-%d",
-		Json_cache_dir, thread.board, thread.num);
+		Json_cache_dir, thread.board.data(), thread.num);
 	char filename_new[70] = "";
 	sprintf(filename_new, "%s-%s", filename_old, Json_cache_suff_armed);
 	rename(filename_old, filename_new);
@@ -453,7 +448,7 @@ void disarmJsonCache(const makaba_thread &thread)
 {
 	char filename_new[70] = "";
 	sprintf(filename_new, "%s/thread-%s-%d",
-		Json_cache_dir, thread.board, thread.num);
+		Json_cache_dir, thread.board.data(), thread.num);
 	char filename_old[70] = "";
 	sprintf(filename_old, "%s-%s", filename_new, Json_cache_suff_armed);
 	rename(filename_old, filename_new);
@@ -463,7 +458,7 @@ char *readJsonCache(const makaba_thread &thread, long long *threadsize)
 {
 	char filename[70] = "";
 	sprintf(filename, "%s/thread-%s-%d",
-		Json_cache_dir, thread.board, thread.num);
+		Json_cache_dir, thread.board.data(), thread.num);
 	if (strlen(Json_cache_dir) == 0) {
 		if (initJsonCache() == -1) {
 			fprintf(stderr, "[readJsonCache]! Error: @ initJsonCache()\n");
@@ -511,7 +506,7 @@ int writeJsonCache(const makaba_thread &thread, const char *thread_ch)
 
 	char filename[70] = "";
 	sprintf(filename, "%s/thread-%s-%d-%s",
-		Json_cache_dir, thread.board, thread.num, Json_cache_suff_armed);
+		Json_cache_dir, thread.board.data(), thread.num, Json_cache_suff_armed);
 
 	FILE *fd = fopen(filename, "a+");
 	long long fsize = 0;
@@ -551,7 +546,7 @@ int cleanJsonCache() {
     if (dir != NULL) {
         for (int i = 0; entry = readdir(dir); i++) {
             if (i > 1) {
-				if (! strstr(entry->d_name, Json_cache_suff_armed)) {
+ 				if (! strstr(entry->d_name, Json_cache_suff_armed)) {
 					fprintf(stderr, "[cleanJsonCache] Delete %s/%s\n",
 	                    Json_cache_dir, entry->d_name);
 	                remove(entry->d_name);
@@ -568,8 +563,3 @@ int cleanJsonCache() {
 
     return 0;
 }
-
-// ========================================
-// jsoncpp
-// ========================================
-

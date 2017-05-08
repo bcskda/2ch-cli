@@ -67,11 +67,11 @@ int main (int argc, char **argv)
 		return RET_INTERNAL;
 	}
 
+	std::string board(board_name);
+
 	#ifdef CAPTCHA_TEST_CPP
-	makaba_2chaptcha captcha;
-	prepareCaptcha_cpp(captcha, board_name, thread_number, verbose);
-	printf("id = \"%s\"\nresult = \"%d\"\nurl = \"%s\"\n",
-		captcha.id, captcha.result, captcha.png_url);
+	makaba_2chaptcha captcha(board, thread_number);
+    captcha.get_png();
 	char shcmd[40];
 	sprintf(shcmd, "cat %s", CaptchaUtfFilename);
 	system(shcmd);
@@ -79,28 +79,34 @@ int main (int argc, char **argv)
 	#endif
 
 	if (send_post == true) {
-		makaba_2chaptcha captcha;
-		if (prepareCaptcha_cpp(captcha, board_name, thread_number, verbose)) {
-			fprintf(stderr, "[main] ! Error @ prepareCaptcha_cpp: %d\n",
-				makaba_errno);
+		makaba_2chaptcha captcha(board, thread_number);
+		if (captcha.isNull()) {
+			fprintf(stderr, "[main] Error: "
+							"captcha_2chaptcha::captcha_2chaptcha(const std::string &, const long long &)\n"
+							"  error = %d\n"
+							"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
 			return RET_INTERNAL;
+		}
+		if (! captcha.get_png()) {
+			fprintf(stderr, "[main] Error: captcha_2chaptcha::get_png()\n"
+							"  error = %d\n"
+							"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
 		}
 		char shcmd[40];
 		sprintf(shcmd, "cat %s", CaptchaUtfFilename);
 		system(shcmd);
 		printf("Ответ на капчу: ");
-		scanf("%s", captcha.value);
+		std::cin >> captcha.value;
 		long long answer_length;
 		char email[] = "";
 		char *result = sendPost(board_name, thread_number,
 			comment, NULL, NULL, email,
-			captcha.id, captcha.value, &answer_length);
+			captcha.id.data(), captcha.value.data(), &answer_length);
 		printf("Ответ API: %s\n", result); // По-хорошему так делать не надо
 		makabaCleanup();
 		return RET_OK;
 	}
 
-	std::string board(board_name);
 	makaba_thread thread(board, thread_number);
 	if (makaba_errno) {
 		switch(makaba_errno) {
