@@ -8,8 +8,6 @@ C/C++
 ## Зависимости
 - libcurl
 
-- [libjson](https://github.com/vincenthz/libjson)
-
 - jsoncpp
 
 - libncursesw
