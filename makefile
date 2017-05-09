@@ -1,17 +1,18 @@
 CC = g++
-LIBS = -lm -lcurl -ljsoncpp -ljson -lncursesw -lcaca
+LIBS = -lm -lcurl -ljsoncpp -lncursesw -lcaca
 OPTS = -std=c++11 -Wno-format -fPIC
 LOPTS = -Xlinker -z -Xlinker muldefs
+DEBUG_OPTS= -g -ggdb
 CURL_USERAGENT = "\"Linux x86_64\""
-CONFIG = -DCURL_UA=$(CURL_USERAGENT)
-TARGETS = src/{2ch-cli.cpp,makaba.c,parser.cpp,image.c}
+CONFIG = -DCURL_UA=$(CURL_USERAGENT) -DDEFAULT_EDITOR="\"nano\""
+TARGETS = src/{2ch-cli.cpp,makaba.c,parser.cpp,external.cpp,external.cpp}
 
 all: default
 
 release:
 	$(CC)                    $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli 2>build-log
 default:
-	$(CC)                    $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli
+	$(CC)      $(DEBUG_OPTS) $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli
 config-test:
 	$(CC) -DCONFIG_TEST      $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli
 captcha-test-cpp:

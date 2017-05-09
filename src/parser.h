@@ -21,7 +21,8 @@
 #include <jsoncpp/json/json.h>
 #include "error.h"
 #include "makaba.h"
-#include "image.h"
+#include "external.h"
+#include "external.h"
 
 struct post {
 	bool banned;
@@ -43,12 +44,18 @@ struct post {
 	std::string trip_type; // enum?
 	long long unique_posters;
 	long long rel_num;
+	post();
+	post(const std::string &vcomment, const std::string &vemail,
+		 const std::string &vname,    const std::string &vsubject,
+		 const std::string &vtags,    const std::string &vtrip);
+	post(const char *vcomment, const char *vemail,
+		 const char *vname,    const char *vsubject,
+		 const char *vtags,    const char *vtrip);
 	post(Json::Value &val);
 	post(const char *raw); // @TODO
 	bool isNull();
 private:
 	bool isNull_;
-	post();
 };
 typedef struct post makaba_post;
 

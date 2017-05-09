@@ -363,6 +363,26 @@ post::post():
 	isNull_(true)
 	{}
 
+post::post(const std::string &vcomment, const std::string &vemail,
+	 const std::string &vname,    const std::string &vsubject,
+	 const std::string &vtags,    const std::string &vtrip):
+	 
+	isNull_(false),
+	comment(std::string(vcomment)), email  (std::string(vemail)),
+	name   (std::string(vname)),    subject(std::string(vsubject)),
+	tags   (std::string(vtags)),    trip   (std::string(vtrip))
+	{}
+
+post::post(const char *vcomment, const char *vemail,
+	 const char *vname,    const char *vsubject,
+	 const char *vtags,    const char *vtrip):
+	
+	isNull_(false),
+	comment(std::string(vcomment)), email  (std::string(vemail)),
+	name   (std::string(vname)),    subject(std::string(vsubject)),
+	tags   (std::string(vtags)),    trip   (std::string(vtrip))
+	{}
+
 post::post(Json::Value &val):
 	isNull_        (false),
 	banned        ( atoi(       val["banned"        ].asString().data()) ),
@@ -407,13 +427,10 @@ bool post::isNull()
 
 int initJsonCache()
 {
-	char *homedir = getenv("HOME");
-	if (homedir == NULL) {
-		fprintf(stderr, "[initJsonCache]! Error: can`t getenv() HOME\n");
-		makaba_errno = ERR_GETENV;
-		return -1;
+	if (Env_HOME.length() == 0) {
+		setup_env();
 	}
-	sprintf(Json_cache_dir, "%s/.cache/2ch-cli", homedir);
+	sprintf(Json_cache_dir, "%s/.cache/2ch-cli", Env_HOME.data());
 	fprintf(stderr, "[initJsonCache] Json_cache_dir = \"%s\"\n", Json_cache_dir);
 	if (access(Json_cache_dir, F_OK)) {
 		if (mkdir(Json_cache_dir, S_IRWXU) == -1) { // Директория -> 0700

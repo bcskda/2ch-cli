@@ -20,7 +20,7 @@ void pomogite() // Справка
 	printf(" -p - задать пасскод (не поддерживается)\n");
 }
 
-int main (int argc, char **argv)
+int main (int argc, const char **argv)
 {
 	freopen("/tmp/2ch-cli.log", "w", stderr);
 
@@ -29,10 +29,10 @@ int main (int argc, char **argv)
 	return RET_PREEXIT;
 	#endif
 
-	char passcode[32] = "пасскода нет :("; // Пасскод
-    char board_name[10] = "b"; // Имя борды
+	std::string passcode("пасскода нет :("); // Пасскод
+    std::string board("b"); // Имя борды
     long long thread_number = 0; // Номер треда в борде
-	char *comment = NULL; // Комментарий - не занимать память, если не указан
+	std::string comment("");
 	bool send_post = false;
 	bool verbose = false;
 	bool clean_cache = false;
@@ -42,11 +42,11 @@ int main (int argc, char **argv)
 		pomogite();
 		return RET_ARGS;
 	}
-	parse_argv(argc, (const char **)argv,
-		board_name, &thread_number, &comment, passcode,
-		&send_post, &verbose, &clean_cache);
-	fprintf(stderr, "board_name = %s\n", board_name);
-	fprintf(stderr, "comment = %s\n", comment);
+	parse_argv(argc, argv,
+		board, thread_number, comment, passcode,
+		send_post, verbose, clean_cache);
+	fprintf(stderr, "board_name = %s\n", board.data());
+	fprintf(stderr, "comment = %s\n", comment.data());
 
 	if (clean_cache == true) {
 		if (cleanJsonCache()) {
@@ -67,11 +67,9 @@ int main (int argc, char **argv)
 		return RET_INTERNAL;
 	}
 
-	std::string board(board_name);
-
 	#ifdef CAPTCHA_TEST_CPP
 	makaba_2chaptcha captcha(board, thread_number);
-    captcha.get_png();
+	captcha.get_png();
 	char shcmd[40];
 	sprintf(shcmd, "cat %s", CaptchaUtfFilename);
 	system(shcmd);
@@ -79,31 +77,13 @@ int main (int argc, char **argv)
 	#endif
 
 	if (send_post == true) {
-		makaba_2chaptcha captcha(board, thread_number);
-		if (captcha.isNull()) {
-			fprintf(stderr, "[main] Error: "
-							"captcha_2chaptcha::captcha_2chaptcha(const std::string &, const long long &)\n"
-							"  error = %d\n"
-							"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
+		makaba_post post(comment.data(), "",
+						 "", "",
+						 "", "");
+		if (sendPost(post, board, thread_number)) {
+			fprintf(stderr, "[main] Error: sendPost failed: %d\n", makaba_errno);
 			return RET_INTERNAL;
 		}
-		if (! captcha.get_png()) {
-			fprintf(stderr, "[main] Error: captcha_2chaptcha::get_png()\n"
-							"  error = %d\n"
-							"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
-		}
-		char shcmd[40];
-		sprintf(shcmd, "cat %s", CaptchaUtfFilename);
-		system(shcmd);
-		printf("Ответ на капчу: ");
-		std::cin >> captcha.value;
-		long long answer_length;
-		char email[] = "";
-		char *result = sendPost(board_name, thread_number,
-			comment, NULL, NULL, email,
-			captcha.id.data(), captcha.value.data(), &answer_length);
-		printf("Ответ API: %s\n", result); // По-хорошему так делать не надо
-		makabaCleanup();
 		return RET_OK;
 	}
 
@@ -123,7 +103,7 @@ int main (int argc, char **argv)
 
 	if (thread.nposts == 0) {
 		printf(">>> Smth strange with thread at %s/%ld: doen\'t exist, exiting\n",
-			board_name, thread_number);
+			board.data(), thread_number);
 		makabaCleanup();
 		return RET_OK;
 	}
@@ -133,6 +113,9 @@ int main (int argc, char **argv)
 	bool should_exit = false;
 	ncurses_print_post(thread, 0);
 	int ret = RET_OK;
+	makaba_post dummy_post;
+	dummy_post.email = std::string("sage");
+	const char *api_result;
 	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
 		int int_input = 0;
@@ -145,7 +128,14 @@ int main (int argc, char **argv)
 					should_exit = true;
 					break;
 				case 'P': case 'p':
-					printw(">>> Постинг без отдельного запуска еще не поддерживается\n\n");
+					ncurses_exit();
+					fork_and_edit(dummy_post.comment);
+					fprintf(stderr, "[main] Note: fork-read comment \"%s\"\n",
+							dummy_post.comment.data());
+					api_result = sendPost(dummy_post, thread.board, thread.num);
+					ncurses_init();
+					ncurses_print_post(thread, cur_post);
+					ncurses_print_error(api_result);
 					break;
 				case 'H': case 'h':
 					ncurses_print_help();
@@ -237,11 +227,40 @@ int main (int argc, char **argv)
 
 	disarmJsonCache(thread);
 	makabaCleanup();
-	if (comment != NULL)
-		free(comment);
 	fprintf(stderr, "Cleanup done, exiting\n");
 
 	return ret;
+}
+
+const char *sendPost(const makaba_post &post,
+					 const std::string &board, const long long &threadnum)
+{
+	makaba_2chaptcha captcha(board, threadnum);
+	if (captcha.isNull()) {
+		fprintf(stderr, "[main] Error: "
+						"captcha_2chaptcha::captcha_2chaptcha(const std::string &, const long long &)\n"
+						"  error = %d\n"
+						"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
+		return NULL;
+	}
+	if (! captcha.get_png()) {
+		fprintf(stderr, "[main] Error: captcha_2chaptcha::get_png()\n"
+						"  error = %d\n"
+						"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
+		return NULL;
+	}
+
+	char shcmd[40];
+	sprintf(shcmd, "cat %s", CaptchaUtfFilename);
+	system(shcmd);
+	printf("Ответ на капчу: ");
+	std::cin >> captcha.value;
+
+	long long answer_length;
+	const char *result = sendPost(board.data(), threadnum,
+		post.comment.data(), NULL, NULL, post.email.data(),
+		captcha.id.data(), captcha.value.data(), &answer_length);
+	return result;
 }
 
 int printThreadHeader(const makaba_thread &thread)
@@ -293,7 +312,7 @@ int printPost (const makaba_post &post, const bool show_email, const bool show_f
 void ncurses_init() {
 	initscr();
 	raw();
-	keypad (stdscr, TRUE);
+	keypad(stdscr, TRUE);
 	noecho();
 }
 
@@ -328,8 +347,8 @@ void ncurses_print_error(const char *mesg) {
 }
 
 void parse_argv(const int argc, const char **argv,
-	char *board_name, long long *thread_number, char **comment, char *passcode,
-	bool *send_post, bool *verbose, bool *clean_cache)
+	std::string &board, long long &thread_number, std::string &comment, std::string &passcode,
+	bool &send_post, bool &verbose, bool &clean_cache)
 {
 	int opt;
 	while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:sc:vC") ) != -1)
@@ -337,35 +356,23 @@ void parse_argv(const int argc, const char **argv,
 		switch (opt)
 		{
 			case 'p':
-				memset(passcode, '\0', sizeof(passcode));
-                if ( sizeof(optarg) > sizeof(passcode) ) { //проверка
-					printf("Не шути так больше\n");
-					exit(RET_ARGS);
-				}
-				memcpy(passcode, optarg, sizeof(passcode));
+				passcode = std::string(optarg);
                 printf("Разраб ещё не запилил пасскоды\n");
-				printf("Уже что-то могу: %s!\n", passcode);
+				printf("Уже что-то могу: %s!\n", passcode.data());
 				break;
 			case 'b':
-				memset(board_name, '\0', sizeof(board_name));
-                if ( sizeof(optarg) > sizeof(board_name) ) { //проверка
-					printf("Не шути так больше\n");
-					exit(RET_ARGS);
-				}
-				memcpy(board_name, optarg, sizeof(board_name));
+				board = std::string(optarg);
 				break;
 			case 'n':
-				*thread_number = atoi(optarg);
+				thread_number = atoi(optarg);
 				break;
 			case 'c':
-				if (*comment == NULL) {
+				if (comment.length() == 0) {
 					if ( sizeof(optarg) > COMMENT_LEN_MAX ) {
-						printf("Комментарий не длиннее 15к знаков\n");
+						printf("Комментарий не длиннее 15к символов\n");
 						exit(RET_ARGS);
 					}
-					printf("[%d] %s\n", strlen(optarg), optarg);
-					*comment = (char *) calloc(strlen(optarg) + 1, sizeof(char));
-					memcpy(*comment, optarg, strlen(optarg));
+					comment = std::string(optarg);
 				}
 				else {
 					printf("Дважды указан комментарий\n");
@@ -373,13 +380,13 @@ void parse_argv(const int argc, const char **argv,
 				}
 				break;
 			case 's':
-				*send_post = true;
+				send_post = true;
 				break;
 			case 'v':
-				*verbose = true;
+				verbose = true;
 				break;
 			case 'C':
-				*clean_cache = true;
+				clean_cache = true;
 				break;
 			default:
 				printf("Неизвестная опция %c\n", opt);
