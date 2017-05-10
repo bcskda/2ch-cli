@@ -98,7 +98,7 @@ typedef struct captcha_2chaptcha makaba_2chaptcha;
 const size_t Json_cache_buf_size = 2e6;
 const char *Json_cache_suff_armed = "active";
 char *Json_cache_buf = NULL;
-char Json_cache_dir[50] = "";
+char Json_cache_dir[100] = "";
 
 // ========================================
 // Ручной парсинг

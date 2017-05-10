@@ -9,9 +9,11 @@ TARGETS = src/{2ch-cli.cpp,makaba.c,parser.cpp,external.cpp,external.cpp}
 
 all: default
 
+default:
+	$(CC)                    $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli
 release:
 	$(CC)                    $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli 2>build-log
-default:
+debug:
 	$(CC)      $(DEBUG_OPTS) $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli
 config-test:
 	$(CC) -DCONFIG_TEST      $(TARGETS) ${CONFIG} ${LOPTS} ${OPTS} ${LIBS} -o 2ch-cli

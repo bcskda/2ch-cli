@@ -240,10 +240,10 @@ thread::thread(): // private
 	{} 
 
 thread::thread(const std::string &board, const long long &num):
-	isNull_(true),
-	num    (num),
+	isNull_(true ),
+	num    (num  ),
 	board  (board),
-	nposts (0)
+	nposts (0    )
 {
 	char *raw;
 	bool fallback = false;
@@ -364,9 +364,9 @@ post::post():
 	{}
 
 post::post(const std::string &vcomment, const std::string &vemail,
-	 const std::string &vname,    const std::string &vsubject,
-	 const std::string &vtags,    const std::string &vtrip):
-	 
+		   const std::string &vname,    const std::string &vsubject,
+		   const std::string &vtags,    const std::string &vtrip):
+
 	isNull_(false),
 	comment(std::string(vcomment)), email  (std::string(vemail)),
 	name   (std::string(vname)),    subject(std::string(vsubject)),
@@ -374,36 +374,36 @@ post::post(const std::string &vcomment, const std::string &vemail,
 	{}
 
 post::post(const char *vcomment, const char *vemail,
-	 const char *vname,    const char *vsubject,
-	 const char *vtags,    const char *vtrip):
-	
-	isNull_(false),
-	comment(std::string(vcomment)), email  (std::string(vemail)),
-	name   (std::string(vname)),    subject(std::string(vsubject)),
-	tags   (std::string(vtags)),    trip   (std::string(vtrip))
+		   const char *vname,    const char *vsubject,
+		   const char *vtags,    const char *vtrip):
+
+	isNull_(false                      ),
+	comment(vcomment), email  (vemail  ),
+	name   (vname   ), subject(vsubject),
+	tags   (vtags   ), trip   (vtrip   )
 	{}
 
 post::post(Json::Value &val):
-	isNull_        (false),
-	banned        ( atoi(       val["banned"        ].asString().data()) ),
-	closed        ( atoi(       val["closed"        ].asString().data()) ),
-	comment       ( ""                                                   ),
-	date          ( std::string(val["date"          ].asString()       ) ),
-	email         ( std::string(val["email"         ].asString()       ) ),
-	files         (             val["files"         ]                    ),
-	lasthit       ( atoi(       val["lasthit"       ].asString().data()) ),
-	name          ( ""                                                   ),
-	num           ( atoi(       val["num"           ].asString().data()) ),
-	op            ( atoi(       val["op"            ].asString().data()) ),
-	parent        ( atoi(       val["parent"        ].asString().data()) ),
-	sticky        ( atoi(       val["sticky"        ].asString().data()) ),
-	subject       ( std::string(val["subject"       ].asString()       ) ),
-	tags          ( std::string(val["tags"          ].asString()       ) ),
-	timestamp     ( atoi(       val["timestamp"     ].asString().data()) ),
-	trip          ( std::string(val["trip"          ].asString()       ) ),
-	trip_type     ( std::string(val["trip_type"     ].asString()       ) ),
-	unique_posters( atoi(       val["unique_posters"].asString().data()) ),
-	rel_num       ( 0                                                    )
+	isNull_       ( false                                          ),
+	banned        ( atoi( val["banned"        ].asString().data()) ),
+	closed        ( atoi( val["closed"        ].asString().data()) ),
+	comment       ( ""                                             ),
+	date          (       val["date"          ].asString()         ),
+	email         (       val["email"         ].asString()         ),
+	files         (       val["files"         ]                    ),
+	lasthit       ( atoi( val["lasthit"       ].asString().data()) ),
+	name          ( ""                                             ),
+	num           ( atoi( val["num"           ].asString().data()) ),
+	op            ( atoi( val["op"            ].asString().data()) ),
+	parent        ( atoi( val["parent"        ].asString().data()) ),
+	sticky        ( atoi( val["sticky"        ].asString().data()) ),
+	subject       (       val["subject"       ].asString()         ),
+	tags          (       val["tags"          ].asString()         ),
+	timestamp     ( atoi( val["timestamp"     ].asString().data()) ),
+	trip          (       val["trip"          ].asString()         ),
+	trip_type     (       val["trip_type"     ].asString()         ),
+	unique_posters( atoi( val["unique_posters"].asString().data()) ),
+	rel_num       ( 0                                              )
 {
 	const char *comment_raw = val["comment"].asCString();
 	char *comment_parsed = parseHTML(comment_raw, strlen(comment_raw), true);
@@ -413,7 +413,7 @@ post::post(Json::Value &val):
 	char *name_parsed = parseHTML(name_raw, strlen(name_raw), true);
 	this->name = std::string(name_parsed);
 	free(name_parsed);
-	fprintf(stderr, "<init post #%8lld>\n", this->num);
+	fprintf(stderr, "<init post #%10lld>\n", this->num);
 }
 
 bool post::isNull()
@@ -428,8 +428,10 @@ bool post::isNull()
 int initJsonCache()
 {
 	if (Env_HOME.length() == 0) {
+		std::cerr << "call setup" << std::endl;
 		setup_env();
 	}
+	std::cerr << "[at json] btw HOME = \"" << Env_HOME.data() << std::endl;
 	sprintf(Json_cache_dir, "%s/.cache/2ch-cli", Env_HOME.data());
 	fprintf(stderr, "[initJsonCache] Json_cache_dir = \"%s\"\n", Json_cache_dir);
 	if (access(Json_cache_dir, F_OK)) {

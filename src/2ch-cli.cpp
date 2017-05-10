@@ -29,10 +29,10 @@ int main (int argc, const char **argv)
 	return RET_PREEXIT;
 	#endif
 
-	std::string passcode("пасскода нет :("); // Пасскод
-    std::string board("b"); // Имя борды
+	std::string passcode = "пасскода нет :("; // Пасскод
+    std::string board = "b"; // Имя борды
     long long thread_number = 0; // Номер треда в борде
-	std::string comment("");
+	std::string comment = "";
 	bool send_post = false;
 	bool verbose = false;
 	bool clean_cache = false;
@@ -47,7 +47,6 @@ int main (int argc, const char **argv)
 		send_post, verbose, clean_cache);
 	fprintf(stderr, "board_name = %s\n", board.data());
 	fprintf(stderr, "comment = %s\n", comment.data());
-
 	if (clean_cache == true) {
 		if (cleanJsonCache()) {
 			fprintf(stderr, "[main] ! Error @ cleanJsonCache()\n");
@@ -113,9 +112,13 @@ int main (int argc, const char **argv)
 	bool should_exit = false;
 	ncurses_print_post(thread, 0);
 	int ret = RET_OK;
-	makaba_post dummy_post;
-	dummy_post.email = std::string("sage");
-	const char *api_result;
+	makaba_post dummy_post("", "",
+						   "", "",
+						   "", "");
+	dummy_post.email = "sage";
+	
+	std::string api_result;
+	
 	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
 		int int_input = 0;
@@ -135,7 +138,7 @@ int main (int argc, const char **argv)
 					api_result = sendPost(dummy_post, thread.board, thread.num);
 					ncurses_init();
 					ncurses_print_post(thread, cur_post);
-					ncurses_print_error(api_result);
+					ncurses_print_error(api_result.data());
 					break;
 				case 'H': case 'h':
 					ncurses_print_help();
@@ -257,10 +260,9 @@ const char *sendPost(const makaba_post &post,
 	std::cin >> captcha.value;
 
 	long long answer_length;
-	const char *result = sendPost(board.data(), threadnum,
+	return sendPost(board.data(), threadnum,
 		post.comment.data(), NULL, NULL, post.email.data(),
 		captcha.id.data(), captcha.value.data(), &answer_length);
-	return result;
 }
 
 int printThreadHeader(const makaba_thread &thread)
@@ -356,12 +358,12 @@ void parse_argv(const int argc, const char **argv,
 		switch (opt)
 		{
 			case 'p':
-				passcode = std::string(optarg);
+				passcode = optarg;
                 printf("Разраб ещё не запилил пасскоды\n");
 				printf("Уже что-то могу: %s!\n", passcode.data());
 				break;
 			case 'b':
-				board = std::string(optarg);
+				board = optarg;
 				break;
 			case 'n':
 				thread_number = atoi(optarg);
@@ -372,7 +374,7 @@ void parse_argv(const int argc, const char **argv,
 						printf("Комментарий не длиннее 15к символов\n");
 						exit(RET_ARGS);
 					}
-					comment = std::string(optarg);
+					comment = optarg;
 				}
 				else {
 					printf("Дважды указан комментарий\n");

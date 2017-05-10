@@ -2,25 +2,26 @@
 
 void setup_env() {
 	if (Env_EDITOR.length() == 0)
-		Env_EDITOR = std::string(getenv("EDITOR"));
+		Env_EDITOR = getenv("EDITOR");
 	if (Env_EDITOR.length() == 0)
-		Env_EDITOR = std::string( DEFAULT_EDITOR ); // Определён в makefile
+		Env_EDITOR = DEFAULT_EDITOR; // Макрос в makefile
 	if (Env_HOME.length() == 0)
-		Env_HOME = std::string(getenv("HOME"));
+		Env_HOME = getenv("HOME");
+	std::cerr << "[after init] btw HOME = \"" << Env_HOME.data() << std::endl;
+	if (Comment_tmpfile.length() == 0) {
+		Comment_tmpfile = Env_HOME;
+		Comment_tmpfile += "/.cache/2ch-cli/comment";
+    } 
 }
 
-int fork_and_edit(std::string &dest) {
-	if (Env_EDITOR.length() == 0)
-			setup_env;
-	if (Comment_tmpfile.length() == 0) {
-		Comment_tmpfile = std::string(Env_HOME);
-		Comment_tmpfile += "/.cache/2ch-cli/comment";
-	}
+void fork_and_edit(std::string &dest) {
+	if (Env_EDITOR.length() == 0 || Comment_tmpfile.length() == 0)
+			setup_env();
 	pid_t pid = fork();
 	if (pid == 0) { // Потомок
-		char shcmd[200];
+		char shcmd[500];
 		sprintf(shcmd, "[ -f %s ] || echo \'%s\' > %s",
-                Comment_tmpfile.data(), Comment_tmpmesg.data(), Comment_tmpfile.data());
+				Comment_tmpfile.data(), Comment_tmpmesg.data(), Comment_tmpfile.data());
 		system(shcmd);
 		execlp(Env_EDITOR.data(), Env_EDITOR.data(), Comment_tmpfile.data(), NULL);
 	}
@@ -31,7 +32,7 @@ int fork_and_edit(std::string &dest) {
 			if (WEXITSTATUS(status)) {
 				fprintf(stderr, "[fork_and_edit()] [P] Error: child returned %d\n",
 						WEXITSTATUS(status));
-				return WEXITSTATUS(status);
+				return;
 			}
 			else {
 				fprintf(stderr, "[fork_and_edit()] [P] Note: child returned 0\n");
@@ -42,6 +43,8 @@ int fork_and_edit(std::string &dest) {
 								std::istreambuf_iterator<char>());
 			}
 		}
+		fprintf(stderr, "[fork_and_edit()] [P] Error: child didn`t exit\n");
+		return;
 	}
 }
 

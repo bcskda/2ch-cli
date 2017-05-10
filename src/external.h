@@ -25,15 +25,13 @@ const int Ret_show_import_canvas = 2;
 const int Ret_show_create_display = 3;
 
 int show_img(const char *filename);
-//int convert_img(const char *filename, const bool v);
 void convert_img(const char *filename, const char *ofile, const bool v);
 int perf_exec(const char **args);
 
 const std::string Comment_tmpmesg = "Здесь будет текст поста";
-std::string Comment_tmpfile;
-
-std::string Env_HOME;
-std::string Env_EDITOR;
+static std::string Comment_tmpfile = "";
+std::string Env_HOME = "";
+std::string Env_EDITOR = "";
 
 void setup_env();
-int fork_and_edit(std::string &dest);
+void fork_and_edit(std::string &dest);
