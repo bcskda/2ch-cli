@@ -39,7 +39,8 @@ const char Headers_pref[] = "| ";
 const char Headers_suff[] = " |";
 
 const char *sendPost(const makaba_post &post,
-					 const std::string &board, const long long &threadnum = 0);
+					 const std::string &board,
+					 const long long &threadnum = 0);
 
 int printThreadHeader(const makaba_thread &thread);
 int printPost (const makaba_post &post, const bool show_email, const bool show_files);

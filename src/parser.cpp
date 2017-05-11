@@ -132,12 +132,12 @@ captcha_2chaptcha::captcha_2chaptcha(const std::string &board, const long long &
 	isNull_(true),
 	id     (std::string())
 {
-	if (! this->get_id(board, threadnum)) {
+	if (this->get_id(board, threadnum)) {
 		fprintf(stderr, "[captcha_2chaptcha::captcha_2chaptcha(const std::string &, const long long &)]: "
 						"Error: captcha_2chaptcha::get_id() failed\n");
 		return;
 	}
-	if (! this->form_url()) {
+	if (this->form_url()) {
 		fprintf(stderr, "[captcha_2chaptcha::captcha_2chaptcha(const std::string &, const long long &)]: "
 						"Error: captcha_2chaptcha::form_url() failed\n");
 		return;
@@ -145,18 +145,18 @@ captcha_2chaptcha::captcha_2chaptcha(const std::string &board, const long long &
 	isNull_ = false;
 }
 
-bool captcha_2chaptcha::get_id(const std::string &board, const long long &threadnum)
+int captcha_2chaptcha::get_id(const std::string &board, const long long &threadnum)
 {
 	if (this->id.length()) {
 		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Note: already has ID\n"
 						"  board = %s, thread = %lld\n", board.data(), threadnum);
-		return true;
+		return -1;
 	}
 	char *id_raw = get2chaptchaId(board.data(), threadnum, false);
 	if (id_raw == NULL) {
 		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Error: "
 						"get2chaptchaId(): %d\n", makaba_errno);
-		return false;
+		return -1;
 	}
 	Json::CharReaderBuilder rbuilder;
 	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
@@ -167,7 +167,7 @@ bool captcha_2chaptcha::get_id(const std::string &board, const long long &thread
 						"Json::CharReader::parse():\n  %s\n",
 				errs.data());
 		makaba_errno = ERR_GENERAL_FORMAT;
-		return false;
+		return -1;
 	}
 	fprintf(stderr, "btw ans:\n");
     std::cerr << ans << std::endl;
@@ -175,23 +175,23 @@ bool captcha_2chaptcha::get_id(const std::string &board, const long long &thread
 		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Error: "
 						"API returned \"error\":\"%d\"\n");
 		this->error = ans["description"].asString();
-		return false;
+		return -1;
 	}
 	this->id = ans["id"].asString();
-	return true;
+	return 0;
 }
 
-bool captcha_2chaptcha::form_url()
+int captcha_2chaptcha::form_url()
 {
 	if (this->id.length() == 0) {
 		fprintf(stderr, "[bool captcha_2chaptcha::form_url] Error: "
 						"ID is null\n");
-		return false;
+		return -1;
 	}
 	if (this->png_url.length()) {
 		fprintf(stderr, "[bool captcha_2chaptcha::form_url] Note: "
 						"already has png_url\n");
-		return true;
+		return -1;
 	}
 	this->png_url.resize(strlen(BASE_URL) + strlen(CAPTCHA_2CHAPTCHA) +
 						this->id.length() + 10);
@@ -200,27 +200,27 @@ bool captcha_2chaptcha::form_url()
 	this->png_url += CAPTCHA_2CHAPTCHA;
 	this->png_url += "/image/";
 	this->png_url += this->id;
-	return true;
+	return 0;
 }
 
-bool captcha_2chaptcha::get_png() {
+int captcha_2chaptcha::get_png() {
 	if (this->id.length() == 0) {
 		fprintf(stderr, "[bool captcha_2chaptcha::get_png] Error: "
 						"ID is null\n");
-		return false;
+		return -1;
 	}
 	if (this->png_url.length() == 0) {
 		fprintf(stderr, "[bool captcha_2chaptcha::get_png] Error: "
 						"png_url is null\n");
-		return false;
+		return -1;
 	}
-	
+
 	long long pic_size;
 	char *pic = get2chaptchaPicPNG(this->png_url.data(), &pic_size);
 	if (pic == NULL) {
 		fprintf(stderr, "[bool captcha_2chaptcha::get_png] Error: "
 						"get2chaptchaPicPNG() failed: %d\n", makaba_errno);
-		return false;
+		return -1;
 	}
 	FILE *pic_file = fopen(CaptchaPngFilename, "w");
 	fwrite(pic, sizeof(char), pic_size, pic_file);
@@ -228,7 +228,7 @@ bool captcha_2chaptcha::get_png() {
 	
 	convert_img(CaptchaPngFilename, CaptchaUtfFilename, false);
 
-	return true;
+	return 0;
 }
 
 // ========================================
@@ -288,7 +288,7 @@ thread::thread(const std::string &board, const long long &num):
 		armJsonCache(*this);
 	}
 
-	if (! this->append(raw)) {
+	if (this->append(raw)) {
 		fprintf(stderr, "[thread::thread(const std::string, const long long)] "
 						"Error @ thread::append(const char *)\n");
 		makaba_errno = ERR_GENERAL_FORMAT;
@@ -301,7 +301,7 @@ bool thread::isNull()
 	return this->isNull_;
 }
 
-bool thread::append(const char *raw)
+int thread::append(const char *raw)
 {
 	Json::CharReaderBuilder rbuilder;
 	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
@@ -312,7 +312,7 @@ bool thread::append(const char *raw)
 						"Json::CharReader::parse():\n  %s\n",
 				errs.data());
 		makaba_errno = ERR_GENERAL_FORMAT;
-		return false;
+		return -1;
 	}
 
 	for (auto obj : array) {
@@ -321,15 +321,15 @@ bool thread::append(const char *raw)
 		post.rel_num = this->nposts;
 		this->posts.push_back(post);
 	}
-	return true;
+	return 0;
 }
 
-bool thread::update()
+int thread::update()
 {
 	if (this->isNull()) {
 		fprintf(stderr, "[bool thread::update()] Error: is null\n");
 		makaba_errno = ERR_INTERNAL;
-		return false;
+		return -1;
 	}
 
 	long long size;
@@ -337,7 +337,7 @@ bool thread::update()
 						  this->nposts + 1, &size, false);
 	if (raw == NULL) {
 		fprintf(stderr, "[bool thread::update()] Error @ getThread()\n");
-		return false;
+		return -1;
 	}
 
 	bool write_cache = true;
@@ -351,12 +351,12 @@ bool thread::update()
 	if (write_cache)
 		writeJsonCache(*this, raw);
 
-	if (! this->append(raw)) {
+	if (this->append(raw)) {
 		fprintf(stderr, "[bool thread::update()] Error @ thread::append()\n");
-		return false;
+		return -1;
 	}
 
-	return true;
+	return 0;
 }
 
 post::post():

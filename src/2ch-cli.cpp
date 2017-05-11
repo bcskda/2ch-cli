@@ -116,9 +116,9 @@ int main (int argc, const char **argv)
 						   "", "",
 						   "", "");
 	dummy_post.email = "sage";
-	
+
 	std::string api_result;
-	
+
 	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
 		int int_input = 0;
@@ -130,23 +130,38 @@ int main (int argc, const char **argv)
 					done = 1;
 					should_exit = true;
 					break;
-				case 'P': case 'p':
+				case 'c':
 					ncurses_exit();
-					fork_and_edit(dummy_post.comment);
+					edit(dummy_post.comment, Task_comment);
 					fprintf(stderr, "[main] Note: fork-read comment \"%s\"\n",
 							dummy_post.comment.data());
+					ncurses_init();
+					ncurses_print_post(thread, cur_post);
+					break;
+				case 's':
+					if (dummy_post.email.length()) {
+						dummy_post.email = "";
+						ncurses_print_error("Sage: off");
+					}
+					else {
+						dummy_post.email = "sage";
+						ncurses_print_error("Sage: on");
+					}
+					break;
+				case 'S':
+					ncurses_exit();
 					api_result = sendPost(dummy_post, thread.board, thread.num);
 					ncurses_init();
 					ncurses_print_post(thread, cur_post);
 					ncurses_print_error(api_result.data());
 					break;
-				case 'H': case 'h':
+				case 'h':
 					ncurses_print_help();
 					break;
-				case 'C': case 'c':
+				case 'C':
 					ncurses_print_post(thread, cur_post);
 					break;
-				case 'G': case 'g':
+				case 'G':
 					printw("Перейти к посту: ");
 					refresh();
 					echo();
@@ -161,10 +176,10 @@ int main (int argc, const char **argv)
 					cur_post = int_input - 1;
 					ncurses_print_post(thread, cur_post);
 					break;
-				case 'U': case 'u':
+				case 'u':
 					printw(">>> Обновление треда ...");
 					refresh();
-					if (! thread.update()) {
+					if (thread.update()) {
 						fprintf(stderr, "[main] Error @ thread::update()\n");
 						printw(" ошибка\n");
 						ncurses_print_error(makaba_strerror(makaba_errno));
@@ -236,7 +251,8 @@ int main (int argc, const char **argv)
 }
 
 const char *sendPost(const makaba_post &post,
-					 const std::string &board, const long long &threadnum)
+					 const std::string &board,
+					 const long long &threadnum)
 {
 	makaba_2chaptcha captcha(board, threadnum);
 	if (captcha.isNull()) {
@@ -246,23 +262,25 @@ const char *sendPost(const makaba_post &post,
 						"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
 		return NULL;
 	}
-	if (! captcha.get_png()) {
+	if (captcha.get_png()) {
 		fprintf(stderr, "[main] Error: captcha_2chaptcha::get_png()\n"
 						"  error = %d\n"
 						"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
 		return NULL;
 	}
 
-	char shcmd[40];
-	sprintf(shcmd, "cat %s", CaptchaUtfFilename);
-	system(shcmd);
-	printf("Ответ на капчу: ");
+	caca_display_t *display = show_img(CaptchaUtfFilename);
+	caca_canvas_t *canvas = caca_get_canvas(display);
+	caca_put_str(canvas,
+				 1, Converter_height_i,
+			     "Ответ на капчу (секурность уровня sudo): ");
+	caca_refresh_display(display);
 	std::cin >> captcha.value;
+	caca_free_display(display);
 
-	long long answer_length;
 	return sendPost(board.data(), threadnum,
-		post.comment.data(), NULL, NULL, post.email.data(),
-		captcha.id.data(), captcha.value.data(), &answer_length);
+		post.comment.data(), post.subject.data(), post.name.data(), post.email.data(),
+		captcha.id.data(), captcha.value.data());
 }
 
 int printThreadHeader(const makaba_thread &thread)
@@ -323,13 +341,20 @@ void ncurses_exit() {
 }
 
 void ncurses_print_help() {
-	printw("\n");
-	printw(">>> [C] - очистить экран\n");
-	printw(">>> [G] - перейти по номеру поста, [U] - обновить тред\n");
-	printw(">>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост\n");
-	printw(">>> [PageUp] - %d постов назад, [PageDown] - %d постов вперёд\n", Skip_on_PG, Skip_on_PG);
-	printw(">>> [Home] - первый пост, [End] - последний пост\n");
-	printw(">>> [H] помощь, [Q] выход\n\n");
+	printw("\n"
+	       ">>> u - обновить тред\n"
+	       ">>> s - вкл/выкл sage\n"
+	       ">>> c - изменить текст поста\n"
+	       ">>> S - отправить пост\n"
+	       "\n"
+	       ">>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост\n"
+	       ">>> [PageUp] - %d постов назад, [PageDown] - %d постов вперёд\n"
+	       ">>> [Home] - первый пост, [End] - последний пост\n"
+	       ">>> G - перейти по отн. номеру поста\n"
+	       "\n"
+	       ">>> C - очистить экран\n"
+	       ">>> h - помощь, q - выход\n\n",
+	       Skip_on_PG, Skip_on_PG);
 }
 
 void ncurses_print_post(const makaba_thread &thread, const long long num) {
@@ -346,6 +371,10 @@ void ncurses_print_error(const char *mesg) {
 	mvprintw(Err_pos_y , Err_pos_x, mesg);
 	attroff(A_STANDOUT);
 	move(oldy, oldx);
+}
+
+void ncurses_clear_error() {
+	
 }
 
 void parse_argv(const int argc, const char **argv,

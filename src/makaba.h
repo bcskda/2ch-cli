@@ -46,5 +46,6 @@ char *form2chaptchaPicURL(const char *id);
 char *get2chaptchaPicPNG(const char *url, long long *pic_size);
 
 char *sendPost (const char *board, const long long threadn,
-	const char *comment, const char *subject, const char *name, const char *email,
-	const char *captcha_id, const char *captcha_value, long long *answer_length);
+				const char *comment, const char *subject,
+				const char *name, const char *email,
+				const char *captcha_id, const char *captcha_value);

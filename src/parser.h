@@ -65,12 +65,12 @@ struct thread {
 	std::string board;
 	std::vector<makaba_post> posts;
 	thread(const std::string &board, const long long &num);
-	bool update();
+	int update();
 	bool isNull();
 private:
 	bool isNull_;
 	thread();
-	bool append(const char *raw);
+	int append(const char *raw);
 };
 typedef struct thread makaba_thread;
 
@@ -81,13 +81,13 @@ struct captcha_2chaptcha {
 	captcha_2chaptcha(const std::string &board, const long long &threadnum);
 	captcha_2chaptcha(const makaba_thread& thread); // @TODO
 	bool isNull();
-	bool get_png();
+	int get_png();
 private:
 	bool isNull_;
     std::string png_url;
 	captcha_2chaptcha();
-	bool get_id(const std::string &board, const long long &threadnum);
-	bool form_url();
+	int get_id(const std::string &board, const long long &threadnum);
+	int form_url();
 };
 typedef struct captcha_2chaptcha makaba_2chaptcha;
 
