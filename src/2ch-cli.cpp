@@ -115,7 +115,7 @@ int main (int argc, const char **argv)
 	makaba_post dummy_post("", "",
 						   "", "",
 						   "", "");
-	dummy_post.email = "sage";
+	dummy_post.email = Sage_on ? "sage" : DEFAULT_EMAIL;
 
 	std::string api_result;
 
@@ -139,14 +139,10 @@ int main (int argc, const char **argv)
 					ncurses_print_post(thread, cur_post);
 					break;
 				case 's':
-					if (dummy_post.email.length()) {
-						dummy_post.email = "";
-						ncurses_print_error("Sage: off");
-					}
-					else {
-						dummy_post.email = "sage";
-						ncurses_print_error("Sage: on");
-					}
+					Sage_on = ! Sage_on;
+					ncurses_clear_errors();
+					dummy_post.email = Sage_on ? "sage" : DEFAULT_EMAIL;
+					ncurses_print_error(Sage_on ? "Sage: on" : "Sage: off");
 					break;
 				case 'S':
 					ncurses_exit();
@@ -373,8 +369,13 @@ void ncurses_print_error(const char *mesg) {
 	move(oldy, oldx);
 }
 
-void ncurses_clear_error() {
-	
+void ncurses_clear_errors()
+{
+	int oldy, oldx;
+	getyx(stdscr, oldy, oldx);
+	move(Err_pos_y, Err_pos_x);
+	clrtoeol();
+	move(oldy, oldx);
 }
 
 void parse_argv(const int argc, const char **argv,

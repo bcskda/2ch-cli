@@ -1,10 +1,16 @@
+# Это можно трогать:
+CONF_CURL_USERAGENT = "\"Linux\""
+CONF_DEFAULT_EDITOR = "\"nano\""
+CONF_DEFAULT_EMAIL  = "\"\""
+
 CC = g++
-LIBS = -lm -lcurl -ljsoncpp -lncursesw -lcaca
+LIBS = -lcurl -ljsoncpp -lncursesw -lcaca
 OPTS = -std=c++11 -fPIC -Wno-pointer-arith
 LOPTS = -Xlinker -z -Xlinker muldefs
 DEBUG_OPTS= -g -ggdb
-CURL_USERAGENT = "\"Linux x86_64\""
-CONFIG = -DCURL_UA=$(CURL_USERAGENT) -DDEFAULT_EDITOR="\"nano\""
+CONFIG = -DCURL_UA=$(CONF_CURL_USERAGENT) \
+         -DDEFAULT_EDITOR=$(CONF_DEFAULT_EDITOR) \
+         -DDEFAULT_EMAIL=$(CONF_DEFAULT_EMAIL)
 TARGETS = src/{2ch-cli.cpp,makaba.c,parser.cpp,external.cpp}
 
 all: default

@@ -45,6 +45,9 @@ void edit(std::string &dest, const enum edit_task task) {
 			fork_and_edit(dest, Trip_tmpfile);
 			break;
 	}
+	// '\n' из-за EOF:
+	if (dest.back() == '\n')
+		dest.erase(dest.end() - 1);
 }
 
 void read(std::string &dest, const enum edit_task task) {

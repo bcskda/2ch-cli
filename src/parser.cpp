@@ -407,11 +407,11 @@ post::post(Json::Value &val):
 	rel_num       ( 0                                              )
 {
 	const char *comment_raw = val["comment"].asCString();
-	char *comment_parsed = parseHTML(comment_raw, strlen(comment_raw), true);
+	char *comment_parsed = parseHTML(comment_raw, strlen(comment_raw), false);
 	this->comment = std::string(comment_parsed);
 	free(comment_parsed);
 	const char *name_raw = val["name"].asCString();
-	char *name_parsed = parseHTML(name_raw, strlen(name_raw), true);
+	char *name_parsed = parseHTML(name_raw, strlen(name_raw), false);
 	this->name = std::string(name_parsed);
 	free(name_parsed);
 	fprintf(stderr, "<init post #%10lld>\n", this->num);

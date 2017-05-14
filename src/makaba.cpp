@@ -333,10 +333,10 @@ char *sendPost (const char *board, const long long threadn,
 		post.push_back( { "subject", subject } );
 	}
 	if (name != NULL) {
-		post.push_back( { "name", name } );
+		post.push_back( { "name",    name    } );
 	}
 	if (email != NULL) {
-		post.push_back( { "email", email } );
+		post.push_back( { "email",   email   } );
 	}
 	
 	char *result = callAPI(url, post, NULL);
