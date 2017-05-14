@@ -100,7 +100,7 @@ char *getBoardPage(const char *board, const long long page, const bool v) {
 		return NULL;
 	}
 	if (page <= 0) {
-		fprintf(stderr, "[getBoardPage] Error: page \"%ld\" <= 0\n", page);
+		fprintf(stderr, "[getBoardPage] Error: page \"%lld\" <= 0\n", page);
 		makaba_errno = ERR_ARGS;
 		return NULL;
 	}
@@ -113,7 +113,7 @@ char *getBoardPage(const char *board, const long long page, const bool v) {
 		makaba_errno = ERR_MEMORY;
 		return NULL;
 	}
-	sprintf(url, "%s/%s/%ld.json",
+	sprintf(url, "%s/%s/%lld.json",
 			BASE_URL, board, page);
 	if (v) fprintf(stderr, "[getBoardPage] url = %s\n", url);
 	if (CURL_BUFF_BODY == NULL) {
@@ -172,7 +172,7 @@ char *getThread(const char *board, const long long threadn,
 		return NULL;
 	}
 	if (threadn <= 0) {
-		fprintf(stderr, "[getThread] Error: thread \"%ld\" <= 0\n", threadn);
+		fprintf(stderr, "[getThread] Error: thread \"%lld\" <= 0\n", threadn);
 		makaba_errno = ERR_ARGS;
 		return NULL;
 	}
@@ -198,7 +198,7 @@ char *getThread(const char *board, const long long threadn,
 		free(url);
 		return NULL;
 	}
-	sprintf(post, "task=get_thread&board=%s&thread=%ld&post=%ld", 
+	sprintf(post, "task=get_thread&board=%s&thread=%lld&post=%lld", 
 			board, threadn, postn_rel);
 	if (v) fprintf(stderr, "[getThread] post = %s\n", post);
 
@@ -261,7 +261,7 @@ char *get2chaptchaId(const char *board, const long long threadn, const bool v) {
 		return NULL;
 	}
 	if (threadn <= 0) {
-		fprintf(stderr, "[getCaptchaId] Error: thread \"%ld\" <= 0\n", threadn);
+		fprintf(stderr, "[getCaptchaId] Error: thread \"%lld\" <= 0\n", threadn);
 		makaba_errno = ERR_ARGS;
 		return NULL;
 	}
@@ -287,7 +287,7 @@ char *get2chaptchaId(const char *board, const long long threadn, const bool v) {
 		free(url);
 		return NULL;
 	}
-	sprintf(post, "board=%s&thread=%ld", 
+	sprintf(post, "board=%s&thread=%lld", 
 			board, threadn);
 	if (v) fprintf(stderr, "[get2chaptchaId] post = %s\n", post);
 
@@ -352,7 +352,7 @@ char *sendPost (const char *board, const long long threadn,
 		return NULL;
 	}
 	if (threadn < 0) {
-		fprintf(stderr, "[sendPost] Error: thread \"%ld\" < 0\n", threadn);
+		fprintf(stderr, "[sendPost] Error: thread \"%lld\" < 0\n", threadn);
 		makaba_errno = ERR_ARGS;
 		return NULL;
 	}
@@ -362,8 +362,8 @@ char *sendPost (const char *board, const long long threadn,
 		return NULL;
 	}
 	if (strlen(comment) > COMMENT_LEN_MAX) {
-		fprintf(stderr, "[sendPost] Error: comment length \"%d\" > maximal \"%d\"\n",
-				strlen(comment), COMMENT_LEN_MAX);
+		fprintf(stderr, "[sendPost] Error: comment length \"%d\" > maximal \"%lld\"\n",
+				(int)strlen(comment), COMMENT_LEN_MAX);
 		makaba_errno = ERR_ARGS;
 		return NULL;
 	}
@@ -411,7 +411,7 @@ char *sendPost (const char *board, const long long threadn,
 		free(url);
 		return NULL;
 	}
-	sprintf(post, "%s&board=%s&thread=%ld&comment=%s",
+	sprintf(post, "%s&board=%s&thread=%lld&comment=%s",
 				POSTING_FIELDS, board, threadn, comment);
 	if (subject != NULL) {
 		sprintf(post, "%s&subject=%s",

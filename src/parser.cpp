@@ -6,11 +6,11 @@
 
 #include "parser.h"
 
-char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // Пока что игнорируем разметку
+char *parseHTML (const char *raw, const long long raw_len, const bool v) { // Пока что игнорируем разметку
 
 	if (v) {
 		fprintf(stderr, "]] Started parseHTML\n");
-		fprintf(stderr, "Raw len: %d\n", raw_len);
+		fprintf(stderr, "Raw len: %lld\n", raw_len);
 		fprintf(stderr, "Raw:\n%s\nEnd of raw\n", raw);
 	}
 
@@ -109,7 +109,7 @@ char *parseHTML (const char *raw, const long long  raw_len, const bool v) { // �
 			}
 		}
 	}
-	if (v) fprintf(stderr, "]] Final length: %d\n", parsed_len);
+	if (v) fprintf(stderr, "]] Final length: %lld\n", parsed_len);
 	if (v) fprintf(stderr, "]] Exiting parseHTML\n");
 	return parsed;
 }
@@ -173,7 +173,8 @@ int captcha_2chaptcha::get_id(const std::string &board, const long long &threadn
     std::cerr << ans << std::endl;
 	if (! ans["error"].isNull()) {
 		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Error: "
-						"API returned \"error\":\"%d\"\n");
+						"API returned \"error\":\"%d\"\n",
+						ans["error"].asInt());
 		this->error = ans["description"].asString();
 		return -1;
 	}
@@ -448,7 +449,7 @@ int initJsonCache()
 bool checkJsonCache(const makaba_thread &thread)
 {
 	char filename[70] = "";
-	sprintf(filename, "%s/thread-%s-%d",
+	sprintf(filename, "%s/thread-%s-%lld",
 		Json_cache_dir, thread.board.data(), thread.num);
 	return access(filename, F_OK) == 0;
 }
@@ -456,7 +457,7 @@ bool checkJsonCache(const makaba_thread &thread)
 void armJsonCache(const makaba_thread &thread)
 {
 	char filename_old[70] = "";
-	sprintf(filename_old, "%s/thread-%s-%d",
+	sprintf(filename_old, "%s/thread-%s-%lld",
 		Json_cache_dir, thread.board.data(), thread.num);
 	char filename_new[70] = "";
 	sprintf(filename_new, "%s-%s", filename_old, Json_cache_suff_armed);
@@ -466,7 +467,7 @@ void armJsonCache(const makaba_thread &thread)
 void disarmJsonCache(const makaba_thread &thread)
 {
 	char filename_new[70] = "";
-	sprintf(filename_new, "%s/thread-%s-%d",
+	sprintf(filename_new, "%s/thread-%s-%lld",
 		Json_cache_dir, thread.board.data(), thread.num);
 	char filename_old[70] = "";
 	sprintf(filename_old, "%s-%s", filename_new, Json_cache_suff_armed);
@@ -476,7 +477,7 @@ void disarmJsonCache(const makaba_thread &thread)
 char *readJsonCache(const makaba_thread &thread, long long *threadsize)
 {
 	char filename[70] = "";
-	sprintf(filename, "%s/thread-%s-%d",
+	sprintf(filename, "%s/thread-%s-%lld",
 		Json_cache_dir, thread.board.data(), thread.num);
 	if (strlen(Json_cache_dir) == 0) {
 		if (initJsonCache() == -1) {
@@ -524,7 +525,7 @@ int writeJsonCache(const makaba_thread &thread, const char *thread_ch)
 		return 0;
 
 	char filename[70] = "";
-	sprintf(filename, "%s/thread-%s-%d-%s",
+	sprintf(filename, "%s/thread-%s-%lld-%s",
 		Json_cache_dir, thread.board.data(), thread.num, Json_cache_suff_armed);
 
 	FILE *fd = fopen(filename, "a+");
@@ -549,7 +550,8 @@ int cleanJsonCache() {
     if (chdir(Json_cache_dir)) {
         switch(errno) {
             case ENOENT:
-                fprintf(stderr, "[cleanJsonCache]! Error: cache directory %s doesn`t exist after initJsonCache()\n");
+                fprintf(stderr, "[cleanJsonCache]! Error: cache directory %s doesn`t exist after initJsonCache()\n",
+						Json_cache_dir);
                 return 0;
             default:
                 fprintf(stderr, "[cleanJsonCache]! Error: can`t chdir() to %s: %s\n",

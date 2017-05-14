@@ -101,7 +101,7 @@ int main (int argc, const char **argv)
 	}
 
 	if (thread.nposts == 0) {
-		printf(">>> Smth strange with thread at %s/%ld: doen\'t exist, exiting\n",
+		printf(">>> Smth strange with thread at %s/%lld: doen\'t exist, exiting\n",
 			board.data(), thread_number);
 		makabaCleanup();
 		return RET_OK;
@@ -314,7 +314,7 @@ int printPost (const makaba_post &post, const bool show_email, const bool show_f
 		else
 			sage = true;
 	}
-	sprintf(header_2, "№%ld (%ld) %s", post.num, post.rel_num, post.date.data());
+	sprintf(header_2, "№%lld (%lld) %s", post.num, post.rel_num, post.date.data());
 	// @TODO Выравнивать строки заголовка по ширине
 	printw("%s", Headers_pref);
 	if (sage)

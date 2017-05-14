@@ -60,8 +60,8 @@ private:
 typedef struct post makaba_post;
 
 struct thread {
-	long int num;
-	long int nposts;
+	long long num;
+	long long nposts;
 	std::string board;
 	std::vector<makaba_post> posts;
 	thread(const std::string &board, const long long &num);
