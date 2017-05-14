@@ -1,5 +1,5 @@
 // ========================================
-// File: makaba.c
+// File: makaba.cpp
 // Makaba API-related functions
 // (Implementation)
 // ========================================
@@ -10,12 +10,18 @@
 // API general
 // ========================================
 
-char *callAPI(const char *url, const char *post, long long *size, const bool v) {
+char *callAPI(const std::string &url,
+			  const Postfields &postfields,
+			  long long *size)
+{
 	fprintf(stderr, "[callAPI] Start\n");
-	fprintf(stderr, "[callAPI] url   = \"%s\"\n", url);
-	fprintf(stderr, "[callAPI] post  = \"%s\"\n", post);
-	if (url == NULL) {
-		fprintf(stderr, "[callAPI] Error: URL = null\n");
+	fprintf(stderr, "[callAPI] url   = \"%s\"\n", url.data());
+	fprintf(stderr, "[callAPI] postfields:\n");
+	for (auto p: postfields) {
+		fprintf(stderr, "  \"%10s\" = \"%s\"\n", p.first.data(), p.second.data());
+	}
+	if (url.length() == 0) {
+		fprintf(stderr, "[callAPI] Error: zero-length url\n");
 		makaba_errno = ERR_ARGS;
 		return NULL;
 	}
@@ -33,31 +39,41 @@ char *callAPI(const char *url, const char *post, long long *size, const bool v) 
 	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, CURL_UA);
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
 	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, CURL_writeToBuff);
-	curl_easy_setopt(curl_handle, CURLOPT_URL, url);
-	if (post != NULL) {
-		curl_easy_setopt(curl_handle, CURLOPT_POST, 1);
-		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDSIZE, strlen(post));
-		curl_easy_setopt(curl_handle, CURLOPT_POSTFIELDS, post);
+	curl_easy_setopt(curl_handle, CURLOPT_URL, url.data());
+
+	if (postfields.size() > 0) {
+		struct curl_httppost* post = NULL;
+		struct curl_httppost* last = NULL;
+		
+		for (auto p: postfields) {
+			curl_formadd(&post, &last,
+						CURLFORM_COPYNAME,  p.first.data(),
+						CURLFORM_COPYCONTENTS, p.second.data(),
+						CURLFORM_END);
+		}
+		
+		curl_easy_setopt(curl_handle, CURLOPT_HTTPPOST, post);
 	}
 
 	CURLcode request_status = curl_easy_perform(curl_handle);
-	if (v) fprintf(stderr, "[callAPI] request performed\n");
+	fprintf(stderr, "[callAPI] request performed\n");
 	CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
 	if (size != NULL)
 		*size = (long long) CURL_BUFF_POS;
 	CURL_BUFF_POS = 0;
+
+	char *ret = CURL_BUFF_BODY;
 	if (request_status != CURLE_OK) {
 		fprintf(stderr, "[callAPI] Error: curl_easy_perform() failed: %s\n",
 				curl_easy_strerror(request_status));
-		curl_easy_cleanup(curl_handle);
 		makaba_errno = ERR_CURL_PERFORM;
-		return NULL;
+		ret = NULL;
 	}
 	curl_easy_cleanup(curl_handle);
 
     fprintf(stderr, "[callAPI] Exit\n");
 
-	return CURL_BUFF_BODY;
+	return ret;
 }
 
 // ========================================
@@ -67,27 +83,17 @@ char *callAPI(const char *url, const char *post, long long *size, const bool v) 
 char *getBoardsList(const bool v) {
 	if (v) fprintf(stderr, "[getBoardsList] Start");
 
-	int url_length = strlen(BASE_URL) + strlen(MOBILE_API) + 20;
 	// URL: 2ch.hk/makaba/mobile.fcgi?task=get_boards
-	char *url = (char *) calloc(url_length, sizeof(char));
-	if (url == NULL) {
-		fprintf(stderr, "[getBoardsList] Error: failed calloc() for url\n");
-		makaba_errno = ERR_MEMORY;
-		return NULL;
-	}
-	sprintf(url, "%s/%s?task=get_boards", 
-			BASE_URL, MOBILE_API);
-	if (v) fprintf(stderr, "[getBoardsList] url = %s\n", url);
-	if (CURL_BUFF_BODY == NULL) {
-		fprintf(stderr, "[getBoardsList] Warning: curl body buffer not allocated\n");
-		makabaSetup();
-	}
+	std::string url = BASE_URL;
+	url += '/';
+	url += MOBILE_API;
+	url += "?task=get_boards";
+	if (v) fprintf(stderr, "[getBoardsList] url = %s\n", url.data());
 	
-	char *result = callAPI(url, NULL, NULL, v);
+	char *result = callAPI(url, {}, NULL);
 	if (result == NULL) {
 		fprintf(stderr, "[getBoardsListJSON] Error: callAPI() failed\n");
 	}
-	free(url);
 	if (v) fprintf(stderr, "[getBoardsList] Exit");
 	return result;
 }
@@ -105,27 +111,19 @@ char *getBoardPage(const char *board, const long long page, const bool v) {
 		return NULL;
 	}
 
-	int url_length = strlen(BASE_URL) + strlen(board) + log10(page) + 10;
 	// URL format: 2ch.hk/$board/$page.json
-	char *url = (char *) calloc(url_length, sizeof(char));
-	if (url == NULL) {
-		fprintf(stderr, "[getBoardPage] Error: failed calloc() for url\n");
-		makaba_errno = ERR_MEMORY;
-		return NULL;
-	}
-	sprintf(url, "%s/%s/%lld.json",
-			BASE_URL, board, page);
-	if (v) fprintf(stderr, "[getBoardPage] url = %s\n", url);
-	if (CURL_BUFF_BODY == NULL) {
-		fprintf(stderr, "[getBoardPage] Warning: curl body buffer not allocated\n");
-		makabaSetup();
-	}
-
-	char *result = callAPI(url, NULL, NULL, v);
+	std::string url = BASE_URL;
+	url += '/';
+	url += board;
+	url += '/';
+	url += std::to_string(page);
+	url += ".json";
+	if (v) fprintf(stderr, "[getBoardPage] url = %s\n", url.data());
+	
+	char *result = callAPI(url, {}, NULL);
 	if (result == NULL) {
 		fprintf(stderr, "[getBoardPage] Error: callAPI() failed\n");
 	}
-	free(url);
 	if (v) fprintf(stderr, "[getBoardPage] Exit");
 	return result;
 }
@@ -138,27 +136,16 @@ char *getBoardCatalog(const char *board, const bool v) {
 		return NULL;
 	}
 
-	int url_length = strlen(BASE_URL) + strlen(board) + 20;
 	// URL format: 2ch.hk/$board/catalog.json
-	char *url = (char *) calloc(url_length, sizeof(char));
-	if (url == NULL) {
-		fprintf(stderr, "[getBoardCatalog] Error: failed calloc() for url\n");
-		makaba_errno = ERR_MEMORY;
-		return NULL;
-	}
-	sprintf(url, "%s/%s/catalog.json",
-			BASE_URL, board);
-	if (v) fprintf(stderr, "[getBoardCatalog] url = %s\n", url);
-	if (CURL_BUFF_BODY == NULL) {
-		fprintf(stderr, "[getBoardCatalog] Warning: curl body buffer not allocated\n");
-		makabaSetup();
-	}
+	std::string url = BASE_URL;
+	url += board;
+	url += "/catalog.json";
+	if (v) fprintf(stderr, "[getBoardCatalog] url = %s\n", url.data());
 
-	char *result = callAPI(url, NULL, NULL, v);
+	char *result = callAPI(url, {}, NULL);
 	if (result == NULL) {
 		fprintf(stderr, "[getBoardCatalog] Error: callAPI() failed\n");
 	}
-	free(url);
 	if (v) fprintf(stderr, "[getBoardCatalog] Exit");
 	return result;
 }
@@ -176,42 +163,26 @@ char *getThread(const char *board, const long long threadn,
 		makaba_errno = ERR_ARGS;
 		return NULL;
 	}
-
-	int url_length = strlen(BASE_URL) + strlen(MOBILE_API) + 5;
-	// URL: 2ch.hk/makaba/mobile.fcgi
-	char *url = (char *) calloc(url_length, sizeof(char));
-	if (url == NULL) {
-		fprintf(stderr, "[getThread] Error: failed calloc() for url\n");
-		makaba_errno = ERR_MEMORY;
-		return NULL;
-	}
-	sprintf(url, "%s/%s",
-			BASE_URL, MOBILE_API);
-	if (v) fprintf(stderr, "[getThread] url = %s\n", url);
 	
-	int post_length = strlen(board) + log10(threadn) + log10(postn_rel) + 40;
+	// URL: 2ch.hk/makaba/mobile.fcgi
+	std::string url = BASE_URL;
+	url += '/';
+	url += MOBILE_API;
+	
 	// POST: task=get_thread&board=$board&thread=$threadn&post=$postn_rel
-	char *post = (char *) calloc(post_length, sizeof(char));
-	if (post == NULL) {
-		fprintf(stderr, "[getThread] Error: failed calloc() for post\n");
-		makaba_errno = ERR_MEMORY;
-		free(url);
-		return NULL;
-	}
-	sprintf(post, "task=get_thread&board=%s&thread=%lld&post=%lld", 
-			board, threadn, postn_rel);
-	if (v) fprintf(stderr, "[getThread] post = %s\n", post);
-
-	if (CURL_BUFF_BODY == NULL) {
-		fprintf(stderr, "[getThread] Warning: curl body buffer not allocated\n");
-		makabaSetup();
-	}
-	char *result = callAPI(url, post, threadsize, v);
+	Postfields post(
+		{
+			{ "task",   "get_thread"              },
+			{ "board",  board                     },
+			{ "thread", std::to_string(threadn)   },
+			{ "post",   std::to_string(postn_rel) }
+		}
+													   );
+	
+	char *result = callAPI(url, post, threadsize);
 	if (result == NULL) {
 		fprintf(stderr, "[getThread] Error: callAPI() failed\n");
 	}
-	free(post);
-	free(url);
 	if (v) fprintf(stderr, "[getThread] Exit\n");
 	return result;
 }
@@ -228,27 +199,18 @@ char *getCaptchaSettings(const char *board, const bool v) {
 		return NULL;
 	}
 	
-	int url_length = strlen(BASE_URL) + strlen(CAPTCHA_SETTINGS) + strlen(board) + 5;
 	// URL: 2ch.hk/api/captcha/settings/$board
-	char *url = (char *) calloc(url_length, sizeof(char));
-	if (url == NULL) {
-		fprintf(stderr, "[getCaptchaSettings] Error: failed calloc() for url\n");
-		makaba_errno = ERR_MEMORY;
-		return NULL;
-	}
-	sprintf(url, "%s/%s/%s", 
-				BASE_URL, CAPTCHA_SETTINGS, board);
-	if (v) fprintf(stderr, "[getCaptchaSettings] url = %s\n", url);
-	if (CURL_BUFF_BODY == NULL) {
-		fprintf(stderr, "[getCaptchaSettings] Warning: curl body buffer not allocated\n");
-		makabaSetup();
-	}
+	std::string url = BASE_URL;
+	url += '/';
+	url += CAPTCHA_SETTINGS;
+	url += '/';
+	url += board;
+	if (v) fprintf(stderr, "[getCaptchaSettings] url = %s\n", url.data());
 	
-	char *result = callAPI(url, NULL, NULL, v);
+	char *result = callAPI(url, {}, NULL);
 	if (result == NULL) {
 		fprintf(stderr, "[getCaptchaSettings] Error: callAPI() failed\n");
 	}
-	free(url);
 	if (v) fprintf(stderr, "[getCaptchaSettings] Exit");
 	return result;
 }
@@ -265,57 +227,28 @@ char *get2chaptchaId(const char *board, const long long threadn, const bool v) {
 		makaba_errno = ERR_ARGS;
 		return NULL;
 	}
-
-	int url_length = strlen(BASE_URL) + strlen(MOBILE_API) + 5;
-	// URL: 2ch.hk/api/captcha/2chaptcha/id
-	char *url = (char *) calloc(url_length, sizeof(char));
-	if (url == NULL) {
-		fprintf (stderr, "[get2chaptchaId] Error: failed calloc() for url\n");
-		makaba_errno = ERR_MEMORY;
-		return NULL;
-	}
-	sprintf(url, "%s/%s/id",
-			BASE_URL, CAPTCHA_2CHAPTCHA);
-	if (v) fprintf(stderr, "[get2chaptchaId] url = %s\n", url);
 	
-	int post_length = strlen(board) + log10(threadn) + 15;
+	// URL: 2ch.hk/api/captcha/2chaptcha/id
+	std::string url = BASE_URL;
+	url += '/';
+	url += CAPTCHA_2CHAPTCHA;
+	url += "/id";
+	if (v) fprintf(stderr, "[get2chaptchaId] url = %s\n", url.data());
+	
 	// POST: board=$board&thread=$threadn
-	char *post = (char *) calloc(post_length, sizeof(char));
-	if (post == NULL) {
-		fprintf (stderr, "[get2chaptchaId] Error: failed calloc() for post\n");
-		makaba_errno = ERR_MEMORY;
-		free(url);
-		return NULL;
-	}
-	sprintf(post, "board=%s&thread=%lld", 
-			board, threadn);
-	if (v) fprintf(stderr, "[get2chaptchaId] post = %s\n", post);
-
-	if (CURL_BUFF_BODY == NULL) {
-		fprintf(stderr, "[get2chaptchaId] Warning: curl body buffer not allocated\n");
-		makabaSetup();
-	}
-	char *result = callAPI(url, post, NULL, v);
+	Postfields post(
+		{
+			{ "board",  board                   },
+			{ "thread", std::to_string(threadn) }
+		}
+			   );
+	
+	char *result = callAPI(url, post, NULL);
 	if (result == NULL) {
 		fprintf(stderr, "[get2chaptchaId] Error: callAPI() failed\n");
 	}
-	free(post);
-	free(url);
 	if (v) fprintf(stderr, "[get2chaptchaId] Exit\n");
 	return result;
-}
-
-char *form2chaptchaPicURL(const char *id) {
-	int url_length = strlen(BASE_URL) + strlen(CAPTCHA_2CHAPTCHA) + strlen(id) + 10;
-	char *url = (char*) calloc(url_length, sizeof(char));
-	if (url == NULL) {
-			fprintf (stderr, "[form2chaptchaPicURL] Error: failed calloc() for url\n");
-			makaba_errno = ERR_MEMORY;
-			return NULL;
-	}
-	sprintf(url, "%s/%s/image/%s",
-			BASE_URL, CAPTCHA_2CHAPTCHA, id);
-	return url;
 }
 
 char *get2chaptchaPicPNG(const char *url, long long *pic_size) {
@@ -330,7 +263,7 @@ char *get2chaptchaPicPNG(const char *url, long long *pic_size) {
 		makabaSetup();
 	}
 
-	char *result = callAPI(url, NULL, pic_size, false);
+	char *result = callAPI(url, {}, pic_size);
 	if (result == NULL) {
 		fprintf(stderr, "[get2chaptchaPicPNG] Error: callAPI() failed\n");
 	}
@@ -377,68 +310,39 @@ char *sendPost (const char *board, const long long threadn,
 		makaba_errno = ERR_ARGS;
 		return NULL;
 	}
-
-	int url_length = strlen(BASE_URL) + strlen(POSTING_API) + 5;
-	// URL: 2ch.hk/makaba/posting.fcgi
-	char *url = (char *) calloc(url_length, sizeof(char));
-	if (url == NULL) {
-		fprintf(stderr, "[sendPost] Error: failed calloc() for url\n");
-		makaba_errno = ERR_MEMORY;
-		return NULL;
-	}
-	sprintf(url, "%s/%s",
-			BASE_URL, POSTING_API);
-	fprintf(stderr, "[sendPost] url = %s\n", url);
 	
-	int post_length = strlen(POSTING_FIELDS) + strlen(board) + 25;
-	post_length += (threadn > 0) ? (log10(threadn)) : (1);
-	post_length += 9 + strlen(comment);
+	// URL: 2ch.hk/makaba/posting.fcgi
+	std::string url = BASE_URL;
+	url += '/';
+	url += POSTING_API;
+	fprintf(stderr, "[sendPost] url = %s\n", url.data());
+	
+	Postfields post(
+		{
+			{ "json",            "1"                     },
+			{ "task",            "post"                  },
+			{ "captcha_type",    "2chaptcha"             },
+			{ "board",           board                   },
+			{ "thread",          std::to_string(threadn) },
+			{ "comment",         comment                 },
+			{ "2chaptcha_id",    captcha_id              },
+			{ "2chaptcha_value", captcha_value           }
+		}
+			   );
 	if (subject != NULL) {
-		post_length += 9 + strlen(subject);
+		post.push_back( { "subject", subject } );
 	}
 	if (name != NULL) {
-		post_length += 6 + strlen(name);
+		post.push_back( { "name", name } );
 	}
 	if (email != NULL) {
-		post_length += 7 + strlen(email);
+		post.push_back( { "email", email } );
 	}
-	post_length += 12 + strlen(captcha_id);
-	post_length += 15 + strlen(captcha_value);
-	char *post = (char *) calloc(post_length, sizeof(char));
-	if (post == NULL) {
-		fprintf(stderr, "[sendPost] Error: failed calloc() for post\n");
-		makaba_errno = ERR_MEMORY;
-		free(url);
-		return NULL;
-	}
-	sprintf(post, "%s&board=%s&thread=%lld&comment=%s",
-				POSTING_FIELDS, board, threadn, comment);
-	if (subject != NULL) {
-		sprintf(post, "%s&subject=%s",
-				post, subject);
-	}
-	if (name != NULL) {
-		sprintf(post, "%s&name=%s",
-				post, name);
-	}
-	if (email != NULL) {
-		sprintf(post, "%s&email=%s",
-				post, email);
-	}
-	sprintf(post, "%s&2chaptcha_id=%s&2chaptcha_value=%s",
-			post, captcha_id, captcha_value);
-	fprintf(stderr, "[sendPost] post = %s\n", post);
-
-	if (CURL_BUFF_BODY == NULL) {
-		fprintf(stderr, "[sendPost] Warning: curl body buffer not allocated\n");
-		makabaSetup();
-	}
-	char *result = callAPI(url, post, NULL, false);
+	
+	char *result = callAPI(url, post, NULL);
 	if (result == NULL) {
 		fprintf(stderr, "[sendPost] Error: callAPI() failed\n");
 	}
-	free(post);
-	free(url);
 	fprintf(stderr, "[sendPost] Exit\n");
 	return result;
 }

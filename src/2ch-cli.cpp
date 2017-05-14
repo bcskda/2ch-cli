@@ -392,6 +392,10 @@ void parse_argv(const int argc, const char **argv,
 				printf("Уже что-то могу: %s!\n", passcode.data());
 				break;
 			case 'b':
+				if (strlen(optarg) > 20) {
+					printf("Толсто.\n");
+					exit(RET_ARGS);
+				}
 				board = optarg;
 				break;
 			case 'n':

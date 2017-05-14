@@ -6,13 +6,16 @@
 
 #pragma once
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
+#include <vector>
+#include <string>
+#include <cstdio>
+#include <cstring>
+#include <cstdlib>
 #include <cmath>
 #include <curl/curl.h>
-#include <stdbool.h>
 #include "error.h"
+
+typedef std::vector< std::pair<std::string, std::string> > Postfields;
 
 const char *BASE_URL = "https://2ch.hk";
 const char *MOBILE_API = "makaba/mobile.fcgi";
@@ -42,7 +45,6 @@ char *getThread(const char *board, const long long threadn,
 
 char *getCaptchaSettings(const char *board);
 char *get2chaptchaId(const char *board, const long long threadn, const bool v);
-char *form2chaptchaPicURL(const char *id);
 char *get2chaptchaPicPNG(const char *url, long long *pic_size);
 
 char *sendPost (const char *board, const long long threadn,

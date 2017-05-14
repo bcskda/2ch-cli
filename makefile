@@ -18,7 +18,7 @@ captcha-test-cpp: prepare
 link: makaba.o parser.o external.o 2ch-cli.o
 	$(CC) ${OPTS} ${LOPTS} ${LIBS} build/makaba.o build/parser.o build/external.o build/2ch-cli.o -o 2ch-cli
 makaba.o:
-	$(CC) src/makaba.c     ${CONFIG} ${OPTS} -c -o build/makaba.o
+	$(CC) src/makaba.cpp   ${CONFIG} ${OPTS} -c -o build/makaba.o
 parser.o:
 	$(CC) src/parser.cpp   ${CONFIG} ${OPTS} -c -o build/parser.o
 external.o:
