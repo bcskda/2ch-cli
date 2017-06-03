@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.7)
 project(2ch-cli)
 
-if(NOT WIN32)
+if (NOT WIN32)
     string(ASCII 27 Esc)
     set(ColorReset  "${Esc}[m")
     set(ColorBold   "${Esc}[1m")
@@ -67,6 +67,7 @@ set(LINK_LIBRARIES
         curl
         jsoncpp
         ncursesw
+        tinfow
         caca)
 
 add_executable(2ch-cli ${SOURCE_FILES})
