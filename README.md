@@ -4,6 +4,8 @@
 ##### Юзабелен в данной версии, пытайся.
 
 ## Требования
+- cmake>=3.7
+
 - libcurl
 
 - jsoncpp
@@ -14,11 +16,22 @@
 
 ## Установка
 ```
-cd /path/to/repo
 git clone https://github.com/bcskda/2ch-cli
 cd 2ch-cli
-make
+mkdir build && cd build
+cmake .. # Опционально, аргументы
+make -j4
+sudo make install
 ```
+
+### Возможные аргументы CMake
+```
+-DCURL_USERAGENT='Ваш юзерагент (Linux)'
+-DDEFAULT_EDITOR='Ваш редактор (nano)'
+-DDEFAULT_EMAIL='Ваш email (пусто)'
+-DCMAKE_INSTALL_PREFIX='Ваш префикс (/usr/local)'
+```
+
 
 ## Запуск
 ```
@@ -27,8 +40,7 @@ make
 
 ## Настройки
 Редактор берётся из переменной окружения ```EDITOR```.
-Юзерагент, стандартный редактор и email расположены в первых строках makefile,
-имеют префикс ```CONF_```. Можно аккуратно поменять.
+Юзерагент, стандартный редактор и email задаются с помощью аргументов CMake.
 По умолчанию:
 - Редактор - nano
 - Юзерагент - "Linux" (Linux: Неизвестно)
