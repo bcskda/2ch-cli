@@ -36,17 +36,13 @@ if ("${DEFAULT_EMAIL}" STREQUAL "")
     set(DEFAULT_EMAIL "")
 endif()
 
-message("${Cyan}Default useragent is ${Magenta}${CURL_USERAGENT}${ColorReset}")
-message("${Cyan}Default editor is ${Magenta}${DEFAULT_EDITOR}${ColorReset}")
-message("${Cyan}Default email is ${Magenta}${DEFAULT_EMAIL}${ColorReset}")
+message("${Cyan}Default useragent is \"${Magenta}${CURL_USERAGENT}${Cyan}\"${ColorReset}")
+message("${Cyan}Default editor is \"${Magenta}${DEFAULT_EDITOR}${Cyan}\"${ColorReset}")
+message("${Cyan}Default email is \"${Magenta}${DEFAULT_EMAIL}${Cyan}\"${ColorReset}")
 
 
 link_directories(/lib64 /usr/lib64)
 include_directories(/usr/include)
-
-# FIXME: Лютейший костыль, после исправления хедеров обязательно убрать!
-set(LINKER_FLAGS "-z muldefs")
-set(CMAKE_EXE_LINKER_FLAGS "${LINKER_FLAGS}")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-O2 -fPIC -Wall -pipe")
