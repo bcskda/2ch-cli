@@ -44,6 +44,9 @@ message("${Cyan}Default email is \"${Magenta}${DEFAULT_EMAIL}${Cyan}\"${ColorRes
 link_directories(/lib64 /usr/lib64)
 include_directories(/usr/include)
 
+# jsoncpp может лежать в разных местах
+include_directories(/usr/include/jsoncpp)
+
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-O2 -fPIC -Wall -pipe")
 set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
@@ -51,6 +54,7 @@ set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
 set(SOURCE_FILES
         src/2ch-cli.cpp
         src/2ch-cli.h
+        src/error.cpp
         src/error.h
         src/external.cpp
         src/external.h
