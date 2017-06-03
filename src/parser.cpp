@@ -273,8 +273,8 @@ thread::thread(): // private
 thread::thread(const std::string &board, const long long &num):
 	isNull_(true ),
 	num    (num  ),
-	board  (board),
-	nposts (0    )
+	nposts (0    ),
+	board  (board)
 {
 	char *raw;
 	bool fallback = false;

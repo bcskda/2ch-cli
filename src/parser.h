@@ -23,7 +23,9 @@
 #include "external.h"
 #include "external.h"
 
-struct post {
+class post {
+	bool isNull_;
+public:
 	bool banned;
 	bool closed;
 	std::string comment;
@@ -53,12 +55,14 @@ struct post {
 	post(Json::Value &val);
 	post(const char *raw); // @TODO
 	bool isNull();
-private:
-	bool isNull_;
 };
-typedef struct post makaba_post;
+typedef class post makaba_post;
 
-struct thread {
+class thread {
+	bool isNull_;
+	thread();
+	int append(const char *raw);
+public:
 	long long num;
 	long long nposts;
 	std::string board;
@@ -66,14 +70,16 @@ struct thread {
 	thread(const std::string &board, const long long &num);
 	int update();
 	bool isNull();
-private:
-	bool isNull_;
-	thread();
-	int append(const char *raw);
 };
-typedef struct thread makaba_thread;
+typedef class thread makaba_thread;
 
-struct captcha_2chaptcha {
+class captcha_2chaptcha {
+	bool isNull_;
+	std::string png_url;
+	captcha_2chaptcha();
+	int get_id(const std::string &board, const long long &threadnum);
+	int form_url();
+public:
 	std::string id;
 	std::string value;
 	std::string error; // @TODO ro
@@ -81,14 +87,8 @@ struct captcha_2chaptcha {
 	captcha_2chaptcha(const makaba_thread& thread); // @TODO
 	bool isNull();
 	int get_png();
-private:
-	bool isNull_;
-    std::string png_url;
-	captcha_2chaptcha();
-	int get_id(const std::string &board, const long long &threadnum);
-	int form_url();
 };
-typedef struct captcha_2chaptcha makaba_2chaptcha;
+typedef class captcha_2chaptcha makaba_2chaptcha;
 
 // ========================================
 // JSON cache

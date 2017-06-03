@@ -18,14 +18,17 @@ const char *makaba_strerror(makaba_error_t err) {
         case ERR_REF_FORMAT:
         case ERR_INTERNAL:
             return "Внутренняя ошибка";
+        case ERR_GENERAL_FORMAT:
+            return "Ошибка в формате ответа сервера";
         case ERR_JSON_INIT:
         case ERR_JSON_PARSE:
             return "Внутренняя ошибка libjson";
         case ERR_CACHE_NOENT:
             return "Ошибка: файл кэша не существует";
-        ERR_CACHE_READ:
+        case ERR_CACHE_READ:
             return "Ошибка при чтении файла кэша";
-        ERR_GETENV:
+        case ERR_GETENV:
             return "Ошибка работы со средой";
     }
+    return "Ошибка makaba_strerror()";
 }

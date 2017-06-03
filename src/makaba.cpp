@@ -16,7 +16,7 @@ const char *CAPTCHA_SETTINGS = "api/captcha/settings";
 const char *CAPTCHA_2CHAPTCHA = "api/captcha/2chaptcha";
 const size_t CURL_BUFF_BODY_SIZE = 2e6;
 const size_t CURL_BUFF_HEADER_SIZE = 2000;
-const long long COMMENT_LEN_MAX = 15e3;
+const size_t COMMENT_LEN_MAX = 15e3;
 // Юзерагент  - макрос CURL_UA в мейкфайле
 char *CURL_BUFF_BODY = NULL;
 char *CURL_BUFF_HEADER = NULL;
@@ -313,8 +313,8 @@ char *sendPost (const char *board, const long long threadn,
 		return NULL;
 	}
 	if (strlen(comment) > COMMENT_LEN_MAX) {
-		fprintf(stderr, "[sendPost] Error: comment length \"%d\" > maximal \"%lld\"\n",
-				(int)strlen(comment), COMMENT_LEN_MAX);
+		fprintf(stderr, "[sendPost] Error: comment length \"%lu\" > maximal \"%lu\"\n",
+				strlen(comment), COMMENT_LEN_MAX);
 		makaba_errno = ERR_ARGS;
 		return NULL;
 	}
