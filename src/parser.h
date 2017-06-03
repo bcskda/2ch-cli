@@ -17,7 +17,7 @@
 #include <dirent.h>
 #include <errno.h>
 #include <vector>
-#include <jsoncpp/json/json.h>
+#include <json/json.h>
 #include "error.h"
 #include "makaba.h"
 #include "external.h"
