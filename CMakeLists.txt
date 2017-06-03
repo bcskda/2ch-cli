@@ -41,11 +41,16 @@ message("${Cyan}Default editor is \"${Magenta}${DEFAULT_EDITOR}${Cyan}\"${ColorR
 message("${Cyan}Default email is \"${Magenta}${DEFAULT_EMAIL}${Cyan}\"${ColorReset}")
 
 
-link_directories(/lib64 /usr/lib64)
-include_directories(/usr/include)
+find_package(PkgConfig)
 
-# jsoncpp может лежать в разных местах
-include_directories(/usr/include/jsoncpp)
+pkg_check_modules(ALL_LIBS REQUIRED
+        libcurl
+        jsoncpp
+        ncursesw
+        caca)
+
+link_directories(${ALL_LIBS_LIBRARY_DIRS})
+include_directories(${ALL_LIBS_INCLUDE_DIRS})
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-O2 -fPIC -Wall -pipe")
@@ -63,15 +68,8 @@ set(SOURCE_FILES
         src/parser.cpp
         src/parser.h)
 
-set(LINK_LIBRARIES
-        curl
-        jsoncpp
-        ncursesw
-        tinfow
-        caca)
-
 add_executable(2ch-cli ${SOURCE_FILES})
-target_link_libraries(2ch-cli ${LINK_LIBRARIES})
+target_link_libraries(2ch-cli ${ALL_LIBS_LIBRARIES})
 
 # Костыльно, но иначе CMake ругается.
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCURL_UA=\"\\\"${CURL_USERAGENT}\\\"\"")
