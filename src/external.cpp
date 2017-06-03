@@ -1,5 +1,31 @@
 #include "external.h"
 
+// Global defs
+
+const char *Converter          = "img2txt";
+const char *Converter_format   = "caca";
+const char *Converter_width_s  = "140";
+const char *Converter_height_s = "35";
+const int   Converter_width_i  = 140;
+const int   Converter_height_i = 35;
+
+const int Ret_show_OK = 0;
+const int Ret_show_create_canvas = 1;
+const int Ret_show_import_canvas = 2;
+const int Ret_show_create_display = 3;
+
+const  std::string Comment_tmpmesg = "Здесь будет текст поста";
+
+std::string Comment_tmpfile = "";
+std::string Email_tmpfile   = "";
+std::string Name_tmpfile    = "";
+std::string Trip_tmpfile    = "";
+
+std::string Env_HOME = "";
+std::string Env_EDITOR = "";
+
+// End Global defs
+
 void setup_env() {
 	if (Env_EDITOR.length() == 0)
 		Env_EDITOR = getenv("EDITOR");

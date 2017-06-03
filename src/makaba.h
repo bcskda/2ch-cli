@@ -17,19 +17,23 @@
 
 typedef std::vector< std::pair<std::string, std::string> > Postfields;
 
-const char *BASE_URL = "https://2ch.hk";
-const char *MOBILE_API = "makaba/mobile.fcgi";
-const char *POSTING_API = "makaba/posting.fcgi";
-const char *POSTING_FIELDS = "json=1&task=post&captcha_type=2chaptcha";
-const char *CAPTCHA_SETTINGS = "api/captcha/settings";
-const char *CAPTCHA_2CHAPTCHA = "api/captcha/2chaptcha";
-const size_t CURL_BUFF_BODY_SIZE = 2e6;
-const size_t CURL_BUFF_HEADER_SIZE = 2000;
-const long long COMMENT_LEN_MAX = 15e3;
+// Global defs
+
+extern const char *BASE_URL;
+extern const char *MOBILE_API;
+extern const char *POSTING_API;
+extern const char *POSTING_FIELDS;
+extern const char *CAPTCHA_SETTINGS;
+extern const char *CAPTCHA_2CHAPTCHA;
+extern const size_t CURL_BUFF_BODY_SIZE;
+extern const size_t CURL_BUFF_HEADER_SIZE;
+extern const long long COMMENT_LEN_MAX;
 // Юзерагент  - макрос CURL_UA в мейкфайле
-char *CURL_BUFF_BODY = NULL;
-char *CURL_BUFF_HEADER = NULL;
-size_t CURL_BUFF_POS = 0;
+extern char *CURL_BUFF_BODY;
+extern char *CURL_BUFF_HEADER;
+extern size_t CURL_BUFF_POS;
+
+// End Global defs
 
 size_t CURL_writeToBuff (const char *src, const size_t size, const size_t nmemb, void *dest);
 void makabaSetup();

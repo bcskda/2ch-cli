@@ -6,6 +6,36 @@
 
 #include "parser.h"
 
+// Global defs
+
+const size_t Json_cache_buf_size = 2e6;
+const char *Json_cache_suff_armed = "active";
+char *Json_cache_buf = NULL;
+char Json_cache_dir[100] = "";
+
+const char *PATTERN_TAG_OPEN = "<";
+const char *PATTERN_TAG_CLOSE = ">";
+
+const char *PATTERN_HREF_OPEN = "<a href=\"";
+const char *PATTERN_HREF_CLOSE = "</a>";
+const char *PATTERN_REPLY_CLASS = "class=\"post-reply-link\"";
+const char *PATTERN_REPLY_THREAD = "data-thread=\"";
+const char *PATTERN_REPLY_NUM = "data-num=\"";
+const char *PATTERN_NEWLINE = "<br>";
+const char *PATTERN_LT = "&lt";
+const char *PATTERN_GT = "&gt";
+const char *PATTERN_SLASH = "&#47";
+const char *PATTERN_BCKSLASH = "&#92";
+const char *PATTERN_NBSP = "&nbsp";
+const char *PATTERN_SINGLE_QUOT = "&#39";
+const char *PATTERN_DOUBLE_QUOT = "&quot";
+const char *PATTERN_AMP = "&amp";
+
+const char *CaptchaPngFilename = "/tmp/2ch-captcha.png";
+const char *CaptchaUtfFilename = "/tmp/2ch-captcha.utf8";
+
+// End Global defs
+
 char *parseHTML (const char *raw, const long long raw_len, const bool v) { // Пока что игнорируем разметку
 
 	if (v) {

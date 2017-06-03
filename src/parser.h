@@ -17,7 +17,6 @@
 #include <dirent.h>
 #include <errno.h>
 #include <vector>
-#include <json.h>
 #include <jsoncpp/json/json.h>
 #include "error.h"
 #include "makaba.h"
@@ -95,35 +94,35 @@ typedef struct captcha_2chaptcha makaba_2chaptcha;
 // JSON cache
 // ========================================
 
-const size_t Json_cache_buf_size = 2e6;
-const char *Json_cache_suff_armed = "active";
-char *Json_cache_buf = NULL;
-char Json_cache_dir[100] = "";
+extern const size_t Json_cache_buf_size;
+extern const char *Json_cache_suff_armed;
+extern char *Json_cache_buf;
+extern char Json_cache_dir[100];
 
 // ========================================
 // Ручной парсинг
 // ========================================
 
-const char *PATTERN_TAG_OPEN = "<";
-const char *PATTERN_TAG_CLOSE = ">";
+extern const char *PATTERN_TAG_OPEN;
+extern const char *PATTERN_TAG_CLOSE;
 
-const char *PATTERN_HREF_OPEN = "<a href=\"";
-const char *PATTERN_HREF_CLOSE = "</a>";
-const char *PATTERN_REPLY_CLASS = "class=\"post-reply-link\"";
-const char *PATTERN_REPLY_THREAD = "data-thread=\"";
-const char *PATTERN_REPLY_NUM = "data-num=\"";
-const char *PATTERN_NEWLINE = "<br>";
-const char *PATTERN_LT = "&lt";
-const char *PATTERN_GT = "&gt";
-const char *PATTERN_SLASH = "&#47";
-const char *PATTERN_BCKSLASH = "&#92";
-const char *PATTERN_NBSP = "&nbsp";
-const char *PATTERN_SINGLE_QUOT = "&#39";
-const char *PATTERN_DOUBLE_QUOT = "&quot";
-const char *PATTERN_AMP = "&amp";
+extern const char *PATTERN_HREF_OPEN;
+extern const char *PATTERN_HREF_CLOSE;
+extern const char *PATTERN_REPLY_CLASS;
+extern const char *PATTERN_REPLY_THREAD;
+extern const char *PATTERN_REPLY_NUM;
+extern const char *PATTERN_NEWLINE;
+extern const char *PATTERN_LT;
+extern const char *PATTERN_GT;
+extern const char *PATTERN_SLASH;
+extern const char *PATTERN_BCKSLASH;
+extern const char *PATTERN_NBSP;
+extern const char *PATTERN_SINGLE_QUOT;
+extern const char *PATTERN_DOUBLE_QUOT;
+extern const char *PATTERN_AMP;
 
-const char *CaptchaPngFilename = "/tmp/2ch-captcha.png";
-const char *CaptchaUtfFilename = "/tmp/2ch-captcha.utf8";
+extern const char *CaptchaPngFilename;
+extern const char *CaptchaUtfFilename;
 
 // ========================================
 // Прототипы

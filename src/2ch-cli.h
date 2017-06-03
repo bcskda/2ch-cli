@@ -20,24 +20,24 @@
 
 #define VERSION "v0.4test7"
 
-const int RET_OK = 0;
-const int RET_ARGS = 1;
-const int RET_PREEXIT = 2;
-const int RET_MEMORY = 3;
-const int RET_PARSE = 4;
-const int RET_INTERNAL = 5;
+extern const int RET_OK;
+extern const int RET_ARGS;
+extern const int RET_PREEXIT;
+extern const int RET_MEMORY;
+extern const int RET_PARSE;
+extern const int RET_INTERNAL;
 
-const int Skip_on_PG = 20;
+extern const int Skip_on_PG;
 
-const int Head_pos_x = 0;
-const int Head_pos_y = 0;
-const int Err_pos_x = 50;
-const int Err_pos_y = 0;
+extern const int Head_pos_x;
+extern const int Head_pos_y;
+extern const int Err_pos_x;
+extern const int Err_pos_y;
 
-const char Headers_pref[] = "| ";
-const char Headers_suff[] = " |";
+extern const char *Headers_pref;
+extern const char *Headers_suff;
 
-bool Sage_on = false;
+extern bool Sage_on;
 
 const char *sendPost(const makaba_post &post,
 					 const std::string &board,

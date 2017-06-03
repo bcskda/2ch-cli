@@ -6,6 +6,24 @@
 
 #include "makaba.h"
 
+// Global defs
+
+const char *BASE_URL = "https://2ch.hk";
+const char *MOBILE_API = "makaba/mobile.fcgi";
+const char *POSTING_API = "makaba/posting.fcgi";
+const char *POSTING_FIELDS = "json=1&task=post&captcha_type=2chaptcha";
+const char *CAPTCHA_SETTINGS = "api/captcha/settings";
+const char *CAPTCHA_2CHAPTCHA = "api/captcha/2chaptcha";
+const size_t CURL_BUFF_BODY_SIZE = 2e6;
+const size_t CURL_BUFF_HEADER_SIZE = 2000;
+const long long COMMENT_LEN_MAX = 15e3;
+// Юзерагент  - макрос CURL_UA в мейкфайле
+char *CURL_BUFF_BODY = NULL;
+char *CURL_BUFF_HEADER = NULL;
+size_t CURL_BUFF_POS = 0;
+
+// End Global defs
+
 // ========================================
 // API general
 // ========================================

@@ -12,31 +12,31 @@
 #include <stdbool.h>
 #include "error.h"
 
-#define Converter          "img2txt"
-#define Converter_width_i  140
-#define Converter_height_i 35
-#define Converter_width_s  "140"
-#define Converter_height_s "35"
-#define Converter_format   "caca"
+extern const char *Converter;
+extern const char *Converter_format;
+extern const char *Converter_width_s;
+extern const char *Converter_height_s;
+extern const int   Converter_width_i;
+extern const int   Converter_height_i;
 
-const int Ret_show_OK = 0;
-const int Ret_show_create_canvas = 1;
-const int Ret_show_import_canvas = 2;
-const int Ret_show_create_display = 3;
+extern const int Ret_show_OK;
+extern const int Ret_show_create_canvas;
+extern const int Ret_show_import_canvas;
+extern const int Ret_show_create_display;
 
 caca_display_t *show_img(const char *filename);
 void convert_img(const char *filename, const char *ofile, const bool v);
 int perf_exec(const char **args);
 
-const  std::string Comment_tmpmesg = "Здесь будет текст поста";
+extern const  std::string Comment_tmpmesg;
 
-static std::string Comment_tmpfile = "";
-static std::string Email_tmpfile   = "";
-static std::string Name_tmpfile    = "";
-static std::string Trip_tmpfile    = "";
+extern std::string Comment_tmpfile;
+extern std::string Email_tmpfile;
+extern std::string Name_tmpfile;
+extern std::string Trip_tmpfile;
 
-std::string Env_HOME = "";
-std::string Env_EDITOR = "";
+extern std::string Env_HOME;
+extern std::string Env_EDITOR;
 
 enum edit_task {
 	Task_comment,

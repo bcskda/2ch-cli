@@ -6,6 +6,29 @@
 
 #include "2ch-cli.h"
 
+// Global defs
+
+const int RET_OK = 0;
+const int RET_ARGS = 1;
+const int RET_PREEXIT = 2;
+const int RET_MEMORY = 3;
+const int RET_PARSE = 4;
+const int RET_INTERNAL = 5;
+
+const int Skip_on_PG = 20;
+
+const int Head_pos_x = 0;
+const int Head_pos_y = 0;
+const int Err_pos_x = 50;
+const int Err_pos_y = 0;
+
+const char *Headers_pref = "| ";
+const char *Headers_suff = " |";
+
+bool Sage_on = false;
+
+// End Global defs
+
 void pomogite() // Справка
 {
 	printf("2ch-cli " VERSION " - консольный клиент двача\n");
