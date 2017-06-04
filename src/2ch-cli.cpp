@@ -90,7 +90,7 @@ int main (int argc, const char **argv)
 	}
 
 	#ifdef CAPTCHA_TEST_CPP
-	makaba_2chaptcha captcha(board, thread_number);
+	Makaba::Captcha_2ch captcha(board, thread_number);
 	captcha.get_png();
 	char shcmd[40];
 	sprintf(shcmd, "cat %s", CaptchaUtfFilename);
@@ -99,7 +99,7 @@ int main (int argc, const char **argv)
 	#endif
 
 	if (send_post == true) {
-		makaba_post post(comment.data(), "",
+		Makaba::Post post(comment.data(), "",
 						 "", "",
 						 "", "");
 		if (sendPost(post, board, thread_number)) {
@@ -109,7 +109,7 @@ int main (int argc, const char **argv)
 		return RET_OK;
 	}
 
-	makaba_thread thread(board, thread_number);
+	Makaba::Thread thread(board, thread_number);
 	if (makaba_errno) {
 		printf("An error occured: %s\n", makaba_strerror(makaba_errno));
 		makabaCleanup();
@@ -128,7 +128,7 @@ int main (int argc, const char **argv)
 	bool should_exit = false;
 	ncurses_print_post(thread, 0);
 	int ret = RET_OK;
-	makaba_post dummy_post("", "",
+	Makaba::Post dummy_post("", "",
 						   "", "",
 						   "", "");
 	dummy_post.email = Sage_on ? "sage" : DEFAULT_EMAIL;
@@ -262,20 +262,20 @@ int main (int argc, const char **argv)
 	return ret;
 }
 
-const char *sendPost(const makaba_post &post,
+const char *sendPost(const Makaba::Post &post,
 					 const std::string &board,
 					 const long long &threadnum)
 {
-	makaba_2chaptcha captcha(board, threadnum);
+	Makaba::Captcha_2ch captcha(board, threadnum);
 	if (captcha.isNull()) {
 		fprintf(stderr, "[main] Error: "
-						"captcha_2chaptcha::captcha_2chaptcha(const std::string &, const long long &)\n"
+						"Makaba::Captcha_2ch::Makaba::Captcha_2ch(const std::string &, const long long &)\n"
 						"  error = %d\n"
 						"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
 		return NULL;
 	}
 	if (captcha.get_png()) {
-		fprintf(stderr, "[main] Error: captcha_2chaptcha::get_png()\n"
+		fprintf(stderr, "[main] Error: Makaba::Captcha_2ch::get_png()\n"
 						"  error = %d\n"
 						"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
 		return NULL;
@@ -295,7 +295,7 @@ const char *sendPost(const makaba_post &post,
 		captcha.id.data(), captcha.value.data());
 }
 
-int printThreadHeader(const makaba_thread &thread)
+int printThreadHeader(const Makaba::Thread &thread)
 {
 	move(Head_pos_y, Head_pos_x);
 	printw("%s", Headers_pref);
@@ -304,7 +304,7 @@ int printThreadHeader(const makaba_thread &thread)
 	return 0;
 }
 
-int printPost (const makaba_post &post, const bool show_email, const bool show_files) {
+int printPost (const Makaba::Post &post, const bool show_email, const bool show_files) {
 	if (post.date.length() == 0) {
 		fprintf(stderr, "! ERROR @printPost: Null date in struct post\n");
 		makaba_errno = ERR_POST_FORMAT;
@@ -364,7 +364,7 @@ void ncurses_print_help() {
 	       Skip_on_PG, Skip_on_PG);
 }
 
-void ncurses_print_post(const makaba_thread &thread, const long long num) {
+void ncurses_print_post(const Makaba::Thread &thread, const long long num) {
 	clear();
 	printThreadHeader(thread);
 	printPost(thread.posts[num], true, true);

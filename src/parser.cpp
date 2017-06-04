@@ -148,44 +148,45 @@ char *parseHTML (const char *raw, const long long raw_len, const bool v) { // П
 // Captcha
 // ========================================
 
-bool captcha_2chaptcha::isNull()
+bool Makaba::Captcha_2ch::isNull()
 {
 	return this->isNull_;
 }
 
-captcha_2chaptcha::captcha_2chaptcha():
+Makaba::Captcha_2ch::Captcha_2ch():
 	isNull_(true),
 	id     (std::string())
 	{}
 
-captcha_2chaptcha::captcha_2chaptcha(const std::string &board, const long long &threadnum):
+Makaba::Captcha_2ch::Captcha_2ch(const std::string &board, const long long &threadnum):
 	isNull_(true),
 	id     (std::string())
 {
 	if (this->get_id(board, threadnum)) {
-		fprintf(stderr, "[captcha_2chaptcha::captcha_2chaptcha(const std::string &, const long long &)]: "
-						"Error: captcha_2chaptcha::get_id() failed\n");
+		fprintf(stderr, "[%s]: Error: this->get_id() failed\n",
+				__PRETTY_FUNCTION__);
 		return;
 	}
 	if (this->form_url()) {
-		fprintf(stderr, "[captcha_2chaptcha::captcha_2chaptcha(const std::string &, const long long &)]: "
-						"Error: captcha_2chaptcha::form_url() failed\n");
+		fprintf(stderr, "[%s]: Error: this->form_url() failed\n",
+				__PRETTY_FUNCTION__);
 		return;
 	}
 	isNull_ = false;
 }
 
-int captcha_2chaptcha::get_id(const std::string &board, const long long &threadnum)
+int Makaba::Captcha_2ch::get_id(const std::string &board, const long long &threadnum)
 {
 	if (this->id.length()) {
-		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Note: already has ID\n"
-						"  board = %s, thread = %lld\n", board.data(), threadnum);
+		fprintf(stderr, "[%s] Note: already has ID\n"
+						"  board = %s, thread = %lld\n",
+				__PRETTY_FUNCTION__, board.data(), threadnum);
 		return -1;
 	}
 	char *id_raw = get2chaptchaId(board.data(), threadnum, false);
 	if (id_raw == NULL) {
-		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Error: "
-						"get2chaptchaId(): %d\n", makaba_errno);
+		fprintf(stderr, "[%s] Error: get2chaptchaId(): %d\n",
+				__PRETTY_FUNCTION__, makaba_errno);
 		return -1;
 	}
 	Json::CharReaderBuilder rbuilder;
@@ -193,18 +194,18 @@ int captcha_2chaptcha::get_id(const std::string &board, const long long &threadn
 	std::string errs;
 	Json::Value ans;
 	if (! reader->parse(id_raw, id_raw + strlen(id_raw), &ans, &errs)) {
-		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Error:\n"
+		fprintf(stderr, "[%s] Error:\n"
 						"Json::CharReader::parse():\n  %s\n",
-				errs.data());
+				__PRETTY_FUNCTION__, errs.data());
 		makaba_errno = ERR_GENERAL_FORMAT;
 		return -1;
 	}
 	fprintf(stderr, "btw ans:\n");
     std::cerr << ans << std::endl;
 	if (! ans["error"].isNull()) {
-		fprintf(stderr, "[bool captcha_2chaptcha::get_id()] Error: "
+		fprintf(stderr, "[%s] Error: \n"
 						"API returned \"error\":\"%d\"\n",
-						ans["error"].asInt());
+						__PRETTY_FUNCTION__, ans["error"].asInt());
 		this->error = ans["description"].asString();
 		return -1;
 	}
@@ -212,16 +213,15 @@ int captcha_2chaptcha::get_id(const std::string &board, const long long &threadn
 	return 0;
 }
 
-int captcha_2chaptcha::form_url()
+int Makaba::Captcha_2ch::form_url()
 {
 	if (this->id.length() == 0) {
-		fprintf(stderr, "[bool captcha_2chaptcha::form_url] Error: "
-						"ID is null\n");
+		fprintf(stderr, "[%s] Error: ID is null\n", __PRETTY_FUNCTION__);
 		return -1;
 	}
 	if (this->png_url.length()) {
-		fprintf(stderr, "[bool captcha_2chaptcha::form_url] Note: "
-						"already has png_url\n");
+		fprintf(stderr, "[%s] Note: already has png_url, not re-doing\n",
+				__PRETTY_FUNCTION__);
 		return -1;
 	}
 	this->png_url.resize(strlen(BASE_URL) + strlen(CAPTCHA_2CHAPTCHA) +
@@ -234,23 +234,21 @@ int captcha_2chaptcha::form_url()
 	return 0;
 }
 
-int captcha_2chaptcha::get_png() {
+int Makaba::Captcha_2ch::get_png() {
 	if (this->id.length() == 0) {
-		fprintf(stderr, "[bool captcha_2chaptcha::get_png] Error: "
-						"ID is null\n");
+		fprintf(stderr, "[%s] Error: ID is null\n", __PRETTY_FUNCTION__);
 		return -1;
 	}
 	if (this->png_url.length() == 0) {
-		fprintf(stderr, "[bool captcha_2chaptcha::get_png] Error: "
-						"png_url is null\n");
+		fprintf(stderr, "[%s] Error: png_url is null\n", __PRETTY_FUNCTION__);
 		return -1;
 	}
 
 	long long pic_size;
 	char *pic = get2chaptchaPicPNG(this->png_url.data(), &pic_size);
 	if (pic == NULL) {
-		fprintf(stderr, "[bool captcha_2chaptcha::get_png] Error: "
-						"get2chaptchaPicPNG() failed: %d\n", makaba_errno);
+		fprintf(stderr, "[%s] Error: get2chaptchaPicPNG() failed: %d\n",
+				__PRETTY_FUNCTION__, makaba_errno);
 		return -1;
 	}
 	FILE *pic_file = fopen(CaptchaPngFilename, "w");
@@ -266,11 +264,11 @@ int captcha_2chaptcha::get_png() {
 // Треды, посты
 // ========================================
 
-thread::thread(): // private
+Makaba::Thread::Thread(): // private
 	isNull_(true)
 	{} 
 
-thread::thread(const std::string &board, const long long &num):
+Makaba::Thread::Thread(const std::string &board, const long long &num):
 	isNull_(true ),
 	num    (num  ),
 	nposts (0    ),
@@ -280,10 +278,10 @@ thread::thread(const std::string &board, const long long &num):
 	bool fallback = false;
 	if (Json_cache_dir == NULL) {
 		if (initJsonCache()) {
-			fprintf(stderr, "[thread::thread(const std::string, const long long)] "
-							"Error @ initJsonCache()\n");
-			fprintf(stderr, "[thread::thread(const std::string, const long long)] "
-							"Warning: Fallback to getThread()\n");
+			fprintf(stderr, "[%s] Error @ initJsonCache()\n",
+					__PRETTY_FUNCTION__);
+			fprintf(stderr, "[%s] Warning: Fallback to getThread()\n",
+					__PRETTY_FUNCTION__);
 			fallback = true;
 		}
 	}
@@ -291,13 +289,13 @@ thread::thread(const std::string &board, const long long &num):
 	if (fallback == false && checkJsonCache(*this)) { // Тред есть в кэше
 		raw = readJsonCache(*this, &size);
 		if (raw == NULL) {
-			fprintf(stderr, "[thread::thread(const std::string, const long long)] "
-							"Warning: Fallback to getThread()\n");
+			fprintf(stderr, "[%s] Warning: Fallback to getThread()\n",
+					__PRETTY_FUNCTION__);
 			raw = getThread(this->board.data(), this->num,
 							1, &size, false);
 			if (raw == NULL) {
-				fprintf(stderr, "[thread::thread(const std::string, const long long)] "
-								"Error @ getThread()\n");
+				fprintf(stderr, "[%s] Error @ getThread()\n",
+						__PRETTY_FUNCTION__);
 				return;
 			}
 		} // Избавиться бы от копипасты
@@ -307,58 +305,55 @@ thread::thread(const std::string &board, const long long &num):
 		raw = getThread(this->board.data(), this->num,
 						1, &size, false);
 		if (raw == NULL) {
-			fprintf(stderr, "[thread::thread(const std::string, const long long)] "
-							"Error @ getThread()\n");
+			fprintf(stderr, "[%s] Error @ getThread()\n", __PRETTY_FUNCTION__);
 			return;
 		}
 		if (writeJsonCache(*this, raw)) {
-			fprintf(stderr, "[thread::thread(const std::string, const long long)] "
-							"Error @ writeJsonCache()\n");
+			fprintf(stderr, "[%s] Error @ writeJsonCache()\n", __PRETTY_FUNCTION__);
 			return;
 		}
 		armJsonCache(*this);
 	}
 
 	if (this->append(raw)) {
-		fprintf(stderr, "[thread::thread(const std::string, const long long)] "
-						"Error @ thread::append(const char *)\n");
+		fprintf(stderr, "[%s] Error @ this->append()\n", __PRETTY_FUNCTION__);
 		makaba_errno = ERR_GENERAL_FORMAT;
 	}
 	this->isNull_ = false;
 }
 
-bool thread::isNull()
+bool Makaba::Thread::isNull()
 {
 	return this->isNull_;
 }
 
-int thread::append(const char *raw)
+int Makaba::Thread::append(const char *raw)
 {
 	Json::CharReaderBuilder rbuilder;
 	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
 	std::string errs;
 	Json::Value array;
 	if (! reader->parse(raw, raw + strlen(raw), &array, &errs)) {
-		fprintf(stderr, "[thread::append(const char *)] Error:\n"
+		fprintf(stderr, "[%s] Error:\n"
 						"Json::CharReader::parse():\n  %s\n",
-				errs.data());
+				__PRETTY_FUNCTION__, errs.data());
 		makaba_errno = ERR_GENERAL_FORMAT;
 		return -1;
 	}
 
 	for (auto obj : array) {
 		this->nposts++;
-		makaba_post post(obj);
+		Makaba::Post post(obj);
 		post.rel_num = this->nposts;
 		this->posts.push_back(post);
 	}
 	return 0;
 }
 
-int thread::update()
+int Makaba::Thread::update()
 {
 	if (this->isNull()) {
-		fprintf(stderr, "[bool thread::update()] Error: is null\n");
+		fprintf(stderr, "[%s] Error: is null\n", __PRETTY_FUNCTION__);
 		makaba_errno = ERR_INTERNAL;
 		return -1;
 	}
@@ -367,7 +362,7 @@ int thread::update()
 	char *raw = getThread(this->board.data(), this->num,
 						  this->nposts + 1, &size, false);
 	if (raw == NULL) {
-		fprintf(stderr, "[bool thread::update()] Error @ getThread()\n");
+		fprintf(stderr, "[%s] Error @ getThread()\n", __PRETTY_FUNCTION__);
 		return -1;
 	}
 
@@ -375,28 +370,28 @@ int thread::update()
 	if (Json_cache_dir == NULL) {
 		if (initJsonCache()) {
 			write_cache = false;
-			fprintf(stderr, "[bool thread::update()] Error @ initJsonCache()"
-							"[bool thread::update()] Warning: Can`t write cache\n");
+			fprintf(stderr, "[%s] Error @ initJsonCache(), can`t write cache\n",
+				__PRETTY_FUNCTION__);
 		}
 	}
 	if (write_cache)
 		writeJsonCache(*this, raw);
 
 	if (this->append(raw)) {
-		fprintf(stderr, "[bool thread::update()] Error @ thread::append()\n");
+		fprintf(stderr, "[%s] Error @ this->append()\n", __PRETTY_FUNCTION__);
 		return -1;
 	}
 
 	return 0;
 }
 
-post::post():
+Makaba::Post::Post():
 	isNull_(true)
 	{}
 
-post::post(const std::string &vcomment, const std::string &vemail,
-		   const std::string &vname,    const std::string &vsubject,
-		   const std::string &vtags,    const std::string &vtrip):
+Makaba::Post::Post(const std::string &vcomment, const std::string &vemail,
+				   const std::string &vname,    const std::string &vsubject,
+				   const std::string &vtags,    const std::string &vtrip):
 
 	isNull_(false),
 	comment(std::string(vcomment)), email  (std::string(vemail)),
@@ -404,9 +399,9 @@ post::post(const std::string &vcomment, const std::string &vemail,
 	tags   (std::string(vtags)),    trip   (std::string(vtrip))
 	{}
 
-post::post(const char *vcomment, const char *vemail,
-		   const char *vname,    const char *vsubject,
-		   const char *vtags,    const char *vtrip):
+Makaba::Post::Post(const char *vcomment, const char *vemail,
+				   const char *vname,    const char *vsubject,
+				   const char *vtags,    const char *vtrip):
 
 	isNull_(false                      ),
 	comment(vcomment), email  (vemail  ),
@@ -414,7 +409,7 @@ post::post(const char *vcomment, const char *vemail,
 	tags   (vtags   ), trip   (vtrip   )
 	{}
 
-post::post(Json::Value &val):
+Makaba::Post::Post(Json::Value &val):
 	isNull_       ( false                                          ),
 	banned        ( atoi( val["banned"        ].asString().data()) ),
 	closed        ( atoi( val["closed"        ].asString().data()) ),
@@ -438,16 +433,16 @@ post::post(Json::Value &val):
 {
 	const char *comment_raw = val["comment"].asCString();
 	char *comment_parsed = parseHTML(comment_raw, strlen(comment_raw), false);
-	this->comment = std::string(comment_parsed);
+	this->comment = comment_parsed;
 	free(comment_parsed);
 	const char *name_raw = val["name"].asCString();
 	char *name_parsed = parseHTML(name_raw, strlen(name_raw), false);
-	this->name = std::string(name_parsed);
+	this->name = name_parsed;
 	free(name_parsed);
 	fprintf(stderr, "<init post #%10lld>\n", this->num);
 }
 
-bool post::isNull()
+bool Makaba::Post::isNull()
 {
 	return this->isNull_;
 }
@@ -476,7 +471,7 @@ int initJsonCache()
 	return 0;
 }
 
-bool checkJsonCache(const makaba_thread &thread)
+bool checkJsonCache(const Makaba::Thread &thread)
 {
 	char filename[70] = "";
 	sprintf(filename, "%s/thread-%s-%lld",
@@ -484,7 +479,7 @@ bool checkJsonCache(const makaba_thread &thread)
 	return access(filename, F_OK) == 0;
 }
 
-void armJsonCache(const makaba_thread &thread)
+void armJsonCache(const Makaba::Thread &thread)
 {
 	char filename_old[70] = "";
 	sprintf(filename_old, "%s/thread-%s-%lld",
@@ -494,7 +489,7 @@ void armJsonCache(const makaba_thread &thread)
 	rename(filename_old, filename_new);
 }
 
-void disarmJsonCache(const makaba_thread &thread)
+void disarmJsonCache(const Makaba::Thread &thread)
 {
 	char filename_new[70] = "";
 	sprintf(filename_new, "%s/thread-%s-%lld",
@@ -504,7 +499,7 @@ void disarmJsonCache(const makaba_thread &thread)
 	rename(filename_old, filename_new);
 }
 
-char *readJsonCache(const makaba_thread &thread, long long *threadsize)
+char *readJsonCache(const Makaba::Thread &thread, long long *threadsize)
 {
 	char filename[70] = "";
 	sprintf(filename, "%s/thread-%s-%lld",
@@ -544,7 +539,7 @@ char *readJsonCache(const makaba_thread &thread, long long *threadsize)
 	return Json_cache_buf;
 }
 
-int writeJsonCache(const makaba_thread &thread, const char *thread_ch)
+int writeJsonCache(const Makaba::Thread &thread, const char *thread_ch)
 {
 	if (strlen(Json_cache_dir) == 0) {
 		if (initJsonCache() == -1) {

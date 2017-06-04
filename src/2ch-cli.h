@@ -39,12 +39,12 @@ extern const char *Headers_suff;
 
 extern bool Sage_on;
 
-const char *sendPost(const makaba_post &post,
+const char *sendPost(const Makaba::Post &post,
 					 const std::string &board,
 					 const long long &threadnum = 0);
 
-int printThreadHeader(const makaba_thread &thread);
-int printPost (const makaba_post &post, const bool show_email, const bool show_files);
+int printThreadHeader(const Makaba::Thread &thread);
+int printPost (const Makaba::Post &post, const bool show_email, const bool show_files);
 
 void parse_argv(const int argc, const char **argv,
 	std::string &board, long long &thread_number, std::string &comment, std::string &passcode,
@@ -52,6 +52,6 @@ void parse_argv(const int argc, const char **argv,
 void ncurses_init();
 void ncurses_exit();
 void ncurses_print_help();
-void ncurses_print_post(const makaba_thread &thread, const long long num);
+void ncurses_print_post(const Makaba::Thread &thread, const long long num);
 void ncurses_print_error(const char *mesg);
 void ncurses_clear_errors();

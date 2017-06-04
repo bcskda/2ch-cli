@@ -23,7 +23,9 @@
 #include "external.h"
 #include "external.h"
 
-class post {
+namespace Makaba {
+
+class Post {
 	bool isNull_;
 public:
 	bool banned;
@@ -45,50 +47,49 @@ public:
 	std::string trip_type; // enum?
 	long long unique_posters;
 	long long rel_num;
-	post();
-	post(const std::string &vcomment, const std::string &vemail,
+	Post();
+	Post(const std::string &vcomment, const std::string &vemail,
 		 const std::string &vname,    const std::string &vsubject,
 		 const std::string &vtags,    const std::string &vtrip);
-	post(const char *vcomment, const char *vemail,
+	Post(const char *vcomment, const char *vemail,
 		 const char *vname,    const char *vsubject,
 		 const char *vtags,    const char *vtrip);
-	post(Json::Value &val);
-	post(const char *raw); // @TODO
+	Post(Json::Value &val);
+	Post(const char *raw); // @TODO
 	bool isNull();
 };
-typedef class post makaba_post;
 
-class thread {
+class Thread {
 	bool isNull_;
-	thread();
+	Thread();
 	int append(const char *raw);
 public:
 	long long num;
 	long long nposts;
 	std::string board;
-	std::vector<makaba_post> posts;
-	thread(const std::string &board, const long long &num);
+	std::vector<Makaba::Post> posts;
+	Thread(const std::string &board, const long long &num);
 	int update();
 	bool isNull();
 };
-typedef class thread makaba_thread;
 
-class captcha_2chaptcha {
+class Captcha_2ch {
 	bool isNull_;
 	std::string png_url;
-	captcha_2chaptcha();
+	Captcha_2ch();
 	int get_id(const std::string &board, const long long &threadnum);
 	int form_url();
 public:
 	std::string id;
 	std::string value;
 	std::string error; // @TODO ro
-	captcha_2chaptcha(const std::string &board, const long long &threadnum);
-	captcha_2chaptcha(const makaba_thread& thread); // @TODO
+	Captcha_2ch(const std::string &board, const long long &threadnum);
+	Captcha_2ch(const Makaba::Thread& thread); // @TODO
 	bool isNull();
 	int get_png();
 };
-typedef class captcha_2chaptcha makaba_2chaptcha;
+
+} // end namespace Makaba
 
 // ========================================
 // JSON cache
@@ -131,12 +132,12 @@ extern const char *CaptchaUtfFilename;
 char *parseHTML(const char *raw, const long long raw_len, const bool v);
 
 int   initJsonCache  ();
-bool  checkJsonCache (const makaba_thread &thread);
-void  armJsonCache   (const makaba_thread &thread);
-void  disarmJsonCache(const makaba_thread &thread);
-char *readJsonCache  (const makaba_thread &thread, long long *threadsize);
-int   writeJsonCache (const makaba_thread &thread, const char *thread_ch);
+bool  checkJsonCache (const Makaba::Thread &thread);
+void  armJsonCache   (const Makaba::Thread &thread);
+void  disarmJsonCache(const Makaba::Thread &thread);
+char *readJsonCache  (const Makaba::Thread &thread, long long *threadsize);
+int   writeJsonCache (const Makaba::Thread &thread, const char *thread_ch);
 int   cleanJsonCache ();
 
-void freePost  (makaba_thread &post);
-void freeThread(makaba_thread &thread);
+void freePost  (Makaba::Thread &post);
+void freeThread(Makaba::Thread &thread);
