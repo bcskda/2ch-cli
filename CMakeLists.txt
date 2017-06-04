@@ -57,16 +57,18 @@ set(CMAKE_CXX_FLAGS "-O2 -fPIC -pipe -Wall -Wno-pointer-arith")
 set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
 
 set(SOURCE_FILES
-        src/2ch-cli.cpp
-        src/2ch-cli.h
         src/error.cpp
         src/error.h
         src/external.cpp
         src/external.h
+        src/API.cpp
+        src/API.h
+        src/parser.cpp
+        src/parser.h
         src/makaba.cpp
         src/makaba.h
-        src/parser.cpp
-        src/parser.h)
+        src/2ch-cli.cpp
+        src/2ch-cli.h)
 
 add_executable(2ch-cli ${SOURCE_FILES})
 target_link_libraries(2ch-cli ${ALL_LIBS_LIBRARIES})

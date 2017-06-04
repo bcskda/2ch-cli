@@ -1,392 +1,323 @@
 // ========================================
 // File: makaba.cpp
-// Makaba API-related functions
-// (Implementation)
+// High-level imageboard API
 // ========================================
+
 
 #include "makaba.h"
 
-// Global defs
-
-const char *BASE_URL = "https://2ch.hk";
-const char *MOBILE_API = "makaba/mobile.fcgi";
-const char *POSTING_API = "makaba/posting.fcgi";
-const char *POSTING_FIELDS = "json=1&task=post&captcha_type=2chaptcha";
-const char *CAPTCHA_SETTINGS = "api/captcha/settings";
-const char *CAPTCHA_2CHAPTCHA = "api/captcha/2chaptcha";
-const size_t CURL_BUFF_BODY_SIZE = 2e6;
-const size_t CURL_BUFF_HEADER_SIZE = 2000;
-const size_t COMMENT_LEN_MAX = 15e3;
-// Юзерагент  - макрос CURL_UA в мейкфайле
-char *CURL_BUFF_BODY = NULL;
-char *CURL_BUFF_HEADER = NULL;
-size_t CURL_BUFF_POS = 0;
-
-// End Global defs
 
 // ========================================
-// API general
+// Посты
 // ========================================
 
-char *callAPI(const std::string &url,
-			  const Postfields &postfields,
-			  long long *size)
+
+Makaba::Post::Post():
+	isNull_(true)
+	{}
+
+
+Makaba::Post::Post(const std::string &vcomment, const std::string &vemail,
+				   const std::string &vname,    const std::string &vsubject,
+				   const std::string &vtags,    const std::string &vtrip):
+	isNull_(false),
+	comment(std::string(vcomment)), email  (std::string(vemail)),
+	name   (std::string(vname)),    subject(std::string(vsubject)),
+	tags   (std::string(vtags)),    trip   (std::string(vtrip))
+	{}
+
+
+Makaba::Post::Post(const char *vcomment, const char *vemail,
+				   const char *vname,    const char *vsubject,
+				   const char *vtags,    const char *vtrip):
+	isNull_(false                      ),
+	comment(vcomment), email  (vemail  ),
+	name   (vname   ), subject(vsubject),
+	tags   (vtags   ), trip   (vtrip   )
+	{}
+
+
+Makaba::Post::Post(Json::Value &val):
+	isNull_       ( false                                          ),
+	banned        ( atoi( val["banned"        ].asString().data()) ),
+	closed        ( atoi( val["closed"        ].asString().data()) ),
+	comment       ( ""                                             ),
+	date          (       val["date"          ].asString()         ),
+	email         (       val["email"         ].asString()         ),
+	files         (       val["files"         ]                    ),
+	lasthit       ( atoi( val["lasthit"       ].asString().data()) ),
+	name          ( ""                                             ),
+	num           ( atoi( val["num"           ].asString().data()) ),
+	op            ( atoi( val["op"            ].asString().data()) ),
+	parent        ( atoi( val["parent"        ].asString().data()) ),
+	sticky        ( atoi( val["sticky"        ].asString().data()) ),
+	subject       (       val["subject"       ].asString()         ),
+	tags          (       val["tags"          ].asString()         ),
+	timestamp     ( atoi( val["timestamp"     ].asString().data()) ),
+	trip          (       val["trip"          ].asString()         ),
+	trip_type     (       val["trip_type"     ].asString()         ),
+	unique_posters( atoi( val["unique_posters"].asString().data()) ),
+	rel_num       ( 0                                              )
 {
-	fprintf(stderr, "[callAPI] Start\n");
-	fprintf(stderr, "[callAPI] url   = \"%s\"\n", url.data());
-	fprintf(stderr, "[callAPI] postfields:\n");
-	for (auto p: postfields) {
-		fprintf(stderr, "  \"%10s\" = \"%s\"\n", p.first.data(), p.second.data());
-	}
-	if (url.length() == 0) {
-		fprintf(stderr, "[callAPI] Error: zero-length url\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	if (CURL_BUFF_BODY == NULL) {
-		fprintf(stderr, "[callAPI] Warning: curl body buffer not allocated\n");
-		makabaSetup();
-	}
-	CURL *curl_handle = curl_easy_init();
-	if (! curl_handle) {
-		fprintf(stderr, "[callAPI] Error: curl_easy_init() failed\n");
-		makaba_errno = ERR_CURL_INIT;
-		return NULL;
-    }
-
-	curl_easy_setopt(curl_handle, CURLOPT_USERAGENT, CURL_UA);
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEDATA, CURL_BUFF_BODY);
-	curl_easy_setopt(curl_handle, CURLOPT_WRITEFUNCTION, CURL_writeToBuff);
-	curl_easy_setopt(curl_handle, CURLOPT_URL, url.data());
-
-	if (postfields.size() > 0) {
-		struct curl_httppost* post = NULL;
-		struct curl_httppost* last = NULL;
-		
-		for (auto p: postfields) {
-			curl_formadd(&post, &last,
-						CURLFORM_COPYNAME,  p.first.data(),
-						CURLFORM_COPYCONTENTS, p.second.data(),
-						CURLFORM_END);
-		}
-		
-		curl_easy_setopt(curl_handle, CURLOPT_HTTPPOST, post);
-	}
-
-	CURLcode request_status = curl_easy_perform(curl_handle);
-	fprintf(stderr, "[callAPI] request performed\n");
-	CURL_BUFF_BODY[CURL_BUFF_POS] = 0;
-	if (size != NULL)
-		*size = (long long) CURL_BUFF_POS;
-	CURL_BUFF_POS = 0;
-
-	char *ret = CURL_BUFF_BODY;
-	if (request_status != CURLE_OK) {
-		fprintf(stderr, "[callAPI] Error: curl_easy_perform() failed: %s\n",
-				curl_easy_strerror(request_status));
-		makaba_errno = ERR_CURL_PERFORM;
-		ret = NULL;
-	}
-	curl_easy_cleanup(curl_handle);
-
-    fprintf(stderr, "[callAPI] Exit\n");
-
-	return ret;
+	const char *comment_raw = val["comment"].asCString();
+	char *comment_parsed = parseHTML(comment_raw, strlen(comment_raw), false);
+	this->comment = comment_parsed;
+	free(comment_parsed);
+	const char *name_raw = val["name"].asCString();
+	char *name_parsed = parseHTML(name_raw, strlen(name_raw), false);
+	this->name = name_parsed;
+	free(name_parsed);
+	fprintf(stderr, "<init post #%10lld>\n", this->num);
 }
 
-// ========================================
-// Get from API
-// ========================================
 
-char *getBoardsList(const bool v) {
-	if (v) fprintf(stderr, "[getBoardsList] Start");
-
-	// URL: 2ch.hk/makaba/mobile.fcgi?task=get_boards
-	std::string url = BASE_URL;
-	url += '/';
-	url += MOBILE_API;
-	url += "?task=get_boards";
-	if (v) fprintf(stderr, "[getBoardsList] url = %s\n", url.data());
-	
-	char *result = callAPI(url, {}, NULL);
-	if (result == NULL) {
-		fprintf(stderr, "[getBoardsListJSON] Error: callAPI() failed\n");
-	}
-	if (v) fprintf(stderr, "[getBoardsList] Exit");
-	return result;
-}
-
-char *getBoardPage(const char *board, const long long page, const bool v) {
-	if (v) fprintf(stderr, "[getBoardPage] Start");
-	if (board == NULL) {
-		fprintf(stderr, "[getBoardPage] Error: board = null\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	if (page <= 0) {
-		fprintf(stderr, "[getBoardPage] Error: page \"%lld\" <= 0\n", page);
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-
-	// URL format: 2ch.hk/$board/$page.json
-	std::string url = BASE_URL;
-	url += '/';
-	url += board;
-	url += '/';
-	url += std::to_string(page);
-	url += ".json";
-	if (v) fprintf(stderr, "[getBoardPage] url = %s\n", url.data());
-	
-	char *result = callAPI(url, {}, NULL);
-	if (result == NULL) {
-		fprintf(stderr, "[getBoardPage] Error: callAPI() failed\n");
-	}
-	if (v) fprintf(stderr, "[getBoardPage] Exit");
-	return result;
-}
-
-char *getBoardCatalog(const char *board, const bool v) {
-	if (v) fprintf(stderr, "[getBoardCatalog] Start");
-	if (board == NULL) {
-		fprintf(stderr, "[getBoardCatalog] Error: board = null\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-
-	// URL format: 2ch.hk/$board/catalog.json
-	std::string url = BASE_URL;
-	url += board;
-	url += "/catalog.json";
-	if (v) fprintf(stderr, "[getBoardCatalog] url = %s\n", url.data());
-
-	char *result = callAPI(url, {}, NULL);
-	if (result == NULL) {
-		fprintf(stderr, "[getBoardCatalog] Error: callAPI() failed\n");
-	}
-	if (v) fprintf(stderr, "[getBoardCatalog] Exit");
-	return result;
-}
-
-char *getThread(const char *board, const long long threadn,
-	const long long postn_rel, long long *threadsize, const bool v) {
-	if (v) fprintf(stderr, "[getThread] Start\n");
-	if (board == NULL) {
-		fprintf(stderr, "[getThread] Error: board = null\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	if (threadn <= 0) {
-		fprintf(stderr, "[getThread] Error: thread \"%lld\" <= 0\n", threadn);
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	
-	// URL: 2ch.hk/makaba/mobile.fcgi
-	std::string url = BASE_URL;
-	url += '/';
-	url += MOBILE_API;
-	
-	// POST: task=get_thread&board=$board&thread=$threadn&post=$postn_rel
-	Postfields post(
-		{
-			{ "task",   "get_thread"              },
-			{ "board",  board                     },
-			{ "thread", std::to_string(threadn)   },
-			{ "post",   std::to_string(postn_rel) }
-		}
-													   );
-	
-	char *result = callAPI(url, post, threadsize);
-	if (result == NULL) {
-		fprintf(stderr, "[getThread] Error: callAPI() failed\n");
-	}
-	if (v) fprintf(stderr, "[getThread] Exit\n");
-	return result;
-}
-
-// ========================================
-// Captcha
-// ========================================
-
-char *getCaptchaSettings(const char *board, const bool v) {
-	if (v) fprintf(stderr, "[getCaptchaSettings] Start");
-	if (board == NULL) {
-		fprintf(stderr, "[getCaptchaSettings] Error: board = null\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	
-	// URL: 2ch.hk/api/captcha/settings/$board
-	std::string url = BASE_URL;
-	url += '/';
-	url += CAPTCHA_SETTINGS;
-	url += '/';
-	url += board;
-	if (v) fprintf(stderr, "[getCaptchaSettings] url = %s\n", url.data());
-	
-	char *result = callAPI(url, {}, NULL);
-	if (result == NULL) {
-		fprintf(stderr, "[getCaptchaSettings] Error: callAPI() failed\n");
-	}
-	if (v) fprintf(stderr, "[getCaptchaSettings] Exit");
-	return result;
-}
-
-char *get2chaptchaId(const char *board, const long long threadn, const bool v) {
-	if (v) fprintf(stderr, "[getCaptchaId] Start\n");
-	if (board == NULL) {
-		fprintf(stderr, "[getCaptchaId] Error: board = null\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	if (threadn <= 0) {
-		fprintf(stderr, "[getCaptchaId] Error: thread \"%lld\" <= 0\n", threadn);
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	
-	// URL: 2ch.hk/api/captcha/2chaptcha/id
-	std::string url = BASE_URL;
-	url += '/';
-	url += CAPTCHA_2CHAPTCHA;
-	url += "/id";
-	if (v) fprintf(stderr, "[get2chaptchaId] url = %s\n", url.data());
-	
-	// POST: board=$board&thread=$threadn
-	Postfields post(
-		{
-			{ "board",  board                   },
-			{ "thread", std::to_string(threadn) }
-		}
-			   );
-	
-	char *result = callAPI(url, post, NULL);
-	if (result == NULL) {
-		fprintf(stderr, "[get2chaptchaId] Error: callAPI() failed\n");
-	}
-	if (v) fprintf(stderr, "[get2chaptchaId] Exit\n");
-	return result;
-}
-
-char *get2chaptchaPicPNG(const char *url, long long *pic_size) {
-	if (url == NULL) {
-		fprintf(stderr, "[get2chaptchaPicPNG] Error: url = null\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	
-	if (CURL_BUFF_BODY == NULL) {
-		fprintf(stderr, "[get2chaptchaPicPNG] Warning: curl body buffer not allocated\n");
-		makabaSetup();
-	}
-
-	char *result = callAPI(url, {}, pic_size);
-	if (result == NULL) {
-		fprintf(stderr, "[get2chaptchaPicPNG] Error: callAPI() failed\n");
-	}
-	return result;
-}
-
-// ========================================
-// Posting
-// ========================================
-
-char *sendPost (const char *board, const long long threadn,
-				const char *comment, const char *subject,
-				const char *name, const char *email,
-				const char *captcha_id, const char *captcha_value)
+bool Makaba::Post::isNull()
 {
-	if (board == NULL) {
-		fprintf(stderr, "[sendPost] Error: board = null\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	if (threadn < 0) {
-		fprintf(stderr, "[sendPost] Error: thread \"%lld\" < 0\n", threadn);
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	if (comment == NULL) {
-		fprintf(stderr, "[sendPost] Error: comment = null\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	if (strlen(comment) > COMMENT_LEN_MAX) {
-		fprintf(stderr, "[sendPost] Error: comment length \"%lu\" > maximal \"%lu\"\n",
-				strlen(comment), COMMENT_LEN_MAX);
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	if (captcha_id == NULL) { // @TODO Капча обязательна не везде
-		fprintf(stderr, "[sendPost] Error: captcha_id = null\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	if (captcha_value == NULL) {
-		fprintf(stderr, "[sendPost] Error: captcha_value = null\n");
-		makaba_errno = ERR_ARGS;
-		return NULL;
-	}
-	
-	// URL: 2ch.hk/makaba/posting.fcgi
-	std::string url = BASE_URL;
-	url += '/';
-	url += POSTING_API;
-	fprintf(stderr, "[sendPost] url = %s\n", url.data());
-	
-	Postfields post(
-		{
-			{ "json",            "1"                     },
-			{ "task",            "post"                  },
-			{ "captcha_type",    "2chaptcha"             },
-			{ "board",           board                   },
-			{ "thread",          std::to_string(threadn) },
-			{ "comment",         comment                 },
-			{ "2chaptcha_id",    captcha_id              },
-			{ "2chaptcha_value", captcha_value           }
+	return this->isNull_;
+}
+
+
+// ========================================
+// Треды
+// ========================================
+
+
+Makaba::Thread::Thread():
+	isNull_(true)
+	{} 
+
+
+Makaba::Thread::Thread(const std::string &board, const long long &num):
+	isNull_(true ),
+	num    (num  ),
+	nposts (0    ),
+	board  (board)
+{
+	char *raw;
+	bool fallback = false;
+	if (Json_cache_dir == NULL) {
+		if (initJsonCache()) {
+			fprintf(stderr, "[%s] Error @ initJsonCache()\n",
+					__PRETTY_FUNCTION__);
+			fprintf(stderr, "[%s] Warning: Fallback to getThread()\n",
+					__PRETTY_FUNCTION__);
+			fallback = true;
 		}
-			   );
-	if (subject != NULL) {
-		post.push_back( { "subject", subject } );
 	}
-	if (name != NULL) {
-		post.push_back( { "name",    name    } );
+	long long size;
+	if (fallback == false && checkJsonCache(*this)) { // Тред есть в кэше
+		raw = readJsonCache(*this, &size);
+		if (raw == NULL) {
+			fprintf(stderr, "[%s] Warning: Fallback to getThread()\n",
+					__PRETTY_FUNCTION__);
+			raw = getThread(this->board.data(), this->num,
+							1, &size, false);
+			if (raw == NULL) {
+				fprintf(stderr, "[%s] Error @ getThread()\n",
+						__PRETTY_FUNCTION__);
+				return;
+			}
+		} // Избавиться бы от копипасты
+		armJsonCache(*this);
 	}
-	if (email != NULL) {
-		post.push_back( { "email",   email   } );
+	else { // В кэше нет или что-то пошло не так
+		raw = getThread(this->board.data(), this->num,
+						1, &size, false);
+		if (raw == NULL) {
+			fprintf(stderr, "[%s] Error @ getThread()\n", __PRETTY_FUNCTION__);
+			return;
+		}
+		if (writeJsonCache(*this, raw)) {
+			fprintf(stderr, "[%s] Error @ writeJsonCache()\n", __PRETTY_FUNCTION__);
+			return;
+		}
+		armJsonCache(*this);
 	}
+	if (this->append(raw)) {
+		fprintf(stderr, "[%s] Error @ this->append()\n", __PRETTY_FUNCTION__);
+		makaba_errno = ERR_GENERAL_FORMAT;
+	}
+	this->isNull_ = false;
+}
+
+
+bool Makaba::Thread::isNull()
+{
+	return this->isNull_;
+}
+
+
+int Makaba::Thread::append(const char *raw)
+{
+	Json::CharReaderBuilder rbuilder;
+	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
+	std::string errs;
+	Json::Value array;
+	if (! reader->parse(raw, raw + strlen(raw), &array, &errs)) {
+		fprintf(stderr, "[%s] Error:\n"
+						"Json::CharReader::parse():\n  %s\n",
+				__PRETTY_FUNCTION__, errs.data());
+		makaba_errno = ERR_GENERAL_FORMAT;
+		return -1;
+	}
+	for (auto obj : array) {
+		this->nposts++;
+		Makaba::Post post(obj);
+		post.rel_num = this->nposts;
+		this->posts.push_back(post);
+	}
+	return 0;
+}
+
+
+int Makaba::Thread::update()
+{
+	if (this->isNull()) {
+		fprintf(stderr, "[%s] Error: is null\n", __PRETTY_FUNCTION__);
+		makaba_errno = ERR_INTERNAL;
+		return -1;
+	}
+	long long size;
+	char *raw = getThread(this->board.data(), this->num,
+						  this->nposts + 1, &size, false);
+	if (raw == NULL) {
+		fprintf(stderr, "[%s] Error @ getThread()\n", __PRETTY_FUNCTION__);
+		return -1;
+	}
+	bool write_cache = true;
+	if (Json_cache_dir == NULL) {
+		if (initJsonCache()) {
+			write_cache = false;
+			fprintf(stderr, "[%s] Error @ initJsonCache(), can`t write cache\n",
+				__PRETTY_FUNCTION__);
+		}
+	}
+	if (write_cache)
+		writeJsonCache(*this, raw);
+	if (this->append(raw)) {
+		fprintf(stderr, "[%s] Error @ this->append()\n", __PRETTY_FUNCTION__);
+		return -1;
+	}
+	return 0;
+}
+
+
+// ========================================
+// Капча
+// ========================================
+
+
+bool Makaba::Captcha_2ch::isNull()
+{
+	return this->isNull_;
+}
+
+
+Makaba::Captcha_2ch::Captcha_2ch():
+	isNull_(true),
+	id     (std::string())
+	{}
+
+
+Makaba::Captcha_2ch::Captcha_2ch(const std::string &board, const long long &threadnum):
+	isNull_(true),
+	id     (std::string())
+{
+	if (this->get_id(board, threadnum)) {
+		fprintf(stderr, "[%s]: Error: this->get_id() failed\n",
+				__PRETTY_FUNCTION__);
+		return;
+	}
+	if (this->form_url()) {
+		fprintf(stderr, "[%s]: Error: this->form_url() failed\n",
+				__PRETTY_FUNCTION__);
+		return;
+	}
+	isNull_ = false;
+}
+
+
+int Makaba::Captcha_2ch::get_id(const std::string &board, const long long &threadnum)
+{
+	if (this->id.length()) {
+		fprintf(stderr, "[%s] Note: already has ID\n"
+						"  board = %s, thread = %lld\n",
+				__PRETTY_FUNCTION__, board.data(), threadnum);
+		return -1;
+	}
+	char *id_raw = get2chaptchaId(board.data(), threadnum, false);
+	if (id_raw == NULL) {
+		fprintf(stderr, "[%s] Error: get2chaptchaId(): %d\n",
+				__PRETTY_FUNCTION__, makaba_errno);
+		return -1;
+	}
+	Json::CharReaderBuilder rbuilder;
+	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
+	std::string errs;
+	Json::Value ans;
+	if (! reader->parse(id_raw, id_raw + strlen(id_raw), &ans, &errs)) {
+		fprintf(stderr, "[%s] Error:\n"
+						"Json::CharReader::parse():\n  %s\n",
+				__PRETTY_FUNCTION__, errs.data());
+		makaba_errno = ERR_GENERAL_FORMAT;
+		return -1;
+	}
+	fprintf(stderr, "btw ans:\n");
+    std::cerr << ans << std::endl;
+	if (! ans["error"].isNull()) {
+		fprintf(stderr, "[%s] Error: \n"
+						"API returned \"error\":\"%d\"\n",
+						__PRETTY_FUNCTION__, ans["error"].asInt());
+		this->error = ans["description"].asString();
+		return -1;
+	}
+	this->id = ans["id"].asString();
+	return 0;
+}
+
+
+int Makaba::Captcha_2ch::form_url()
+{
+	if (this->id.length() == 0) {
+		fprintf(stderr, "[%s] Error: ID is null\n", __PRETTY_FUNCTION__);
+		return -1;
+	}
+	if (this->png_url.length()) {
+		fprintf(stderr, "[%s] Note: already has png_url, not re-doing\n",
+				__PRETTY_FUNCTION__);
+		return -1;
+	}
+	this->png_url.resize(strlen(BASE_URL) + strlen(CAPTCHA_2CHAPTCHA) +
+						this->id.length() + 10);
+	this->png_url = BASE_URL;
+	this->png_url += '/';
+	this->png_url += CAPTCHA_2CHAPTCHA;
+	this->png_url += "/image/";
+	this->png_url += this->id;
+	return 0;
+}
+
+
+int Makaba::Captcha_2ch::get_png() {
+	if (this->id.length() == 0) {
+		fprintf(stderr, "[%s] Error: ID is null\n", __PRETTY_FUNCTION__);
+		return -1;
+	}
+	if (this->png_url.length() == 0) {
+		fprintf(stderr, "[%s] Error: png_url is null\n", __PRETTY_FUNCTION__);
+		return -1;
+	}
+	long long pic_size;
+	char *pic = get2chaptchaPicPNG(this->png_url.data(), &pic_size);
+	if (pic == NULL) {
+		fprintf(stderr, "[%s] Error: get2chaptchaPicPNG() failed: %d\n",
+				__PRETTY_FUNCTION__, makaba_errno);
+		return -1;
+	}
+	FILE *pic_file = fopen(CaptchaPngFilename, "w");
+	fwrite(pic, sizeof(char), pic_size, pic_file);
+	fclose(pic_file);
 	
-	char *result = callAPI(url, post, NULL);
-	if (result == NULL) {
-		fprintf(stderr, "[sendPost] Error: callAPI() failed\n");
-	}
-	fprintf(stderr, "[sendPost] Exit\n");
-	return result;
-}
-
-// ========================================
-// Misc utility functions
-// ========================================
-
-size_t CURL_writeToBuff (const char *src, const size_t block_size, const size_t nmemb, void *dest) {
-	if (src == NULL ||
-		CURL_BUFF_POS + block_size * nmemb > CURL_BUFF_BODY_SIZE) {
-		return 0;
-	}
-	else {
-		memcpy (dest + CURL_BUFF_POS, src, block_size * nmemb);
-		CURL_BUFF_POS += block_size * nmemb;
-		return block_size * nmemb;
-	}
-}
-
-void makabaSetup() {
-	if (CURL_BUFF_BODY == NULL)
-		CURL_BUFF_BODY = (char*) calloc (CURL_BUFF_BODY_SIZE, sizeof(char));
-}
-
-void makabaCleanup() {
-	if (CURL_BUFF_BODY != NULL)
-		free(CURL_BUFF_BODY);
+	convert_img(CaptchaPngFilename, CaptchaUtfFilename, false);
+	return 0;
 }
