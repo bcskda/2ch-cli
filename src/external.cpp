@@ -58,7 +58,6 @@ void edit(std::string &dest, const enum edit_task task) {
 		case Task_comment:
 			sprintf(shcmd, "[ -f %s ] || echo \'%s\' > %s",
 				Comment_tmpfile.data(), Comment_tmpmesg.data(), Comment_tmpfile.data());
-			system(shcmd);
 			fork_and_edit(dest, Comment_tmpfile);
 			break;
 		case Task_email:
@@ -178,6 +177,7 @@ void convert_img(const char *filename, const char *ofile, const bool v) {
     }
     else {
         // @TODO mktemp()
+        // img2txt выведет всё в stdout, мы перенаправляем в файл
         freopen(ofile, "w", stdout);
         const char *converter_args[] = {
             Converter,

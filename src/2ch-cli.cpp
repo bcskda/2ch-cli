@@ -111,14 +111,7 @@ int main (int argc, const char **argv)
 
 	makaba_thread thread(board, thread_number);
 	if (makaba_errno) {
-		switch(makaba_errno) {
-			case ERR_CURL_PERFORM:
-				printf("Ошибка соединения с сервером\n");
-                break;
-			case ERR_JSON_PARSE:
-				printf("Ошибка обработки ответа сервера\n");
-                break;
-		}
+		printf("An error occured: %s\n", makaba_strerror(makaba_errno));
 		makabaCleanup();
 		return RET_INTERNAL;
 	}
@@ -312,11 +305,6 @@ int printThreadHeader(const makaba_thread &thread)
 }
 
 int printPost (const makaba_post &post, const bool show_email, const bool show_files) {
-	if (post.comment.length() == 0) {
-		fprintf(stderr, "! ERROR @printPost: Null comment in struct post\n");
-		makaba_errno = ERR_POST_FORMAT;
-		return 1;
-	}
 	if (post.date.length() == 0) {
 		fprintf(stderr, "! ERROR @printPost: Null date in struct post\n");
 		makaba_errno = ERR_POST_FORMAT;
