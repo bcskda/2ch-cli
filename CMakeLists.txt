@@ -69,8 +69,6 @@ set(SOURCE_FILES
         src/makaba.h
         src/parser.cpp
         src/parser.h
-        src/cache.cpp
-        src/cache.h
         src/2ch-cli.cpp
         src/2ch-cli.h)
 

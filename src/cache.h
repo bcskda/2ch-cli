@@ -1,17 +1,26 @@
 // ========================================
-// JSON cache
+// File: cache.h
+// Manage raw JSON cache
+// (Headers)
 // ========================================
 
-#pragma once
+#include <iostream>
 #include <cstdio>
 #include <cstdlib>
-#include <cstddef>
-#include <memory>
+#include <cstring>
 #include <sys/stat.h>
 #include <dirent.h>
 #include <errno.h>
 #include "error.h"
-#include "parser.h"
+#include "makaba.h"
+#include "external.h"
+#pragma once
+
+
+// ========================================
+// Ручной парсинг
+// ========================================
+
 
 extern const size_t Json_cache_buf_size;
 extern const char *Json_cache_suff_armed;
@@ -22,9 +31,6 @@ int   initJsonCache  ();
 bool  checkJsonCache (const Makaba::Thread &thread);
 void  armJsonCache   (const Makaba::Thread &thread);
 void  disarmJsonCache(const Makaba::Thread &thread);
-char *readJsonCache  (const std::string &board, const long long &tnum,
-					  long long *threadsize);
-int   writeJsonCache (const std::string &board, const long long &tnum,
-					  const char *raw);
+char *readJsonCache  (const Makaba::Thread &thread, long long *threadsize);
+int   writeJsonCache (const Makaba::Thread &thread, const char *thread_ch);
 int   cleanJsonCache ();
- 

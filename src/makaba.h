@@ -9,22 +9,31 @@
 #include <vector>
 #include <json/json.h>
 #include <cstdio>
+#include <cstdlib>
 #include <cstddef>
 #include <memory>
-#include <sys/stat.h>
-#include <dirent.h>
-#include <errno.h>
 #include "API.h"
-#include "parser.h"
 #include "external.h"
 #include "error.h"
 #pragma once
 
 
-extern const size_t Json_cache_buf_size;
-extern const char *Json_cache_suff_armed;
-extern char *Json_cache_buf;
-extern char Json_cache_dir[100];
+extern const char *PATTERN_TAG_OPEN;
+extern const char *PATTERN_TAG_CLOSE;
+extern const char *PATTERN_HREF_OPEN;
+extern const char *PATTERN_HREF_CLOSE;
+extern const char *PATTERN_REPLY_CLASS;
+extern const char *PATTERN_REPLY_THREAD;
+extern const char *PATTERN_REPLY_NUM;
+extern const char *PATTERN_NEWLINE;
+extern const char *PATTERN_LT;
+extern const char *PATTERN_GT;
+extern const char *PATTERN_SLASH;
+extern const char *PATTERN_BCKSLASH;
+extern const char *PATTERN_NBSP;
+extern const char *PATTERN_SINGLE_QUOT;
+extern const char *PATTERN_DOUBLE_QUOT;
+extern const char *PATTERN_AMP;
 
 
 extern const char *CaptchaPngFilename;
@@ -32,7 +41,6 @@ extern const char *CaptchaUtfFilename;
 
 
 namespace Makaba {
-
 	class Post {
 		bool isNull_;
 	public:
@@ -57,11 +65,11 @@ namespace Makaba {
 		long long rel_num;
 		Post();
 		Post(const std::string &vcomment, const std::string &vemail,
-			const std::string &vname,    const std::string &vsubject,
-			const std::string &vtags,    const std::string &vtrip);
+			 const std::string &vname,    const std::string &vsubject,
+			 const std::string &vtags,    const std::string &vtrip);
 		Post(const char *vcomment, const char *vemail,
-			const char *vname,    const char *vsubject,
-			const char *vtags,    const char *vtrip);
+			 const char *vname,    const char *vsubject,
+			 const char *vtags,    const char *vtrip);
 		Post(Json::Value &val);
 		Post(const char *raw); // @TODO
 		bool isNull();
@@ -71,6 +79,11 @@ namespace Makaba {
 		bool isNull_;
 		Thread();
 		int append(const char *raw);
+		struct {
+			void *userdata;
+			void (*on_update)(void *userdata, const char *raw);
+			bool set;
+		} hook_;
 	public:
 		long long num;
 		long long nposts;
@@ -79,6 +92,11 @@ namespace Makaba {
 		Thread(const std::string &board, const long long &num);
 		int update();
 		bool isNull();
+		bool has_hook();
+		void set_hook(void *userdata,
+					  void (*on_update)(void *userdata, const char *raw));
+		const long long find(const long long pnum);
+		std::vector<Makaba::Post &> find(const std::string comment); // @TODO
 	};
 
 	class Captcha_2ch {
@@ -96,14 +114,6 @@ namespace Makaba {
 		bool isNull();
 		int get_png();
 	};
-
 }
 
-
-int   initJsonCache  ();
-bool  checkJsonCache (const Makaba::Thread &thread);
-void  armJsonCache   (const Makaba::Thread &thread);
-void  disarmJsonCache(const Makaba::Thread &thread);
-char *readJsonCache  (const Makaba::Thread &thread, long long *threadsize);
-int   writeJsonCache (const Makaba::Thread &thread, const char *thread_ch);
-int   cleanJsonCache ();
+char *parseHTML (const char *raw, const long long raw_len, const bool v);

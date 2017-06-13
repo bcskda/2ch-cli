@@ -1,8 +1,7 @@
 // ========================================
 // File: error.h
-// Global error codes
+// Library errors
 // ========================================
-
 #include <cstdio>
 
 #pragma once

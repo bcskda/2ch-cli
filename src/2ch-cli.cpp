@@ -190,7 +190,7 @@ int main (int argc, const char **argv)
 					ncurses_print_post(thread, cur_post);
 					refresh();
 					break;
-				case 'f':
+				case 'g':
 					printw("Перейти по номеру на доске: ");
 					refresh();
 					echo();

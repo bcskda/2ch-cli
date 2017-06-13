@@ -1,3 +1,8 @@
+// ========================================
+// File: error.cpp
+// Library errors
+// ========================================
+
 #include "error.h"
 
 makaba_error_t makaba_errno;

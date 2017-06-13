@@ -14,7 +14,7 @@
 #include <getopt.h>
 
 #include "makaba.h"
-//#include "parser.h"
+#include "cache.h"
 #include "external.h"
 #include "error.h"
 

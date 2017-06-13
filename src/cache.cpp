@@ -1,13 +1,17 @@
 // ========================================
-// JSON cache
+// File: cache.cpp
+// Manage raw JSON cache
+// (Implementation)
 // ========================================
 
 #include "cache.h"
+
 
 const size_t Json_cache_buf_size = 2e6;
 const char *Json_cache_suff_armed = "active";
 char *Json_cache_buf = NULL;
 char Json_cache_dir[100] = "";
+
 
 
 int initJsonCache()
@@ -58,12 +62,11 @@ void disarmJsonCache(const Makaba::Thread &thread)
 	rename(filename_old, filename_new);
 }
 
-char *readJsonCache(const std::string &board, const long long &tnum,
-					long long *threadsize)
+char *readJsonCache(const Makaba::Thread &thread, long long *threadsize)
 {
 	char filename[70] = "";
 	sprintf(filename, "%s/thread-%s-%lld",
-		Json_cache_dir, board.data(), tnum);
+		Json_cache_dir, thread.board.data(), thread.num);
 	if (strlen(Json_cache_dir) == 0) {
 		if (initJsonCache() == -1) {
 			fprintf(stderr, "[readJsonCache]! Error: @ initJsonCache()\n");
@@ -99,8 +102,7 @@ char *readJsonCache(const std::string &board, const long long &tnum,
 	return Json_cache_buf;
 }
 
-int writeJsonCache(const std::string &board, const long long &tnum,
-				   const char *raw)
+int writeJsonCache(const Makaba::Thread &thread, const char *thread_ch)
 {
 	if (strlen(Json_cache_dir) == 0) {
 		if (initJsonCache() == -1) {
@@ -112,7 +114,7 @@ int writeJsonCache(const std::string &board, const long long &tnum,
 
 	char filename[70] = "";
 	sprintf(filename, "%s/thread-%s-%lld-%s",
-		Json_cache_dir, board.data(), tnum, Json_cache_suff_armed);
+		Json_cache_dir, thread.board.data(), thread.num, Json_cache_suff_armed);
 
 	FILE *fd = fopen(filename, "a+");
 	long long fsize = 0;
@@ -169,20 +171,4 @@ int cleanJsonCache() {
     }
 
     return 0;
-}
-
-
-void json_write_hook(const char *userdata, const char *raw)
-{
-	bool write_cache = true;
-		if (Json_cache_dir == NULL) {
-			if (initJsonCache()) {
-				write_cache = false;
-				fprintf(stderr, "[%s] Error @ initJsonCache(), can`t write cache\n",
-					__PRETTY_FUNCTION__);
-			}
-		}
-		if (write_cache)
-			writeJsonCache(*this, raw);
-		*/ 
 }
