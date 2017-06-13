@@ -259,7 +259,7 @@ int Makaba::Captcha_2ch::get_png() {
 // Треды, посты
 // ========================================
 
-Makaba::Thread::Thread(): // private
+Makaba::Thread::Thread():
 	isNull_(true),
 	hook_  ({ NULL, NULL, false })
 	{} 
@@ -385,9 +385,13 @@ void Makaba::Thread::set_hook(void *userdata,
 
 
 
-Makaba::Post &find(const long long pnum) // @TODO
+const long long Makaba::Thread::find(const long long pnum)
 {
-	// You are here
+	for (size_t i = 0; i < this->posts.size(); i++) {
+		if (this->posts[i].num == pnum)
+			return i;
+	}
+	return -1;
 }
 
 Makaba::Post::Post():

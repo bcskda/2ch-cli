@@ -77,8 +77,8 @@ namespace Makaba {
 		bool isNull();
 		void set_hook(void *userdata,
 					  void (*on_update)(const char *userdata, const char *raw));
-		Makaba::Post &find(const long long pnum);
-		std::vector<Makaba::Post &> find(const std::string comment);
+		const long long find(const long long pnum);
+		std::vector<Makaba::Post &> find(const std::string comment); // @TODO
 	};
 
 	class Captcha_2ch {
