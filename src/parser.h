@@ -66,6 +66,7 @@ struct thread {
 	thread(const std::string &board, const long long &num);
 	int update();
 	bool isNull();
+	const long long find(const long long pnum);
 private:
 	bool isNull_;
 	thread();

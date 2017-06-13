@@ -390,6 +390,15 @@ int thread::update()
 	return 0;
 }
 
+const long long thread::find(const long long pnum)
+{
+	for (size_t i = 0; i < this->posts.size(); i++) {
+		if (this->posts[i].num == pnum)
+			return i;
+	}
+	return -1;
+}
+
 post::post():
 	isNull_(true)
 	{}

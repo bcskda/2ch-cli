@@ -145,6 +145,7 @@ int main (int argc, const char **argv)
 	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
 		int int_input = 0;
+		long long search_result = -1;
 		while (done == false) {
 			int nposts_old = thread.nposts;
 			switch (getch())
@@ -181,7 +182,7 @@ int main (int argc, const char **argv)
 					ncurses_print_post(thread, cur_post);
 					break;
 				case 'G':
-					printw("Перейти к посту: ");
+					printw("Перейти по номеру в треде: ");
 					refresh();
 					echo();
 					scanw("%d", &int_input);
@@ -194,6 +195,27 @@ int main (int argc, const char **argv)
 					}
 					cur_post = int_input - 1;
 					ncurses_print_post(thread, cur_post);
+					refresh();
+					break;
+				case 'f':
+					printw("Перейти по номеру на доске: ");
+					refresh();
+					echo();
+					scanw("%d", &int_input);
+					noecho();
+					if (int_input < 1) {
+						int_input = thread.posts[0].num;
+					}
+					search_result = thread.find(int_input);
+					if (search_result == -1) {
+						ncurses_clear_errors();
+						ncurses_print_error("Пост не найден в треде\n");
+					}
+					else {
+						cur_post = search_result;
+					}
+					ncurses_print_post(thread, cur_post);
+					refresh();
 					break;
 				case 'u':
 					printw(">>> Обновление треда ...");
