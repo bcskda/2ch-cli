@@ -1,10 +1,8 @@
 // ========================================
 // File: parser.h
-// API answer parsing functions
+// Parsing functions
 // (Headers)
 // ========================================
-
-#pragma once
 
 #include <iostream>
 #include <cstdio>
@@ -21,6 +19,7 @@
 #include "error.h"
 #include "makaba.h"
 #include "external.h"
+#pragma once
 
 namespace Makaba {
 	class Post {
@@ -104,7 +103,6 @@ namespace Makaba {
 
 extern const char *PATTERN_TAG_OPEN;
 extern const char *PATTERN_TAG_CLOSE;
-
 extern const char *PATTERN_HREF_OPEN;
 extern const char *PATTERN_HREF_CLOSE;
 extern const char *PATTERN_REPLY_CLASS;
@@ -120,11 +118,5 @@ extern const char *PATTERN_SINGLE_QUOT;
 extern const char *PATTERN_DOUBLE_QUOT;
 extern const char *PATTERN_AMP;
 
-extern const char *CaptchaPngFilename;
-extern const char *CaptchaUtfFilename;
-
-// ========================================
-// Прототипы
-// ========================================
 
 char *parseHTML(const char *raw, const long long raw_len, const bool v);

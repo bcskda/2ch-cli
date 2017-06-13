@@ -61,6 +61,10 @@ set(SOURCE_FILES
         src/error.h
         src/external.cpp
         src/external.h
+        src/API.cpp
+        src/API.h
+        src/parser.cpp
+        src/parser.h
         src/makaba.cpp
         src/makaba.h
         src/parser.cpp

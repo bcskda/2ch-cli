@@ -1,16 +1,13 @@
 // ========================================
 // File: parser.cpp
-// API answer parsing functions
+// Parsing functions
 // (Implementation)
 // ========================================
 
 #include "parser.h"
 
-// Global defs
-
 const char *PATTERN_TAG_OPEN = "<";
 const char *PATTERN_TAG_CLOSE = ">";
-
 const char *PATTERN_HREF_OPEN = "<a href=\"";
 const char *PATTERN_HREF_CLOSE = "</a>";
 const char *PATTERN_REPLY_CLASS = "class=\"post-reply-link\"";
@@ -26,13 +23,8 @@ const char *PATTERN_SINGLE_QUOT = "&#39";
 const char *PATTERN_DOUBLE_QUOT = "&quot";
 const char *PATTERN_AMP = "&amp";
 
-const char *CaptchaPngFilename = "/tmp/2ch-captcha.png";
-const char *CaptchaUtfFilename = "/tmp/2ch-captcha.utf8";
-
-// End Global defs
 
 char *parseHTML (const char *raw, const long long raw_len, const bool v) { // Пока что игнорируем разметку
-
 	if (v) {
 		fprintf(stderr, "]] Started parseHTML\n");
 		fprintf(stderr, "Raw len: %lld\n", raw_len);
