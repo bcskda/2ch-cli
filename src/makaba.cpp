@@ -89,7 +89,9 @@ Makaba::Post::Post(Json::Value &val):
 	char *name_parsed = parseHTML(name_raw, strlen(name_raw), false);
 	this->name = name_parsed;
 	free(name_parsed);
-	fprintf(stderr, "<init post #%10lld>\n", this->num);
+	#ifdef MAKABA_DEBUG
+	printf(stderr, "<init post #%10lld>\n", this->num);
+ 	#endif // ifdef MAKABA_DEBUG
 }
 
 
@@ -362,7 +364,7 @@ int Makaba::Captcha_2ch::get_id(const std::string &board, const long long &threa
 		fprintf(stderr, "[%s] Error: \n"
 						"API returned \"error\":\"%d\"\n",
 						__PRETTY_FUNCTION__, ans["error"].asInt());
-		this->error = ans["description"].asString();
+		this->error_ = ans["description"].asString();
 		return -1;
 	}
 	this->id = ans["id"].asString();
@@ -416,6 +418,11 @@ int Makaba::Captcha_2ch::get_png() {
 	return 0;
 }
 
+
+const std::string &Makaba::Captcha_2ch::error()
+{
+	return this->error_;
+}
 
 
 char *parseHTML (const char *raw, const long long &raw_len, const bool &v) { // Пока что игнорируем разметку

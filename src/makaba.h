@@ -112,12 +112,12 @@ namespace Makaba {
 		std::vector<Post &> find(const std::string comment); // @TODO
 	};
 
-	const Thread NullThread;
+	static const Thread NullThread;
 
 	class Captcha_2ch {
 		bool isNull_;
 		std::string png_url;
-		std::string error;
+		std::string error_;
 		/* === */
 		Captcha_2ch();
 		/* === */
@@ -132,7 +132,7 @@ namespace Makaba {
 		/* === */
 		bool isNull();
 		int get_png();
-		std::string &error();
+		const std::string &error();
 	};
 }
 
