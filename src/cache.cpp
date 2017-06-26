@@ -8,21 +8,22 @@
 
 
 const size_t Json_cache_buf_size = 2e6;
+const size_t Json_cache_dir_size = 200;
 const char *Json_cache_suff_armed = "active";
 char *Json_cache_buf = NULL;
-char Json_cache_dir[100] = "";
+char *Json_cache_dir = NULL;
 
 
 
 int initJsonCache()
 {
 	if (Env_HOME.length() == 0) {
-		std::cerr << "call setup" << std::endl;
+		std::cerr << "call setup_env()\n" << std::endl;
 		setup_env();
 	}
-	std::cerr << "[at json] btw HOME = \"" << Env_HOME.data() << std::endl;
+	if (Json_cache_dir == NULL)
+		Json_cache_dir = (char *) calloc(Json_cache_dir_size, sizeof(char));
 	sprintf(Json_cache_dir, "%s/.cache/2ch-cli", Env_HOME.data());
-	fprintf(stderr, "[initJsonCache] Json_cache_dir = \"%s\"\n", Json_cache_dir);
 	if (access(Json_cache_dir, F_OK)) {
 		if (mkdir(Json_cache_dir, S_IRWXU) == -1) { // Директория -> 0700
 			fprintf(stderr, "[initJsonCache]! Error: mkdir() failed: %s\n",
@@ -31,12 +32,13 @@ int initJsonCache()
 			return -1;
 		}
 	}
+	std::cerr << "Exiting " << __PRETTY_FUNCTION__ << std::endl;
 	return 0;
 }
 
 bool checkJsonCache(const Makaba::Thread &thread)
 {
-	char filename[70] = "";
+	char filename[200] = "";
 	sprintf(filename, "%s/thread-%s-%lld",
 		Json_cache_dir, thread.board.data(), thread.num);
 	return access(filename, F_OK) == 0;
@@ -169,6 +171,9 @@ int cleanJsonCache() {
             Json_cache_dir);
         return -1;
     }
+
+	free(Json_cache_buf);
+	free(Json_cache_dir);
 
     return 0;
 }

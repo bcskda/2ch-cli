@@ -1,24 +1,22 @@
 // ========================================
-// File: 2ch-cli.h
-// A CLI-client for 2ch.hk imageboard written on C/C++
+// File: app.h
+// Interface, wrappers, etc.
 // (Headers)
 // ========================================
 
 #pragma once
 
 #include <ncurses.h>
-#include <locale.h>
 #include <unistd.h>
 #include <cstring>
 #include <cstdlib>
-#include <getopt.h>
 
+#include "error.h"
+#include "external.h"
 #include "makaba.h"
 #include "cache.h"
-#include "external.h"
-#include "error.h"
 
-#define VERSION "v0.4test7"
+#define VERSION "v0.4test8"
 
 extern const int RET_OK;
 extern const int RET_ARGS;
@@ -46,6 +44,7 @@ const char *sendPost(const Makaba::Post &post,
 int printThreadHeader(const Makaba::Thread &thread);
 int printPost (const Makaba::Post &post, const bool show_email, const bool show_files);
 
+void pomogite();
 void parse_argv(const int argc, const char **argv,
 	std::string &board, long long &thread_number, std::string &comment, std::string &passcode,
 	bool &send_post, bool &verbose, bool &clean_cache);
@@ -55,3 +54,9 @@ void ncurses_print_help();
 void ncurses_print_post(const Makaba::Thread &thread, const long long num);
 void ncurses_print_error(const char *mesg);
 void ncurses_clear_errors();
+
+Makaba::Thread &thread_init_wrapper (
+	const std::string &vboard,
+	const long long &vnum
+);
+void *thread_hook_on_update(void *userdata, const char *raw);

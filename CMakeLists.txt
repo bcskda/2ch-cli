@@ -54,7 +54,7 @@ include_directories(${ALL_LIBS_INCLUDE_DIRS})
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-O2 -fPIC -pipe -Wall -Wno-pointer-arith")
-set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
+set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -DMAKABA_DEBUG")
 
 set(SOURCE_FILES
         src/error.cpp
@@ -63,14 +63,13 @@ set(SOURCE_FILES
         src/external.h
         src/API.cpp
         src/API.h
-        src/parser.cpp
-        src/parser.h
         src/makaba.cpp
         src/makaba.h
-        src/parser.cpp
-        src/parser.h
-        src/2ch-cli.cpp
-        src/2ch-cli.h)
+        src/cache.cpp
+        src/cache.h
+        src/app.cpp
+        src/app.h
+        src/main.cpp)
 
 add_executable(2ch-cli ${SOURCE_FILES})
 target_link_libraries(2ch-cli ${ALL_LIBS_LIBRARIES})

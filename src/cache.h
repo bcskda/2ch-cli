@@ -23,9 +23,10 @@
 
 
 extern const size_t Json_cache_buf_size;
+extern const size_t Json_cache_dir_size;
 extern const char *Json_cache_suff_armed;
 extern char *Json_cache_buf;
-extern char Json_cache_dir[100];
+extern char *Json_cache_dir;
 
 int   initJsonCache  ();
 bool  checkJsonCache (const Makaba::Thread &thread);
