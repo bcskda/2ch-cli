@@ -77,11 +77,9 @@ namespace Makaba {
 
 	class Thread {
 		bool isNull_;
-		Thread();
-		int append(const char *raw);
 		struct {
 			void *userdata;
-			void (*on_update)(void *userdata, const char *raw);
+			void *(*on_update)(void *userdata, const char *raw);
 			bool set;
 		} hook_;
 	public:
@@ -89,15 +87,22 @@ namespace Makaba {
 		long long nposts;
 		std::string board;
 		std::vector<Makaba::Post> posts;
-		Thread(const std::string &board, const long long &num);
+		Thread();
+		Thread(const std::string &board, const long long &num, const bool inst_dl = true);
+		Thread(const std::string &board, const std::string &raw);
+		int append(const char *raw); // Надо бы ее приватной
 		int update();
 		bool isNull();
 		bool has_hook();
-		void set_hook(void *userdata,
-					  void (*on_update)(void *userdata, const char *raw));
-		const long long find(const long long pnum);
+		void set_hook(
+			void *userdata,
+			void *(*on_update)(void *userdata, const char *raw)
+		);
+		const long long find(const long long &pnum);
 		std::vector<Makaba::Post &> find(const std::string comment); // @TODO
 	};
+
+	const Makaba::Thread NullThread;
 
 	class Captcha_2ch {
 		bool isNull_;
@@ -116,4 +121,4 @@ namespace Makaba {
 	};
 }
 
-char *parseHTML (const char *raw, const long long raw_len, const bool v);
+char *parseHTML (const char *raw, const long long &raw_len, const bool &v);

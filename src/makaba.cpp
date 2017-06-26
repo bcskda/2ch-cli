@@ -110,43 +110,51 @@ Makaba::Thread::Thread():
 	{} 
 
 
-Makaba::Thread::Thread(const std::string &board, const long long &num):
+Makaba::Thread::Thread (
+	const std::string &board,
+	const std::string &raw
+):
+	isNull_(true ),
+	hook_  ({ NULL, NULL, false }),
+	num    (0    ),
+	nposts (0    ),
+	board  (board)
+{
+	Json::CharReaderBuilder rbuilder;
+	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
+	std::string errs;
+	Json::Value array;
+	if (! reader->parse(raw.data(), raw.data() + raw.length(), &array, &errs)) {
+		fprintf(stderr, "[%s] Error:\n"
+						"Json::CharReader::parse():\n  %s\n",
+				__PRETTY_FUNCTION__, errs.data());
+		makaba_errno = ERR_GENERAL_FORMAT;
+		return;
+	}
+	for (auto obj : array) {
+		this->nposts++;
+		Makaba::Post post(obj);
+		post.rel_num = this->nposts;
+		this->posts.push_back(post);
+	}
+	this->num = this->posts[0].num;
+}
+
+
+Makaba::Thread::Thread (
+	const std::string &board,
+	const long long &num,
+	const bool inst_dl
+):
 	isNull_(true ),
 	hook_  ({ NULL, NULL, false }),
 	num    (num  ),
 	nposts (0    ),
 	board  (board)
 {
+	if (inst_dl == false)
+		return;
 	char *raw;
-	/*
-	 * bool fallback = false;
-	if (Json_cache_dir == NULL) {
-		if (initJsonCache()) {
-			fprintf(stderr, "[%s] Error @ initJsonCache()\n",
-					__PRETTY_FUNCTION__);
-			fprintf(stderr, "[%s] Warning: Fallback to getThread()\n",
-					__PRETTY_FUNCTION__);
-			fallback = true;
-		}
-	}
-	long long size;
-	if (fallback == false && checkJsonCache(*this)) { // Тред есть в кэше
-		raw = readJsonCache(*this, &size);
-		if (raw == NULL) {
-			fprintf(stderr, "[%s] Warning: Fallback to getThread()\n",
-					__PRETTY_FUNCTION__);
-			raw = getThread(this->board.data(), this->num,
-							1, &size, false);
-			if (raw == NULL) {
-				fprintf(stderr, "[%s] Error @ getThread()\n",
-						__PRETTY_FUNCTION__);
-				return;
-			}
-		} // Избавиться бы от копипасты
-		armJsonCache(*this);
-	}
-	else { // В кэше нет или что-то пошло не так
-	*/
 	long long size = -1;
 	raw = getThread(this->board.data(), this->num,
 					1, &size, false);
@@ -176,6 +184,16 @@ bool Makaba::Thread::has_hook()
 }
 
 
+void Makaba::Thread::set_hook(
+			void *userdata,
+			void *(*on_update)(void *userdata, const char *raw)
+		)
+{
+	this->hook_.userdata = userdata;
+	this->hook_.on_update = on_update;
+	this->hook_.set = true;
+}
+
 int Makaba::Thread::append(const char *raw)
 {
 	Json::CharReaderBuilder rbuilder;
@@ -201,11 +219,6 @@ int Makaba::Thread::append(const char *raw)
 
 int Makaba::Thread::update()
 {
-	if (this->isNull()) {
-		fprintf(stderr, "[%s] Error: is null\n", __PRETTY_FUNCTION__);
-		makaba_errno = ERR_INTERNAL;
-		return -1;
-	}
 	long long size;
 	char *raw = getThread(this->board.data(), this->num,
 						  this->nposts + 1, &size, false);
@@ -219,18 +232,14 @@ int Makaba::Thread::update()
 		fprintf(stderr, "[%s] Error @ this->append()\n", __PRETTY_FUNCTION__);
 		return -1;
 	}
+	if (this->isNull()) {
+		this->isNull_ = false;
+	}
 	return 0;
 }
 
-void Makaba::Thread::set_hook(void *userdata,
-							  void (*on_update)(void *userdata, const char *raw))
-{
-	this->hook_.userdata = userdata;
-	this->hook_.on_update = on_update;
-	this->hook_.set = true;
-}
 
-const long long Makaba::Thread::find(const long long pnum)
+const long long Makaba::Thread::find(const long long &pnum)
 {
 	for (size_t i = 0; i < this->posts.size(); i++) {
 		if (this->posts[i].num == pnum)
@@ -362,7 +371,7 @@ int Makaba::Captcha_2ch::get_png() {
 
 
 
-char *parseHTML (const char *raw, const long long raw_len, const bool v) { // Пока что игнорируем разметку
+char *parseHTML (const char *raw, const long long &raw_len, const bool &v) { // Пока что игнорируем разметку
 	if (v) {
 		fprintf(stderr, "]] Started parseHTML\n");
 		fprintf(stderr, "Raw len: %lld\n", raw_len);
