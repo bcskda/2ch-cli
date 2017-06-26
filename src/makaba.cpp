@@ -93,6 +93,31 @@ Makaba::Post::Post(Json::Value &val):
 }
 
 
+Makaba::Post &Makaba::Post::operator = (const Makaba::Post &rhs)
+{
+	this->isNull_        = rhs.isNull_;
+	this->banned         = rhs.banned;
+	this->comment        = rhs.comment;
+	this->date           = rhs.date;
+	this->email          = rhs.email;
+	this->files          = rhs.files;
+	this->lasthit        = rhs.lasthit;
+	this->name           = rhs.name;
+	this->num            = rhs.num;
+	this->op             = rhs.op;
+	this->parent         = rhs.parent;
+	this->sticky         = rhs.sticky;
+	this->subject        = rhs.subject;
+	this->tags           = rhs.tags;
+	this->timestamp      = rhs.timestamp;
+	this->trip           = rhs.trip;
+	this->trip_type      = rhs.trip_type;
+	this->unique_posters = rhs.unique_posters;
+	this->rel_num        = rhs.rel_num;
+	return *this;
+}
+
+
 bool Makaba::Post::isNull()
 {
 	return this->isNull_;
@@ -172,6 +197,27 @@ Makaba::Thread::Thread (
 }
 
 
+// Присваивание
+Makaba::Thread& Makaba::Thread::operator = (const Makaba::Thread &rhs)
+{
+	this->isNull_ = rhs.isNull_;
+	this->hook_   = rhs.hook_;
+	this->num     = rhs.num;
+	this->nposts  = rhs.nposts;
+	this->board   = rhs.board;
+	this->posts   = rhs.posts;
+	return *this;
+}
+
+
+// Дополнение постами
+Makaba::Thread &Makaba::Thread::operator << (const char *rhs)
+{
+	this->append(rhs);
+	return *this;
+}
+
+
 bool Makaba::Thread::isNull()
 {
 	return this->isNull_;
@@ -193,6 +239,7 @@ void Makaba::Thread::set_hook(
 	this->hook_.on_update = on_update;
 	this->hook_.set = true;
 }
+
 
 int Makaba::Thread::append(const char *raw)
 {

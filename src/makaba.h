@@ -63,6 +63,7 @@ namespace Makaba {
 		std::string trip_type; // enum?
 		long long unique_posters;
 		long long rel_num;
+		/* === */
 		Post();
 		Post(const std::string &vcomment, const std::string &vemail,
 			 const std::string &vname,    const std::string &vsubject,
@@ -72,6 +73,9 @@ namespace Makaba {
 			 const char *vtags,    const char *vtrip);
 		Post(Json::Value &val);
 		Post(const char *raw); // @TODO
+		/* === */
+		Post &operator=(const Post &rhs);
+		/* === */
 		bool isNull();
 	};
 
@@ -86,38 +90,49 @@ namespace Makaba {
 		long long num;
 		long long nposts;
 		std::string board;
-		std::vector<Makaba::Post> posts;
+		std::vector<Post> posts;
+		/* === */
 		Thread();
 		Thread(const std::string &board, const long long &num, const bool inst_dl = true);
 		Thread(const std::string &board, const std::string &raw);
-		int append(const char *raw); // Надо бы ее приватной
-		int update();
+		/* === */
+		Thread &operator = (const Thread &rhs);
+		Thread &operator << (const char *rhs);
+		/* === */
 		bool isNull();
 		bool has_hook();
 		void set_hook(
 			void *userdata,
 			void *(*on_update)(void *userdata, const char *raw)
 		);
+		/* === */
+		int append(const char *raw); // Надо бы ее приватной
+		int update();
 		const long long find(const long long &pnum);
-		std::vector<Makaba::Post &> find(const std::string comment); // @TODO
+		std::vector<Post &> find(const std::string comment); // @TODO
 	};
 
-	const Makaba::Thread NullThread;
+	const Thread NullThread;
 
 	class Captcha_2ch {
 		bool isNull_;
 		std::string png_url;
+		std::string error;
+		/* === */
 		Captcha_2ch();
+		/* === */
 		int get_id(const std::string &board, const long long &threadnum);
 		int form_url();
 	public:
 		std::string id;
 		std::string value;
-		std::string error; // @TODO ro
+		/* === */
 		Captcha_2ch(const std::string &board, const long long &threadnum);
-		Captcha_2ch(const Makaba::Thread& thread); // @TODO
+		Captcha_2ch(const Thread& thread); // @TODO
+		/* === */
 		bool isNull();
 		int get_png();
+		std::string &error();
 	};
 }
 
