@@ -28,7 +28,6 @@ extern const char *CAPTCHA_2CHAPTCHA;
 extern const size_t CURL_BUFF_BODY_SIZE;
 extern const size_t CURL_BUFF_HEADER_SIZE;
 extern const size_t COMMENT_LEN_MAX;
-// Юзерагент  - макрос CURL_UA в мейкфайле
 extern char *CURL_BUFF_BODY;
 extern char *CURL_BUFF_HEADER;
 extern size_t CURL_BUFF_POS;

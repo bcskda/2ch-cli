@@ -155,7 +155,7 @@ int cleanJsonCache() {
     dir = opendir("./");
 
     if (dir != NULL) {
-        for (int i = 0; entry = readdir(dir); i++) {
+        for (int i = 0; (entry = readdir(dir)) != 0; i++) {
             if (i > 1) {
  				if (! strstr(entry->d_name, Json_cache_suff_armed)) {
 					fprintf(stderr, "[cleanJsonCache] Delete %s/%s\n",

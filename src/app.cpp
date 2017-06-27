@@ -22,39 +22,6 @@ bool Sage_on = false;
 
 // End Global defs
 
-const char *sendPost(
-	const Makaba::Post &post,
-	const std::string &board,
-	const long long &threadnum)
-{
-	Makaba::Captcha_2ch captcha(board, threadnum);
-	if (captcha.isNull()) {
-		fprintf(stderr, "[main] Error: "
-						"Makaba::Captcha_2ch::Makaba::Captcha_2ch(const std::string &, const long long &)\n"
-						"  error = %d\n"
-						"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
-		return NULL;
-	}
-	if (captcha.get_png()) {
-		fprintf(stderr, "[main] Error: Makaba::Captcha_2ch::get_png()\n"
-						"  error = %d\n"
-						"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
-		return NULL;
-	}
-
-	caca_display_t *display = show_img(CaptchaUtfFilename);
-	caca_canvas_t *canvas = caca_get_canvas(display);
-	caca_put_str(canvas,
-				 1, Converter_height_i,
-			     "Ответ на капчу (секурность уровня sudo): ");
-	caca_refresh_display(display);
-	std::cin >> captcha.value;
-	caca_free_display(display);
-
-	return sendPost(board.data(), threadnum,
-		post.comment.data(), post.subject.data(), post.name.data(), post.email.data(),
-		captcha.id.data(), captcha.value.data());
-}
 
 int printThreadHeader(const Makaba::Thread &thread)
 {
@@ -161,7 +128,7 @@ void parse_argv(
 	const int argc, const char **argv,
 	std::string &board, long long &thread_number,
 	std::string &comment, std::string &passcode,
-	bool &send_post, bool &verbose,
+	bool &verbose,
 	bool &clean_cache)
 {
 	int opt;
@@ -197,9 +164,11 @@ void parse_argv(
 					exit(RET_ARGS);
 				}
 				break;
-			case 's':
-				send_post = true;
-				break;
+			/* DEPRECATED
+			 * case 's':
+			 * send_post = true;
+			 * break;
+			 */ 
 			case 'v':
 				verbose = true;
 				break;
@@ -286,7 +255,9 @@ void pomogite() // Справка
 	printf(" -h - помощь\n");
 	printf(" -b - задать борду\n");
 	printf(" -n - задать номер треда\n");
-	printf(" -s - отправить пост\n");
+	/* DEPRECATED
+	 * printf(" -s - отправить пост\n");
+	 */
 	printf(" -c - задать комментарий\n");
 	printf(" -C - очистить кэш тредов\n");
 	printf(" -v - подробный лог (для разработчиков)\n");

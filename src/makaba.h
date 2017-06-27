@@ -72,7 +72,7 @@ namespace Makaba {
 			 const char *vname,    const char *vsubject,
 			 const char *vtags,    const char *vtrip);
 		Post(Json::Value &val);
-		Post(const char *raw); // @TODO
+		Post(const std::string &raw);
 		/* === */
 		Post &operator=(const Post &rhs);
 		/* === */
@@ -108,6 +108,7 @@ namespace Makaba {
 		/* === */
 		int append(const char *raw); // Надо бы ее приватной
 		int update();
+		std::string send_post(const Post &post);
 		const long long find(const long long &pnum);
 		std::vector<Post &> find(const std::string comment); // @TODO
 	};

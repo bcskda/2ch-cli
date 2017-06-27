@@ -59,6 +59,24 @@ Makaba::Post::Post(const char *vcomment, const char *vemail,
 	{}
 
 
+Makaba::Post::Post(const std::string &raw):
+	isNull_(true)
+{
+	Json::CharReaderBuilder rbuilder;
+	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
+	std::string errs;
+	Json::Value jval;
+	if (! reader->parse(raw.data(), raw.data() + raw.length(), &jval, &errs)) {
+		fprintf(stderr, "[%s] Error:\n"
+						"Json::CharReader::parse():\n  %s\n",
+				__PRETTY_FUNCTION__, errs.data());
+		makaba_errno = ERR_GENERAL_FORMAT;
+		return;
+	}
+	isNull_ = false;
+}
+
+
 Makaba::Post::Post(Json::Value &val):
 	isNull_       ( false                                          ),
 	banned        ( atoi( val["banned"        ].asString().data()) ),
@@ -199,8 +217,8 @@ Makaba::Thread::Thread (
 }
 
 
-// Присваивание
-Makaba::Thread& Makaba::Thread::operator = (const Makaba::Thread &rhs)
+// Копирование
+Makaba::Thread &Makaba::Thread::operator = (const Makaba::Thread &rhs)
 {
 	this->isNull_ = rhs.isNull_;
 	this->hook_   = rhs.hook_;
@@ -288,6 +306,41 @@ int Makaba::Thread::update()
 }
 
 
+std::string Makaba::Thread::send_post(const Makaba::Post &post)
+{
+	Makaba::Captcha_2ch captcha(this->board, this->num);
+	if (captcha.isNull()) {
+		fprintf(stderr, "[%s] Error: "
+						"Captcha constructor: error = %d, description = %s\n",
+						__PRETTY_FUNCTION__, makaba_errno, makaba_strerror(makaba_errno));
+		return std::string("");
+	}
+	if (captcha.get_png()) {
+		fprintf(stderr, "[main] Error: Makaba::Captcha_2ch::get_png()\n"
+						"  error = %d\n"
+						"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
+		return std::string("");
+	}
+	
+	caca_display_t *display = show_img(CaptchaUtfFilename);
+	caca_canvas_t *canvas = caca_get_canvas(display);
+	caca_put_str(canvas,
+				 1, Converter_height_i,
+				 "Ответ на капчу (секурность уровня sudo): ");
+	caca_refresh_display(display);
+	std::cin >> captcha.value;
+	caca_free_display(display);
+	
+	char *api_result = sendPost(
+			this->board.data(), this->num,
+			post.comment.data(), post.subject.data(), post.name.data(), post.email.data(),
+			captcha.id.data(), captcha.value.data()
+		);
+	
+	return std::string(api_result);
+}
+
+
 const long long Makaba::Thread::find(const long long &pnum)
 {
 	for (size_t i = 0; i < this->posts.size(); i++) {
@@ -313,6 +366,25 @@ Makaba::Captcha_2ch::Captcha_2ch():
 	isNull_(true),
 	id     (std::string())
 	{}
+
+
+
+Makaba::Captcha_2ch::Captcha_2ch(const Makaba::Thread &thread):
+	isNull_(true),
+	id     (std::string())
+{
+	if (this->get_id(thread.board, thread.num)) {
+		fprintf(stderr, "[%s]: Error: this->get_id() failed\n",
+				__PRETTY_FUNCTION__);
+		return;
+	}
+	if (this->form_url()) {
+		fprintf(stderr, "[%s]: Error: this->form_url() failed\n",
+				__PRETTY_FUNCTION__);
+		return;
+	}
+	isNull_ = false;
+}
 
 
 Makaba::Captcha_2ch::Captcha_2ch(const std::string &board, const long long &threadnum):

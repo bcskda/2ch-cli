@@ -21,15 +21,14 @@ const int RET_INTERNAL = 5;
 int main (int argc, const char **argv)
 {
 	freopen("/tmp/2ch-cli.log", "w", stderr);
-
+	
 	std::string passcode = "пасскода нет :("; // Пасскод
 	std::string board = "b"; // Имя борды
 	long long thread_number = 0; // Номер треда в борде
 	std::string comment = "";
-	bool send_post = false;
 	bool verbose = false;
 	bool clean_cache = false;
-
+	
 	//getopt
 	if (argc == 1) /* Если аргументов нет, вывод помощи */ {
 		pomogite();
@@ -37,16 +36,16 @@ int main (int argc, const char **argv)
 	}
 	parse_argv(argc, argv,
 		board, thread_number, comment, passcode,
-		send_post, verbose, clean_cache);
+		verbose, clean_cache);
 	fprintf(stderr, "board_name = %s\n", board.data());
 	fprintf(stderr, "comment = %s\n", comment.data());
-
+	
 	if (initJsonCache() == -1) {
 		fprintf(stderr, "[main]! Error @ initJsonCache(): %d\n",
 			makaba_errno);
 		return RET_INTERNAL;
 	}
-
+	
 	if (clean_cache == true) {
 		if (cleanJsonCache()) {
 			fprintf(stderr, "[main] ! Error @ cleanJsonCache()\n");
@@ -57,21 +56,10 @@ int main (int argc, const char **argv)
 		}
 		return RET_OK;
 	}
-
+	
 	setlocale (LC_ALL, "");
 	makabaSetup();
-
-	if (send_post == true) {
-		Makaba::Post post(comment.data(), "",
-						 "", "",
-						 "", "");
-		if (sendPost(post, board, thread_number)) {
-			fprintf(stderr, "[main] Error: sendPost failed: %d\n", makaba_errno);
-			return RET_INTERNAL;
-		}
-		return RET_OK;
-	}
-
+	
 	std::cerr << "[main] Calling wrapper\n";
 	Makaba::Thread thread = thread_init_wrapper(board, thread_number);
 	if (makaba_errno) {
@@ -115,9 +103,9 @@ int main (int argc, const char **argv)
 							"", "",
 							"", "");
 	dummy_post.email = Sage_on ? "sage" : DEFAULT_EMAIL;
-
-	std::string api_result;
-
+	
+	std::string api_result = "";
+	
 	for (int cur_post = 0; should_exit == false; ) {
 		bool done = 0;
 		int int_input = 0;
@@ -146,10 +134,13 @@ int main (int argc, const char **argv)
 					break;
 				case 'S':
 					ncurses_exit();
-					api_result = sendPost(dummy_post, thread.board, thread.num);
+					api_result = thread.send_post(dummy_post);
 					ncurses_init();
 					ncurses_print_post(thread, cur_post);
-					ncurses_print_error(api_result.data());
+					if (api_result.length())
+						printw(">>> Запрос выполнен, ответ API: %s\n", api_result.data());
+					else
+						ncurses_print_error(makaba_strerror(makaba_errno));
 					break;
 				case 'h':
 					ncurses_print_help();

@@ -37,17 +37,13 @@ extern const char *Headers_suff;
 
 extern bool Sage_on;
 
-const char *sendPost(const Makaba::Post &post,
-					 const std::string &board,
-					 const long long &threadnum = 0);
-
 int printThreadHeader(const Makaba::Thread &thread);
 int printPost (const Makaba::Post &post, const bool show_email, const bool show_files);
 
 void pomogite();
 void parse_argv(const int argc, const char **argv,
 	std::string &board, long long &thread_number, std::string &comment, std::string &passcode,
-	bool &send_post, bool &verbose, bool &clean_cache);
+	bool &verbose, bool &clean_cache);
 void ncurses_init();
 void ncurses_exit();
 void ncurses_print_help();
