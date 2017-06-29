@@ -9,6 +9,8 @@ const char *Converter_height_s = "35";
 const int   Converter_width_i  = 140;
 const int   Converter_height_i = 35;
 
+const char *CaptchaUtfFilename = "/tmp/2ch-captcha.utf8";
+
 const int Ret_show_OK = 0;
 const int Ret_show_create_canvas = 1;
 const int Ret_show_import_canvas = 2;

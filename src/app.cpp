@@ -239,6 +239,36 @@ Makaba::Thread *thread_init_wrapper (
 	return thread;
 }
 
+Makaba::Captcha_2ch *captcha_init_wrapper(const Makaba::Thread &thread)
+{
+	Makaba::Captcha_2ch *captcha = new Makaba::Captcha_2ch(thread);
+	if (captcha->isNull()) {
+		delete captcha;
+		return NULL;
+	}
+	return captcha;
+}
+
+std::string thread_send_post_wrapper(
+	Makaba::Thread &thread,
+	const Makaba::Post &post)
+{
+	if (thread.captcha == NULL) {
+		std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Error: null thread.captcha\n";
+		return std::string(""); // TODO нормальная передача ошибок
+	}
+	convert_img(CaptchaPngFilename, CaptchaUtfFilename, false); // Гонка сигналов etc.
+	caca_display_t *display = show_img(CaptchaUtfFilename);
+	caca_canvas_t *canvas = caca_get_canvas(display);
+	caca_put_str(canvas,
+				 1, Converter_height_i + 1,
+				 "Ответ на капчу (секурность уровня sudo): ");
+	caca_refresh_display(display);
+	std::cin >> thread.captcha->value;
+	caca_free_display(display);
+	return thread.send_post(post);
+}
+
 void *thread_hook_on_update(void *userdata, const char *raw)
 {
 	std::cerr << "[hook on_update] Called with \"" << raw << "\"\n";

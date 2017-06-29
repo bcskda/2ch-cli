@@ -139,7 +139,15 @@ int main (int argc, const char **argv)
 					break;
 				case 'S':
 					ncurses_exit();
-					api_result = thread.send_post(dummy_post);
+					thread.captcha = captcha_init_wrapper(thread);
+					if (thread.captcha == NULL) {
+						ncurses_init();
+						ncurses_print_post(thread, cur_post);
+						ncurses_print_error(makaba_strerror(makaba_errno));
+					}
+					break;
+					api_result = thread_send_post_wrapper(thread, dummy_post);
+					delete thread.captcha;
 					ncurses_init();
 					ncurses_print_post(thread, cur_post);
 					if (api_result.length())

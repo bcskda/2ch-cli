@@ -59,4 +59,9 @@ Makaba::Thread *thread_init_wrapper (
 	const std::string &vboard,
 	const long long &vnum
 );
+Makaba::Captcha_2ch *captcha_init_wrapper(const Makaba::Thread &thread);
+std::string thread_send_post_wrapper(
+	Makaba::Thread &thread,
+	const Makaba::Post &post
+);
 void *thread_hook_on_update(void *userdata, const char *raw);

@@ -19,6 +19,8 @@ extern const char *Converter_height_s;
 extern const int   Converter_width_i;
 extern const int   Converter_height_i;
 
+extern const char *CaptchaUtfFilename;
+
 extern const int Ret_show_OK;
 extern const int Ret_show_create_canvas;
 extern const int Ret_show_import_canvas;

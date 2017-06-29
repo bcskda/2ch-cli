@@ -26,7 +26,6 @@ const char *PATTERN_AMP = "&amp";
 
 
 const char *CaptchaPngFilename = "/tmp/2ch-captcha.png";
-const char *CaptchaUtfFilename = "/tmp/2ch-captcha.utf8";
 
 
 // ========================================
@@ -147,7 +146,7 @@ Makaba::Post &Makaba::Post::operator = (const Makaba::Post &rhs)
 }
 
 
-bool Makaba::Post::isNull()
+bool Makaba::Post::isNull() const
 {
 	return this->isNull_;
 }
@@ -160,7 +159,9 @@ bool Makaba::Post::isNull()
 
 Makaba::Thread::Thread():
 	isNull_(true),
-	hook_  ({ NULL, NULL, false })
+	hook_  ({ NULL, NULL, false }),
+	//autodel_captcha_(false),
+	captcha(NULL)
 {
 	#ifdef MAKABA_DEBUG
 	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
@@ -174,9 +175,11 @@ Makaba::Thread::Thread (
 ):
 	isNull_(true ),
 	hook_  ({ NULL, NULL, false }),
+	//autodel_captcha_(false),
 	num    (0    ),
 	nposts (0    ),
-	board  (board)
+	board  (board),
+	captcha(NULL)
 {
 	#ifdef MAKABA_DEBUG
 	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
@@ -209,9 +212,11 @@ Makaba::Thread::Thread (
 ):
 	isNull_(true ),
 	hook_  ({ NULL, NULL, false }),
+	//autodel_captcha_(false),
 	num    (num  ),
 	nposts (0    ),
-	board  (board)
+	board  (board),
+	captcha(NULL)
 {
 	#ifdef MAKABA_DEBUG
 	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
@@ -291,13 +296,13 @@ Makaba::Thread &Makaba::Thread::operator << (const char *rhs)
 }
 
 
-bool Makaba::Thread::isNull()
+bool Makaba::Thread::isNull() const
 {
 	return this->isNull_;
 }
 
 
-bool Makaba::Thread::has_hook()
+bool Makaba::Thread::has_hook() const
 {
 	return this->hook_.set;
 }
@@ -312,6 +317,22 @@ void Makaba::Thread::set_hook(
 	this->hook_.on_update = on_update;
 	this->hook_.set = true;
 }
+
+
+/*
+ * bool Makaba::Thread::autodel_captcha() const
+ * {
+ * 	return this->autodel_captcha_;
+ * }
+ */
+
+
+/*
+ * void Makaba::Thread::autodel_captcha(bool del)
+ * {
+ * 	this->autodel_captcha_ = del;
+ * }
+ */
 
 
 int Makaba::Thread::append(const char *raw)
@@ -361,34 +382,39 @@ int Makaba::Thread::update()
 
 std::string Makaba::Thread::send_post(const Makaba::Post &post)
 {
-	Makaba::Captcha_2ch captcha(this->board, this->num);
-	if (captcha.isNull()) {
-		fprintf(stderr, "[%s] Error: "
-						"Captcha constructor: error = %d, description = %s\n",
+	if (this->captcha == NULL) {
+		fprintf(stderr, "[%s] Error: null captcha\n",
+						__PRETTY_FUNCTION__);
+		return std::string("");
+	}
+	if (captcha->get_png()) {
+		fprintf(stderr, "[%s] Error: Makaba::Captcha_2ch::get_png()\n"
+						"  error = %d\n  description = %s\n",
 						__PRETTY_FUNCTION__, makaba_errno, makaba_strerror(makaba_errno));
 		return std::string("");
 	}
-	if (captcha.get_png()) {
-		fprintf(stderr, "[main] Error: Makaba::Captcha_2ch::get_png()\n"
-						"  error = %d\n"
-						"  description = %s\n", makaba_errno, makaba_strerror(makaba_errno));
-		return std::string("");
-	}
 	
-	caca_display_t *display = show_img(CaptchaUtfFilename);
-	caca_canvas_t *canvas = caca_get_canvas(display);
-	caca_put_str(canvas,
-				 1, Converter_height_i,
-				 "Ответ на капчу (секурность уровня sudo): ");
-	caca_refresh_display(display);
-	std::cin >> captcha.value;
-	caca_free_display(display);
+	/* Не относится к API напрямую, должно быть в app.cpp
+	 * caca_display_t *display = show_img(CaptchaUtfFilename);
+	 * caca_canvas_t *canvas = caca_get_canvas(display);
+	 * caca_put_str(canvas,
+	 * 			 1, Converter_height_i + 1,
+	 * 			 "Ответ на капчу (секурность уровня sudo): ");
+	 * caca_refresh_display(display);
+	 * std::cin >> captcha.value;
+	 * caca_free_display(display);
+	 */
 	
 	char *api_result = sendPost(
 			this->board.data(), this->num,
 			post.comment.data(), post.subject.data(), post.name.data(), post.email.data(),
-			captcha.id.data(), captcha.value.data()
+			this->captcha->id.data(), this->captcha->value.data()
 		);
+	
+	/*
+	 * if (this->autodel_captcha_)
+	 * 	delete this->captcha;
+	 */
 	
 	return std::string(api_result);
 }
@@ -409,7 +435,7 @@ const long long Makaba::Thread::find(const long long &pnum)
 // ========================================
 
 
-bool Makaba::Captcha_2ch::isNull()
+bool Makaba::Captcha_2ch::isNull() const
 {
 	return this->isNull_;
 }
@@ -538,13 +564,14 @@ int Makaba::Captcha_2ch::get_png() {
 	FILE *pic_file = fopen(CaptchaPngFilename, "w");
 	fwrite(pic, sizeof(char), pic_size, pic_file);
 	fclose(pic_file);
-	
-	convert_img(CaptchaPngFilename, CaptchaUtfFilename, false);
+	/* Не относится к API напрямую, должно быть в app.cpp
+	 * convert_img(CaptchaPngFilename, CaptchaUtfFilename, false);
+	 */
 	return 0;
 }
 
 
-const std::string &Makaba::Captcha_2ch::error()
+const std::string &Makaba::Captcha_2ch::error() const
 {
 	return this->error_;
 }

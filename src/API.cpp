@@ -371,7 +371,7 @@ char *sendPost (const char *board, const long long threadn,
 
 size_t CURL_writeToBuff (const char *src, const size_t block_size, const size_t nmemb, void *dest) {
 	if (src == NULL ||
-		CURL_BUFF_POS + block_size * nmemb > CURL_BUFF_BODY_SIZE) {
+		CURL_BUFF_POS + block_size * nmemb > CURL_BUFF_BODY_SIZE) { // TODO uint8_t
 		return 0;
 	}
 	else {

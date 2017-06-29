@@ -13,7 +13,6 @@
 #include <cstddef>
 #include <memory>
 #include "API.h"
-#include "external.h"
 #include "error.h"
 #pragma once
 
@@ -37,12 +36,17 @@ extern const char *PATTERN_AMP;
 
 
 extern const char *CaptchaPngFilename;
-extern const char *CaptchaUtfFilename;
 
 
 namespace Makaba {
+	class Post;
+	class Thread;
+	class Captcha_2ch;
+	
 	class Post {
 		bool isNull_;
+		/* === */
+		Post();
 	public:
 		bool banned;
 		bool closed;
@@ -64,7 +68,7 @@ namespace Makaba {
 		long long unique_posters;
 		long long rel_num;
 		/* === */
-		Post();
+		//Post();
 		Post(const std::string &vcomment, const std::string &vemail,
 			 const std::string &vname,    const std::string &vsubject,
 			 const std::string &vtags,    const std::string &vtrip);
@@ -76,9 +80,9 @@ namespace Makaba {
 		/* === */
 		Post &operator=(const Post &rhs);
 		/* === */
-		bool isNull();
+		bool isNull() const;
 	};
-
+	
 	class Thread {
 		bool isNull_;
 		struct {
@@ -86,11 +90,15 @@ namespace Makaba {
 			void *(*on_update)(void *userdata, const char *raw);
 			bool set;
 		} hook_;
+		/* Нужно ли?
+		 * bool autodel_captcha_;
+		 */
 		std::vector<Post *> posts_; // (sic)
 	public:
 		long long num;
 		long long nposts;
 		std::string board;
+		Captcha_2ch *captcha;
 		/* === */
 		Thread();
 		Thread(const std::string &board, const long long &num, const bool inst_dl = true);
@@ -102,12 +110,16 @@ namespace Makaba {
 		Post & operator [] (size_t i);
 		Thread &operator << (const char *rhs);
 		/* === */
-		bool isNull();
-		bool has_hook();
+		bool isNull() const;
+		bool has_hook() const;
 		void set_hook(
 			void *userdata,
 			void *(*on_update)(void *userdata, const char *raw)
 		);
+		/* Нужно ли?
+		 * bool autodel_captcha() const;
+		 * void autodel_captcha(bool del);
+		 */
 		/* === */
 		int append(const char *raw); // Надо бы ее приватной
 		int update();
@@ -115,9 +127,7 @@ namespace Makaba {
 		const long long find(const long long &pnum);
 		std::vector<Post &> find(const std::string comment); // @TODO
 	};
-
-	static const Thread NullThread;
-
+	
 	class Captcha_2ch {
 		bool isNull_;
 		std::string png_url;
@@ -132,12 +142,14 @@ namespace Makaba {
 		std::string value;
 		/* === */
 		Captcha_2ch(const std::string &board, const long long &threadnum);
-		Captcha_2ch(const Thread& thread); // @TODO
+		Captcha_2ch(const Thread &thread);
 		/* === */
-		bool isNull();
+		bool isNull() const;
 		int get_png();
-		const std::string &error();
+		const std::string &error() const;
 	};
+	
+	static const Thread NullThread;
 }
 
 char *parseHTML (const char *raw, const long long &raw_len, const bool &v);
