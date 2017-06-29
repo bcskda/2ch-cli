@@ -33,7 +33,7 @@ void setup_env() {
 		Env_EDITOR = DEFAULT_EDITOR; // Макрос в makefile
 	if (Env_HOME.length() == 0)
 		Env_HOME = getenv("HOME");
-	std::cerr << "[after init] btw HOME = \"" << Env_HOME.data() << "\"\n";
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << "]] HOME = \"" << Env_HOME.data() << "\"\n";
 	if (Comment_tmpfile.length() == 0) {
 		Comment_tmpfile = Env_HOME;
 		Comment_tmpfile += "/.cache/2ch-cli/comment";

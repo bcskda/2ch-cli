@@ -28,7 +28,7 @@ int printThreadHeader(const Makaba::Thread &thread)
 	move(Head_pos_y, Head_pos_x);
 	printw("%s", Headers_pref);
 	printw("/%s %s, %ld постов\n",
-		thread.board.data(), thread.posts[0].subject.data(), thread.nposts);
+		thread.board.data(), thread[0].subject.data(), thread.nposts);
 	return 0;
 }
 
@@ -102,7 +102,7 @@ void ncurses_print_post(
 {
 	clear();
 	printThreadHeader(thread);
-	printPost(thread.posts[num], true, true);
+	printPost(thread[num], true, true);
 	refresh();
 }
 
@@ -128,8 +128,7 @@ void parse_argv(
 	const int argc, const char **argv,
 	std::string &board, long long &thread_number,
 	std::string &comment, std::string &passcode,
-	bool &verbose,
-	bool &clean_cache)
+	bool &verbose, bool &clean_cache)
 {
 	int opt;
 	while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:sc:vC") ) != -1)
@@ -183,12 +182,13 @@ void parse_argv(
 	}
 }
 
-Makaba::Thread &thread_init_wrapper (
+Makaba::Thread *thread_init_wrapper (
 	const std::string &vboard,
 	const long long &vnum)
 {
-	static Makaba::Thread thread(vboard, vnum, false);
-	thread.set_hook(&thread, thread_hook_on_update);
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Constructing thread\n";
+	Makaba::Thread *thread = new Makaba::Thread(vboard, vnum, false);
+	thread->set_hook(thread, thread_hook_on_update);
 	bool fallback = false;
 	if (Json_cache_dir == NULL) {
 		if (initJsonCache()) {
@@ -202,9 +202,9 @@ Makaba::Thread &thread_init_wrapper (
 	long long size;
 	char *raw = NULL;
 	std::cerr << "[thread_init_wrapper] Checking this thread in cache...\n";
-	if (fallback == false && checkJsonCache(thread)) { // Кэш в порядке и тред в нем есть
+	if (fallback == false && checkJsonCache(*thread)) { // Кэш в порядке и тред в нем есть
 		std::cerr << "[thread_init_wrapper] Found in cache!\n";
-		raw = readJsonCache(thread, &size);
+		raw = readJsonCache(*thread, &size);
 		if (raw == NULL) { // Проблема при чтении треда из кэша
 			fprintf(stderr, "[%s] Warning: Fallback to getThread()\n",
 					__PRETTY_FUNCTION__);
@@ -217,21 +217,24 @@ Makaba::Thread &thread_init_wrapper (
 	}
 	if (fallback == true) { // По какой-то причине тред нужно качать
 		std::cerr << "[thread_init_wrapper] Downloading thread from server";
-		raw = getThread(thread.board.data(), thread.num,
+		raw = getThread(thread->board.data(), thread->num,
 						1, &size, false);
 		if (raw == NULL) {
 			fprintf(stderr, "[%s] Error @ getThread()\n",
 					__PRETTY_FUNCTION__);
-			static Makaba::Thread null;
-			return null;
+			*thread = Makaba::NullThread;
+			return thread;
 		}
 		std::cerr << "[thread_init_wrapper] Caching received posts\n";
-		writeJsonCache(thread, raw);
+		writeJsonCache(*thread, raw);
 	}
 	std::cerr << "[thread_init_wrapper] Appending cached posts\n";
-	thread.append(raw);
-	std::cerr << "[thread_init_wrapper] Checking for new posts\n";
-	thread.update(); // Ошибки обрабатывает main()
+	thread->append(raw);
+	/* Вопрос, нужно ли: долгая загрузка при плохом соединении,
+	 * интерфейса в этот момент нет. Индикатор прогресса в get*?
+	 * std::cerr << "[thread_init_wrapper] Checking for new posts\n";
+	 * thread.update(); // Ошибки обрабатывает main()
+	 */
 	std::cerr << "[thread_init_wrapper] Exiting\n";
 	return thread;
 }

@@ -21,6 +21,7 @@ const int RET_INTERNAL = 5;
 int main (int argc, const char **argv)
 {
 	freopen("/tmp/2ch-cli.log", "w", stderr);
+	std::cerr << "[main] Makaba::NullThread at " << &Makaba::NullThread << std::endl;
 	
 	std::string passcode = "пасскода нет :("; // Пасскод
 	std::string board = "b"; // Имя борды
@@ -34,8 +35,10 @@ int main (int argc, const char **argv)
 		pomogite();
 		return RET_ARGS;
 	}
-	parse_argv(argc, argv,
-		board, thread_number, comment, passcode,
+	parse_argv(
+		argc, argv,
+		board, thread_number,
+		comment, passcode,
 		verbose, clean_cache);
 	fprintf(stderr, "board_name = %s\n", board.data());
 	fprintf(stderr, "comment = %s\n", comment.data());
@@ -61,7 +64,7 @@ int main (int argc, const char **argv)
 	makabaSetup();
 	
 	std::cerr << "[main] Calling wrapper\n";
-	Makaba::Thread thread = thread_init_wrapper(board, thread_number);
+	Makaba::Thread &thread = * thread_init_wrapper(board, thread_number);
 	if (makaba_errno) {
 		fprintf(stderr, "[main] Warning: error during thread_init_wrapper(): %s\n",
 				makaba_strerror(makaba_errno));
@@ -81,6 +84,7 @@ int main (int argc, const char **argv)
 			should_exit = true;
 		if (should_exit) {
 			printf("Ошибка: %s\n", makaba_strerror(makaba_errno));
+			delete &thread;
 			makabaCleanup();
 			return RET_INTERNAL;
 		}
@@ -90,6 +94,7 @@ int main (int argc, const char **argv)
 	if (thread.nposts == 0) {
 		printf(">>> !!!Smth strange with thread at %s/%lld: doen\'t exist, exiting!!! <<<\n",
 			board.data(), thread_number);
+		delete &thread;
 		makabaCleanup();
 		return RET_OK;
 	}
@@ -171,7 +176,7 @@ int main (int argc, const char **argv)
 					scanw("%d", &int_input);
 					noecho();
 					if (int_input < 1) {
-						int_input = thread.posts[0].num;
+						int_input = thread[0].num;
 					}
 					search_result = thread.find(int_input);
 					if (search_result == -1) {
@@ -252,8 +257,9 @@ int main (int argc, const char **argv)
 	ncurses_exit();
 
 	disarmJsonCache(thread);
+	delete &thread;
 	makabaCleanup();
-	fprintf(stderr, "Cleanup done, exiting\n");
+	fprintf(stderr, "[main] Cleanup done, exiting\n");
 
 	return ret;
 }

@@ -62,7 +62,10 @@ Makaba::Post::Post(const char *vcomment, const char *vemail,
 Makaba::Post::Post(const std::string &raw):
 	isNull_(true)
 {
-	Json::CharReaderBuilder rbuilder;
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
+	Json::CharReaderBuilder rbuilder; // TODO Single global
 	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
 	std::string errs;
 	Json::Value jval;
@@ -99,6 +102,9 @@ Makaba::Post::Post(Json::Value &val):
 	unique_posters( atoi( val["unique_posters"].asString().data()) ),
 	rel_num       ( 0                                              )
 {
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
 	const char *comment_raw = val["comment"].asCString();
 	char *comment_parsed = parseHTML(comment_raw, strlen(comment_raw), false);
 	this->comment = comment_parsed;
@@ -108,13 +114,16 @@ Makaba::Post::Post(Json::Value &val):
 	this->name = name_parsed;
 	free(name_parsed);
 	#ifdef MAKABA_DEBUG
-	printf(stderr, "<init post #%10lld>\n", this->num);
+	fprintf(stderr, "<init (new) post #%10lld>\n", this->num);
  	#endif // ifdef MAKABA_DEBUG
 }
 
 
 Makaba::Post &Makaba::Post::operator = (const Makaba::Post &rhs)
 {
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
 	this->isNull_        = rhs.isNull_;
 	this->banned         = rhs.banned;
 	this->comment        = rhs.comment;
@@ -152,7 +161,11 @@ bool Makaba::Post::isNull()
 Makaba::Thread::Thread():
 	isNull_(true),
 	hook_  ({ NULL, NULL, false })
-	{} 
+{
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
+}
 
 
 Makaba::Thread::Thread (
@@ -165,7 +178,10 @@ Makaba::Thread::Thread (
 	nposts (0    ),
 	board  (board)
 {
-	Json::CharReaderBuilder rbuilder;
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
+	Json::CharReaderBuilder rbuilder; // TODO Single global (dup Makaba::Post::Post())
 	std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
 	std::string errs;
 	Json::Value array;
@@ -178,11 +194,11 @@ Makaba::Thread::Thread (
 	}
 	for (auto obj : array) {
 		this->nposts++;
-		Makaba::Post post(obj);
-		post.rel_num = this->nposts;
-		this->posts.push_back(post);
+		Makaba::Post *post = new Makaba::Post(obj);
+		post->rel_num = this->nposts;
+		this->posts_.push_back(post);
 	}
-	this->num = this->posts[0].num;
+	this->num = this->posts_[0]->num;
 }
 
 
@@ -197,6 +213,9 @@ Makaba::Thread::Thread (
 	nposts (0    ),
 	board  (board)
 {
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
 	if (inst_dl == false)
 		return;
 	char *raw;
@@ -217,22 +236,56 @@ Makaba::Thread::Thread (
 }
 
 
+Makaba::Thread::~Thread()
+{
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
+	for (auto p : this->posts_)
+		delete p;
+}
+
 // Копирование
 Makaba::Thread &Makaba::Thread::operator = (const Makaba::Thread &rhs)
 {
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
 	this->isNull_ = rhs.isNull_;
 	this->hook_   = rhs.hook_;
 	this->num     = rhs.num;
 	this->nposts  = rhs.nposts;
 	this->board   = rhs.board;
-	this->posts   = rhs.posts;
+	this->posts_   = rhs.posts_;
+	fprintf(stderr, "<copy thread #%10lld>\n", this->num);
 	return *this;
+}
+
+
+Makaba::Post Makaba::Thread::operator [] (size_t i) const
+{
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
+	return *(this->posts_.at(i));
+}
+
+
+Makaba::Post & Makaba::Thread::operator [] (size_t i)
+{
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
+	return *(this->posts_.at(i));
 }
 
 
 // Дополнение постами
 Makaba::Thread &Makaba::Thread::operator << (const char *rhs)
 {
+	#ifdef MAKABA_DEBUG
+	std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+	#endif // ifdef MAKABA_DEBUG
 	this->append(rhs);
 	return *this;
 }
@@ -276,9 +329,9 @@ int Makaba::Thread::append(const char *raw)
 	}
 	for (auto obj : array) {
 		this->nposts++;
-		Makaba::Post post(obj);
-		post.rel_num = this->nposts;
-		this->posts.push_back(post);
+		Makaba::Post *post = new Makaba::Post(obj);
+		post->rel_num = this->nposts;
+		this->posts_.push_back(post);
 	}
 	return 0;
 }
@@ -343,8 +396,8 @@ std::string Makaba::Thread::send_post(const Makaba::Post &post)
 
 const long long Makaba::Thread::find(const long long &pnum)
 {
-	for (size_t i = 0; i < this->posts.size(); i++) {
-		if (this->posts[i].num == pnum)
+	for (size_t i = 0; i < this->posts_.size(); i++) {
+		if (this->posts_[i]->num == pnum) // TODO binary search?
 			return i;
 	}
 	return -1;

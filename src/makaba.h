@@ -86,17 +86,20 @@ namespace Makaba {
 			void *(*on_update)(void *userdata, const char *raw);
 			bool set;
 		} hook_;
+		std::vector<Post *> posts_; // (sic)
 	public:
 		long long num;
 		long long nposts;
 		std::string board;
-		std::vector<Post> posts;
 		/* === */
 		Thread();
 		Thread(const std::string &board, const long long &num, const bool inst_dl = true);
 		Thread(const std::string &board, const std::string &raw);
+		~Thread();
 		/* === */
 		Thread &operator = (const Thread &rhs);
+		Post operator [] (size_t i) const;
+		Post & operator [] (size_t i);
 		Thread &operator << (const char *rhs);
 		/* === */
 		bool isNull();
