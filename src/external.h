@@ -41,10 +41,10 @@ extern std::string Env_HOME;
 extern std::string Env_EDITOR;
 
 enum edit_task {
-	Task_comment,
-	Task_email,
-	Task_name,
-	Task_trip
+    Task_comment,
+    Task_email,
+    Task_name,
+    Task_trip
 };
 
 void setup_env();
