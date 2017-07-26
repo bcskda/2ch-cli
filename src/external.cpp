@@ -29,12 +29,24 @@ std::string Env_EDITOR = "";
 // End Global defs
 
 void setup_env() {
-    if (Env_EDITOR.length() == 0)
-        Env_EDITOR = getenv("EDITOR");
+    std::cerr << "Enter setup_env()" << std::endl;
+    char *env = NULL;
+    if (Env_EDITOR.length() == 0) {
+        env = getenv("EDITOR");
+        if (env != NULL)
+            Env_EDITOR = env;
+    }
     if (Env_EDITOR.length() == 0)
         Env_EDITOR = DEFAULT_EDITOR; // Макрос в makefile
-    if (Env_HOME.length() == 0)
-        Env_HOME = getenv("HOME");
+    if (Env_HOME.length() == 0) {
+        env = getenv("HOME");
+        if (env != NULL)
+            Env_HOME = env;
+        else {
+            printf("Error: HOME not set");
+            exit(ERR_GETENV);
+        }
+    }
     std::cerr << "[[ " << __PRETTY_FUNCTION__ << "]] HOME = \"" << Env_HOME.data() << "\"\n";
     if (Comment_tmpfile.length() == 0) {
         Comment_tmpfile = Env_HOME;
