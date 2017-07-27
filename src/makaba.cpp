@@ -233,10 +233,8 @@ Makaba::Thread::Thread (
     }
     if (this->has_hook())
         this->hook_.on_update(this->hook_.userdata, raw);
-    if (this->append(raw)) {
+    if (this->append(raw))
         fprintf(stderr, "[%s] Error @ this->append()\n", __PRETTY_FUNCTION__);
-        makaba_errno = ERR_GENERAL_FORMAT;
-    }
     this->isNull_ = false;
 }
 
@@ -346,6 +344,18 @@ int Makaba::Thread::append(const char *raw)
                         "Json::CharReader::parse():\n  %s\n",
                 __PRETTY_FUNCTION__, errs.data());
         makaba_errno = ERR_GENERAL_FORMAT;
+        return -1;
+    }
+    if (! array.isArray()) { // Не массив = объект с ошибкой
+        std::cerr << __PRETTY_FUNCTION__ << " Error: raw json not an array\n:";
+        std::cerr << array << std::endl;
+        switch(array["Code"].asInt()) {
+            case -404:
+                makaba_errno = ERR_API_THREAD_NOT_FOUND;
+                break;
+            default:
+                makaba_errno = ERR_API_GENERAL;
+        }
         return -1;
     }
     for (auto obj : array) {

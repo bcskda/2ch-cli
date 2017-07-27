@@ -220,7 +220,7 @@ Makaba::Thread *thread_init_wrapper (
         fallback = true;
     }
     if (fallback == true) { // По какой-то причине тред нужно качать
-        std::cerr << "[thread_init_wrapper] Downloading thread from server";
+        std::cerr << "[thread_init_wrapper] Downloading thread from server\n";
         raw = getThread(thread->board.data(), thread->num,
                         1, &size, false);
         if (raw == NULL) {
@@ -229,11 +229,15 @@ Makaba::Thread *thread_init_wrapper (
             *thread = Makaba::NullThread;
             return thread;
         }
-        std::cerr << "[thread_init_wrapper] Caching received posts\n";
-        writeJsonCache(*thread, raw);
     }
     std::cerr << "[thread_init_wrapper] Appending cached posts\n";
-    thread->append(raw);
+    if (thread->append(raw)) {
+        std::cerr << __PRETTY_FUNCTION__ << " Error at append\n";
+        *thread = Makaba::NullThread;
+        return thread;
+    }
+    std::cerr << "[thread_init_wrapper] Caching received posts\n";
+    writeJsonCache(*thread, raw);
     /* Вопрос, нужно ли: долгая загрузка при плохом соединении,
     * интерфейса в этот момент нет. Индикатор прогресса в get*?
     * std::cerr << "[thread_init_wrapper] Checking for new posts\n";

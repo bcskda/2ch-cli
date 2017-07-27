@@ -16,12 +16,16 @@ const char *makaba_strerror(makaba_error_t err) {
             return "Внутренняя ошибка cURL";
         case ERR_CURL_PERFORM:
             return "Ошибка соединения с сервером";
+        case ERR_API_THREAD_NOT_FOUND:
+            return "Тред не найден";
+        case ERR_API_GENERAL:
+            return "Некорректный запрос";
         case ERR_ARGS:
         case ERR_REF_FORMAT:
         case ERR_INTERNAL:
             return "Внутренняя ошибка";
         case ERR_POST_FORMAT:
-            return "Ошибка: некорректный пост после обработки";
+            return "Некорректный пост после обработки";
         case ERR_GENERAL_FORMAT:
             return "Ошибка в формате ответа сервера";
         case ERR_CACHE_NOENT:

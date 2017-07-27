@@ -9,6 +9,8 @@ enum makaba_error {
     ERR_UNKNOWN,
     ERR_CURL_INIT,
     ERR_CURL_PERFORM,
+    ERR_API_THREAD_NOT_FOUND,
+    ERR_API_GENERAL,
     ERR_ARGS,
     ERR_POST_FORMAT,
     ERR_REF_FORMAT,
