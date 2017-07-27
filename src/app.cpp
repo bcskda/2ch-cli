@@ -45,24 +45,28 @@ int printPost(
 
     char header_1[150] = "";
     char header_2[150] = "";
-    sprintf(header_1, "%s", post.name.data());
     bool sage = false;
     if (show_email == true && post.email.length() > 0) {
         if (strcmp(post.email.data(), "mailto:sage"))
-            sprintf(header_1, "%s @ %s", header_1, post.email.data());
-        else
+            sprintf(header_1, "%s @ %s", post.name.data(), post.email.data());
+        else {
+            sprintf(header_1, "%s", post.name.data());
             sage = true;
+        }
     }
     sprintf(header_2, "№%lld (%lld) %s", post.num, post.rel_num, post.date.data());
     // @TODO Выравнивать строки заголовка по ширине
+    
     printw("%s", Headers_pref);
     if (sage)
         attron(A_UNDERLINE);
     printw("%s\n", header_1);
     attroff(A_UNDERLINE);
+    
     printw("%s", Headers_pref);
     printw("%s\n", header_2);
-    // Выводим комментарий
+    
+
     printw("\n%s\n\n", post.comment.data());
 
     return 0;
