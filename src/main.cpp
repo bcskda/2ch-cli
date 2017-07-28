@@ -135,7 +135,7 @@ int main (int argc, const char **argv)
                     dummy_post.email = Sage_on ? "sage" : DEFAULT_EMAIL;
                     ncurses_print_error(Sage_on ? "Sage: on" : "Sage: off");
                     break;
-                case 'S':
+                case KEY_ENTER:
                     ncurses_exit();
                     thread.captcha = captcha_init_wrapper(thread);
                     if (thread.captcha == NULL) {
@@ -152,6 +152,12 @@ int main (int argc, const char **argv)
                         printw(">>> Запрос выполнен, ответ API: %s\n", api_result.data());
                     else
                         ncurses_print_error(makaba_strerror(makaba_errno));
+                    break;
+                case 'f':
+                    /* поиск по подстроке */
+                    break;
+                case 'F':
+                    /* поиск по regex */
                     break;
                 case 'h':
                     ncurses_print_help();

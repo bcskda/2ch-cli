@@ -293,6 +293,17 @@ Makaba::Thread &Makaba::Thread::operator << (const char *rhs)
     return *this;
 }
 
+std::vector<Makaba::Post *> Makaba::Thread::find(const std::string& comment) const
+{
+    std::vector<Post *> results;
+    for (auto post : this->posts_)
+    {
+        if (post->comment.find(comment) != std::string::npos)
+            results.push_back(post);
+    }
+    return results;
+}
+
 
 bool Makaba::Thread::isNull() const
 {
@@ -430,7 +441,7 @@ std::string Makaba::Thread::send_post(const Makaba::Post &post)
 }
 
 
-const long long Makaba::Thread::find(const long long &pnum)
+const long long Makaba::Thread::find(const long long &pnum) const
 {
     for (size_t i = 0; i < this->posts_.size(); i++) {
         if (this->posts_[i]->num == pnum) // TODO binary search?
