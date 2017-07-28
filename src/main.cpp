@@ -136,15 +136,17 @@ int main (int argc, const char **argv)
                     ncurses_print_error(Sage_on ? "Sage: on" : "Sage: off");
                     break;
                 case KEY_ENTER:
+                case '\n':
                     ncurses_exit();
                     thread.captcha = captcha_init_wrapper(thread);
                     if (thread.captcha == NULL) {
                         ncurses_init();
                         ncurses_print_post(thread, cur_post);
                         ncurses_print_error(makaba_strerror(makaba_errno));
+                        break;
                     }
-                    break;
                     api_result = thread_send_post_wrapper(thread, dummy_post);
+                    std::cerr << "[main] API answer: " << api_result << std::endl;
                     delete thread.captcha;
                     ncurses_init();
                     ncurses_print_post(thread, cur_post);

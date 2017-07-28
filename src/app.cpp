@@ -255,8 +255,15 @@ Makaba::Captcha_2ch *captcha_init_wrapper(const Makaba::Thread &thread)
     Makaba::Captcha_2ch *captcha = new Makaba::Captcha_2ch(thread);
     if (captcha->isNull()) {
         delete captcha;
+        std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Error at captcha constructor\n";
         return NULL;
     }
+    if (captcha->get_png()) {
+        std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Error at captcha.get_png()\n";
+        delete captcha;
+        return NULL;
+    };
+    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Captcha ready at " << captcha << std::endl;
     return captcha;
 }
 

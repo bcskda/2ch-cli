@@ -149,30 +149,40 @@ void fork_and_edit(std::string &dest, const std::string &filename) {
 }
 
 caca_display_t *show_img(const char *filename) {
-    fprintf(stderr, "]] Starting show_img\n");
+    std::cerr << "]] Starting show_img\n";
 
     caca_canvas_t *canvas;
     caca_display_t *display;
     // Подразумевается, что на данном этапе уже есть сессия ncurses
     canvas = caca_create_canvas(0, 0);
-    if (! canvas) {
-        fprintf(stderr, "[show_img]! Error: could not open libcaca canvas\n");
+    if (canvas == NULL) {
+        std::cerr << "[show_img]! Error: could not open libcaca canvas\n";
         return NULL;
     }
     ssize_t import_ret = caca_import_canvas_from_file(canvas, filename, "");
     if (import_ret == -1) {
-        fprintf(stderr, "[show_img]! Error: could not import canvas from %s\n", filename);
+        std::cerr << "[show_img]! Error: could not import canvas from " << filename << '\n';
         return NULL;
     }
-    display = caca_create_display(canvas);
-    if (! display) {
+    display = caca_create_display_with_driver(canvas, "ncurses");
+    if (display == NULL) {
         fprintf(stderr, "[show_img]! Error: could not open libcaca display\n");
+        switch(errno) {
+            case ENOMEM:
+                std::cerr << "[show_img] Wtf no mem???" << std::endl;
+                break;
+            case ENODEV:
+                std::cerr << "[show_img] Error at dev init" << std::endl;
+                break;
+            default:
+                break;
+        }
         return NULL;
     }
 
     caca_refresh_display(display);
 
-    fprintf(stderr, "]] Exiting show_img\n");
+    std::cerr << "]] Exiting show_img\n";
     return display;
 }
 

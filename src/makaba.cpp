@@ -530,7 +530,6 @@ int Makaba::Captcha_2ch::get_id(const std::string &board, const long long &threa
         makaba_errno = ERR_GENERAL_FORMAT;
         return -1;
     }
-    fprintf(stderr, "btw ans:\n");
     std::cerr << ans << std::endl;
     if (! ans["error"].isNull()) {
         fprintf(stderr, "[%s] Error: \n"
