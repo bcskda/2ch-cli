@@ -46,7 +46,7 @@ int printPost(
 void pomogite();
 void parse_argv(const int argc, const char **argv,
     std::string &board, long long &thread_number,
-    std::string &comment, std::string &passcode,
+    std::string &passcode,
     bool &verbose, bool &clean_cache);
 void ncurses_init();
 void ncurses_exit();

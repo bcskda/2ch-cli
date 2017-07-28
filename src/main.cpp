@@ -26,7 +26,6 @@ int main (int argc, const char **argv)
     std::string passcode = "пасскода нет :("; // Пасскод
     std::string board = "b"; // Имя борды
     long long thread_number = 0; // Номер треда в борде
-    std::string comment = "";
     bool verbose = false;
     bool clean_cache = false;
     
@@ -38,10 +37,9 @@ int main (int argc, const char **argv)
     parse_argv(
         argc, argv,
         board, thread_number,
-        comment, passcode,
+        passcode,
         verbose, clean_cache);
     fprintf(stderr, "board_name = %s\n", board.data());
-    fprintf(stderr, "comment = %s\n", comment.data());
     
     if (initJsonCache() == -1) {
         fprintf(stderr, "[main]! Error @ initJsonCache(): %d\n",

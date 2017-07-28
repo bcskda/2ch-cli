@@ -131,7 +131,7 @@ void ncurses_clear_errors()
 void parse_argv(
     const int argc, const char **argv,
     std::string &board, long long &thread_number,
-    std::string &comment, std::string &passcode,
+    std::string &passcode,
     bool &verbose, bool &clean_cache)
 {
     int opt;
@@ -154,24 +154,25 @@ void parse_argv(
             case 'n':
                 thread_number = atoi(optarg);
                 break;
-            case 'c':
-                if (comment.length() == 0) {
-                    if ( sizeof(optarg) > COMMENT_LEN_MAX ) {
-                        printf("Комментарий не длиннее 15к символов\n");
-                        exit(RET_ARGS);
-                    }
-                    comment = optarg;
-                }
-                else {
-                    printf("Дважды указан комментарий\n");
-                    exit(RET_ARGS);
-                }
-                break;
             /* DEPRECATED
-            * case 's':
-            * send_post = true;
-            * break;
-            */ 
+             * case 'c':
+             *  if (comment.length() == 0) {
+             *      if ( sizeof(optarg) > COMMENT_LEN_MAX ) {
+             *          printf("Комментарий не длиннее 15к символов\n");
+             *          exit(RET_ARGS);
+             *      }
+             *      comment = optarg;
+             *  }
+             *  else {
+             *      printf("Дважды указан комментарий\n");
+             *      exit(RET_ARGS);
+             *  }
+             *  break;
+             *
+             * case 's':
+             * send_post = true;
+             * break;
+             */
             case 'v':
                 verbose = true;
                 break;
