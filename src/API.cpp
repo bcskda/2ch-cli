@@ -297,6 +297,7 @@ char *sendPost (const char *board, const long long threadn,
 				const char *name, const char *email,
 				const char *captcha_id, const char *captcha_value)
 {
+	fprintf(stderr, "[sendPost] Start\n");
 	if (board == NULL) {
 		fprintf(stderr, "[sendPost] Error: board = null\n");
 		makaba_errno = ERR_ARGS;

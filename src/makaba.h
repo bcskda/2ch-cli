@@ -130,6 +130,7 @@ namespace Makaba {
     
     class Captcha_2ch {
         bool isNull_;
+        bool hasPng_;
         std::string png_url;
         std::string error_;
         /* === */
@@ -145,6 +146,7 @@ namespace Makaba {
         Captcha_2ch(const Thread &thread);
         /* === */
         bool isNull() const;
+        bool hasPng() const;
         int get_png();
         const std::string &error() const;
     };

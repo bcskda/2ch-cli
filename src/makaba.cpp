@@ -408,11 +408,13 @@ std::string Makaba::Thread::send_post(const Makaba::Post &post)
                         __PRETTY_FUNCTION__);
         return std::string("");
     }
-    if (captcha->get_png()) {
-        fprintf(stderr, "[%s] Error: Makaba::Captcha_2ch::get_png()\n"
-                        "  error = %d\n  description = %s\n",
-                        __PRETTY_FUNCTION__, makaba_errno, makaba_strerror(makaba_errno));
-        return std::string("");
+    if (! captcha->hasPng()) {
+        if (captcha->get_png()) {
+            fprintf(stderr, "[%s] Error: Makaba::Captcha_2ch::get_png()\n"
+                            "  error = %d\n  description = %s\n",
+                            __PRETTY_FUNCTION__, makaba_errno, makaba_strerror(makaba_errno));
+            return std::string("");
+        }
     }
     
     /* Не относится к API напрямую, должно быть в app.cpp
@@ -462,8 +464,15 @@ bool Makaba::Captcha_2ch::isNull() const
 }
 
 
+bool Makaba::Captcha_2ch::hasPng() const
+{
+    return this->hasPng_;
+}
+
+
 Makaba::Captcha_2ch::Captcha_2ch():
     isNull_(true),
+    hasPng_(false),
     id     (std::string())
     {}
 
@@ -471,6 +480,7 @@ Makaba::Captcha_2ch::Captcha_2ch():
 
 Makaba::Captcha_2ch::Captcha_2ch(const Makaba::Thread &thread):
     isNull_(true),
+    hasPng_(false),
     id     (std::string())
 {
     if (this->get_id(thread.board, thread.num)) {
@@ -489,6 +499,7 @@ Makaba::Captcha_2ch::Captcha_2ch(const Makaba::Thread &thread):
 
 Makaba::Captcha_2ch::Captcha_2ch(const std::string &board, const long long &threadnum):
     isNull_(true),
+    hasPng_(false),
     id     (std::string())
 {
     if (this->get_id(board, threadnum)) {
@@ -566,6 +577,8 @@ int Makaba::Captcha_2ch::form_url()
 
 
 int Makaba::Captcha_2ch::get_png() {
+    if (this->hasPng_)
+        return 0;
     if (this->id.length() == 0) {
         fprintf(stderr, "[%s] Error: ID is null\n", __PRETTY_FUNCTION__);
         return -1;
@@ -587,6 +600,7 @@ int Makaba::Captcha_2ch::get_png() {
     /* Не относится к API напрямую, должно быть в app.cpp
     * convert_img(CaptchaPngFilename, CaptchaUtfFilename, false);
     */
+    this->hasPng_ = true;
     return 0;
 }
 

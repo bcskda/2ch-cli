@@ -27,7 +27,7 @@ extern const int Ret_show_import_canvas;
 extern const int Ret_show_create_display;
 
 caca_display_t *show_img(const char *filename);
-void convert_img(const char *filename, const char *ofile, const bool v);
+void convert_img(const char *filename, const char *ofile);
 int perf_exec(const char **args);
 
 extern const  std::string Comment_tmpmesg;

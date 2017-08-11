@@ -75,8 +75,10 @@ int printPost(
 void ncurses_init() {
     initscr();
     raw();
-    keypad(stdscr, TRUE);
+    keypad(stdscr, true);
     noecho();
+    nodelay(stdscr, false);
+    nl();
 }
 
 void ncurses_exit() {
@@ -275,7 +277,7 @@ std::string thread_send_post_wrapper(
         std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Error: null thread.captcha\n";
         return std::string(""); // TODO нормальная передача ошибок
     }
-    convert_img(CaptchaPngFilename, CaptchaUtfFilename, false); // Гонка сигналов etc.
+    convert_img(CaptchaPngFilename, CaptchaUtfFilename); // Гонка сигналов etc.
     caca_display_t *display = show_img(CaptchaUtfFilename);
     caca_canvas_t *canvas = caca_get_canvas(display);
     caca_put_str(canvas,
