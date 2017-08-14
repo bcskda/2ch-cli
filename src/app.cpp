@@ -15,19 +15,25 @@ const int Head_pos_y = 0;
 const int Err_pos_x = 50;
 const int Err_pos_y = 0;
 
+WINDOW *Wmain = NULL;
+WINDOW *Wlog = NULL;
+
 const char *Headers_pref = "| ";
 const char *Headers_suff = " |";
 
 bool Sage_on = false;
+
+
 
 // End Global defs
 
 
 int printThreadHeader(const Makaba::Thread &thread)
 {
-    move(Head_pos_y, Head_pos_x);
-    printw("%s", Headers_pref);
-    printw("/%s %s, %ld постов\n",
+    refresh();
+    wmove(Wmain, Head_pos_y, Head_pos_x);
+    wprintw(Wmain, "%s", Headers_pref);
+    wprintw(Wmain, "/%s %s, %ld постов\n",
         thread.board.data(), thread[0].subject.data(), thread.nposts);
     return 0;
 }
@@ -37,6 +43,7 @@ int printPost(
     const bool show_email,
     const bool show_files)
 {
+    refresh();
     if (post.date.length() == 0) {
         fprintf(stderr, "! ERROR @printPost: Null date in struct post\n");
         makaba_errno = ERR_POST_FORMAT;
@@ -57,17 +64,16 @@ int printPost(
     sprintf(header_2, "№%lld (%lld) %s", post.num, post.rel_num, post.date.data());
     // @TODO Выравнивать строки заголовка по ширине
     
-    printw("%s", Headers_pref);
+    wprintw(Wmain, "%s", Headers_pref);
     if (sage)
-        attron(A_UNDERLINE);
-    printw("%s\n", header_1);
-    attroff(A_UNDERLINE);
+        wattron(Wmain, A_UNDERLINE);
+    wprintw(Wmain, "%s\n", header_1);
+    wattroff(Wmain, A_UNDERLINE);
     
-    printw("%s", Headers_pref);
-    printw("%s\n", header_2);
+    wprintw(Wmain, "%s", Headers_pref);
+    wprintw(Wmain, "%s\n", header_2);
     
-
-    printw("\n%s\n\n", post.comment.data());
+    wprintw(Wmain, "\n%s\n\n", post.comment.data());
 
     return 0;
 }
@@ -75,6 +81,16 @@ int printPost(
 void ncurses_init() {
     initscr();
     raw();
+    if (Wmain == NULL) { // Upper, 4/5 height, full width
+        refresh();
+        Wmain = newwin(4 * LINES / 5, COLS, 0, 0);
+        wrefresh(Wmain);
+    }
+    if (Wlog == NULL) { // Lower, 1/5 height, full width
+        refresh();
+        Wlog = newwin(LINES / 5, COLS, 4 * LINES / 5, 0);
+        wrefresh(Wlog);
+    }
     keypad(stdscr, true);
     noecho();
     nodelay(stdscr, false);
@@ -82,16 +98,25 @@ void ncurses_init() {
 }
 
 void ncurses_exit() {
+    if (Wmain != NULL) {
+        delwin(Wmain);
+        Wmain = NULL;
+    }
+    if (Wlog != NULL) {
+        delwin(Wlog);
+        Wlog = NULL;
+    }
     endwin();
 }
 
 void ncurses_print_help() {
-    printw("\n"
+    refresh();
+    wprintw(Wlog, "\n"
         ">>> u - обновить тред\n"
         ">>> s - вкл/выкл sage\n"
         ">>> c - изменить текст поста\n"
         ">>> Enter - отправить пост\n"
-        //">>> f - поиск по подстроке\n"
+        ">>> f - поиск по подстроке\n"
         //">>> F - поиск по регулярному выражению\n"
         "\n"
         ">>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост\n"
@@ -102,34 +127,30 @@ void ncurses_print_help() {
         ">>> C - очистить экран\n"
         ">>> h - помощь, q - выход\n\n",
         Skip_on_PG, Skip_on_PG);
+    wrefresh(Wlog);
 }
 
 void ncurses_print_post(
     const Makaba::Thread &thread,
     const long long num)
 {
-    clear();
+    werase(Wmain);
     printThreadHeader(thread);
     printPost(thread[num], true, true);
-    refresh();
+    wrefresh(Wmain);
 }
 
 void ncurses_print_error(const char *mesg) {
-    int oldx = -1, oldy = -1;
-    getyx(stdscr, oldy, oldx);
-    attron(A_STANDOUT);
-    mvprintw(Err_pos_y , Err_pos_x, mesg);
-    attroff(A_STANDOUT);
-    move(oldy, oldx);
+    wattron(Wlog, A_STANDOUT);
+    wprintw(Wlog, mesg);
+    wattroff(Wlog, A_STANDOUT);
+    wrefresh(Wlog);
 }
 
 void ncurses_clear_errors()
 {
-    int oldy, oldx;
-    getyx(stdscr, oldy, oldx);
-    move(Err_pos_y, Err_pos_x);
-    clrtoeol();
-    move(oldy, oldx);
+    werase(Wlog);
+    wrefresh(Wlog);
 }
 
 void parse_argv(
@@ -139,7 +160,7 @@ void parse_argv(
     bool &verbose, bool &clean_cache)
 {
     int opt;
-    while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:sc:vC") ) != -1)
+    while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:sc:vC") ) != -1) // FIXME
     {
         switch (opt)
         {

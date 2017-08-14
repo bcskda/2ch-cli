@@ -32,6 +32,9 @@ extern const int Head_pos_y;
 extern const int Err_pos_x;
 extern const int Err_pos_y;
 
+extern WINDOW *Wmain;
+extern WINDOW *Wlog;
+
 extern const char *Headers_pref;
 extern const char *Headers_suff;
 

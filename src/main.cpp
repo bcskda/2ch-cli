@@ -99,8 +99,12 @@ int main (int argc, const char **argv)
 
     ncurses_init();
     ncurses_print_help();
+    wrefresh(Wlog);
     bool should_exit = false;
     ncurses_print_post(thread, 0);
+    wrefresh(Wmain);
+    refresh();
+    
     int ret = RET_OK;
     Makaba::Post dummy_post("", "",
                             "", "",
@@ -110,14 +114,14 @@ int main (int argc, const char **argv)
     std::string api_result = "";
     
     for (int cur_post = 0; should_exit == false; ) {
-        bool done = 0;
-        long long search_result = -1;
-        while (done == false) {
+        bool done = false;
+        refresh();
+        while (! done) {
             int nposts_old = thread.nposts;
             switch (getch())
             {
                 case 'Q': case 'q':
-                    done = 1;
+                    done = true;
                     should_exit = true;
                     break;
                 case 'c':
@@ -150,29 +154,30 @@ int main (int argc, const char **argv)
                     ncurses_init();
                     ncurses_print_post(thread, cur_post);
                     if (api_result.length())
-                        printw(">>> Запрос выполнен, ответ API: %s\n", api_result.data());
+                        wprintw(Wlog, "Запрос выполнен, ответ API: %s\n", api_result.data());
                     else
                         ncurses_print_error(makaba_strerror(makaba_errno));
+                    wrefresh(Wlog);
                     break;
                 case 'f':
-                    printw("Поиск в треде по подстроке: ");
-                    refresh();
+                    wprintw(Wlog, "Поиск в треде по подстроке: ");
+                    wrefresh(Wlog);
                     {
                         echo();
                         char substr[250];
-                        getstr(substr);
+                        wgetstr(Wlog, substr);
                         noecho();
                         const std::vector<const Makaba::Post *> results = thread.find(substr);
                         if (results.empty())
-                            printw("Ничего не найдено.\n");
+                            wprintw(Wlog, "Ничего не найдено.\n");
                         else {
-                            printw("Найдено в:\n{ ");
+                            wprintw(Wlog, "Найдено в:\n{ ");
                             for (auto p : results) {
-                                printw("#%d ", p->num);
+                                wprintw(Wlog, "#%d ", p->num);
                             }
-                            printw(" }\n");
+                            wprintw(Wlog, " }\n");
                         }
-                        refresh();
+                        wrefresh(Wlog);
                     }
                     break;
                 case 'F':
@@ -182,15 +187,15 @@ int main (int argc, const char **argv)
                     ncurses_print_help();
                     break;
                 case 'C':
-                    ncurses_print_post(thread, cur_post);
+                    ncurses_clear_errors();
                     break;
                 case 'G':
-                    printw("Перейти по номеру в треде: ");
-                    refresh();
+                    wprintw(Wlog, "Перейти по номеру в треде: ");
+                    wrefresh(Wlog);
                     {
                         echo();
                         int num;
-                        scanw("%d", &num);
+                        wscanw(Wlog, "%d", &num);
                         noecho();
                         if (num < 1) {
                             num = 1;
@@ -201,20 +206,20 @@ int main (int argc, const char **argv)
                         cur_post = num - 1;
                     }
                     ncurses_print_post(thread, cur_post);
-                    refresh();
+                    wrefresh(Wmain);
                     break;
                 case 'g':
-                    printw("Перейти по номеру на доске: ");
-                    refresh();
+                    wprintw(Wlog, "Перейти по номеру на доске: ");
+                    wrefresh(Wlog);
                     {
                         echo();
                         int num;
-                        scanw("%d", &num);
+                        wscanw(Wlog, "%d", &num);
                         noecho();
                         if (num < 1) {
                             num = thread[0].num;
                         }
-                        search_result = thread.find(num);
+                        long long search_result = thread.find(num);
                         if (search_result == -1) {
                             ncurses_clear_errors();
                             ncurses_print_error("Пост не найден в треде\n");
@@ -224,41 +229,45 @@ int main (int argc, const char **argv)
                         }
                     }
                     ncurses_print_post(thread, cur_post);
-                    refresh();
+                    wrefresh(Wmain);
                     break;
                 case 'u':
-                    printw(">>> Обновление треда ...");
-                    refresh();
+                    wprintw(Wlog, "Обновление треда ...");
+                    wrefresh(Wlog);
                     if (thread.update()) {
                         fprintf(stderr, "[main] Error @ thread::update()\n");
-                        printw(" ошибка\n");
+                        wprintw(Wlog, " ошибка\n");
                         ncurses_print_error(makaba_strerror(makaba_errno));
                     }
                     else {
-                    printw(" готово, %d новых постов\n",
+                    wprintw(Wlog, " готово, %d новых постов\n",
                         thread.nposts - nposts_old);
                     }
-                    refresh();
+                    wrefresh(Wlog);
                     break;
-                case KEY_RIGHT: case KEY_DOWN:
+                case KEY_RIGHT:
+                case KEY_DOWN:
                     if (cur_post < thread.nposts - 1) {
                         cur_post ++;
                         ncurses_print_post(thread, cur_post);
                     }
                     else {
-                        printw(">>> Последний пост\n");
+                        wprintw(Wlog, "Последний пост\n");
+                        wrefresh(Wlog);
                     }
-                    done = 1;
+                    done = true;
                     break;
-                case KEY_LEFT: case KEY_UP:
+                case KEY_LEFT:
+                case KEY_UP:
                     if (cur_post > 0) {
                         cur_post --;
                         ncurses_print_post(thread, cur_post);
                     }
                     else {
-                        printw(">>> Первый пост\n");
+                        wprintw(Wlog, "Первый пост\n");
+                        wrefresh(Wlog);
                     }
-                    done = 1;
+                    done = true;
                     break;
                 case KEY_NPAGE: // PageDown
                     if (cur_post < thread.nposts - 1) {
