@@ -293,17 +293,6 @@ Makaba::Thread &Makaba::Thread::operator << (const char *rhs)
     return *this;
 }
 
-std::vector<Makaba::Post *> Makaba::Thread::find(const std::string& comment) const
-{
-    std::vector<Post *> results;
-    for (auto post : this->posts_)
-    {
-        if (post->comment.find(comment) != std::string::npos)
-            results.push_back(post);
-    }
-    return results;
-}
-
 
 bool Makaba::Thread::isNull() const
 {
@@ -450,6 +439,18 @@ const long long Makaba::Thread::find(const long long &pnum) const
             return i;
     }
     return -1;
+}
+
+
+const std::vector<const Makaba::Post *> Makaba::Thread::find(const std::string& comment) const
+{
+    std::vector<const Post *> results;
+    for (auto post : this->posts_)
+    {
+        if (post->comment.find(comment) != std::string::npos)
+            results.push_back(post);
+    }
+    return results;
 }
 
 

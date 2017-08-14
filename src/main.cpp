@@ -111,7 +111,6 @@ int main (int argc, const char **argv)
     
     for (int cur_post = 0; should_exit == false; ) {
         bool done = 0;
-        int int_input = 0;
         long long search_result = -1;
         while (done == false) {
             int nposts_old = thread.nposts;
@@ -156,7 +155,25 @@ int main (int argc, const char **argv)
                         ncurses_print_error(makaba_strerror(makaba_errno));
                     break;
                 case 'f':
-                    /* поиск по подстроке */
+                    printw("Поиск в треде по подстроке: ");
+                    refresh();
+                    {
+                        echo();
+                        char substr[250];
+                        getstr(substr);
+                        noecho();
+                        const std::vector<const Makaba::Post *> results = thread.find(substr);
+                        if (results.empty())
+                            printw("Ничего не найдено.\n");
+                        else {
+                            printw("Найдено в:\n{ ");
+                            for (auto p : results) {
+                                printw("#%d ", p->num);
+                            }
+                            printw(" }\n");
+                        }
+                        refresh();
+                    }
                     break;
                 case 'F':
                     /* поиск по regex */
@@ -170,35 +187,41 @@ int main (int argc, const char **argv)
                 case 'G':
                     printw("Перейти по номеру в треде: ");
                     refresh();
-                    echo();
-                    scanw("%d", &int_input);
-                    noecho();
-                    if (int_input < 1) {
-                        int_input = 1;
+                    {
+                        echo();
+                        int num;
+                        scanw("%d", &num);
+                        noecho();
+                        if (num < 1) {
+                            num = 1;
+                        }
+                        if (num > thread.nposts) {
+                            num = thread.nposts;
+                        }
+                        cur_post = num - 1;
                     }
-                    if (int_input > thread.nposts) {
-                        int_input = thread.nposts;
-                    }
-                    cur_post = int_input - 1;
                     ncurses_print_post(thread, cur_post);
                     refresh();
                     break;
                 case 'g':
                     printw("Перейти по номеру на доске: ");
                     refresh();
-                    echo();
-                    scanw("%d", &int_input);
-                    noecho();
-                    if (int_input < 1) {
-                        int_input = thread[0].num;
-                    }
-                    search_result = thread.find(int_input);
-                    if (search_result == -1) {
-                        ncurses_clear_errors();
-                        ncurses_print_error("Пост не найден в треде\n");
-                    }
-                    else {
-                        cur_post = search_result;
+                    {
+                        echo();
+                        int num;
+                        scanw("%d", &num);
+                        noecho();
+                        if (num < 1) {
+                            num = thread[0].num;
+                        }
+                        search_result = thread.find(num);
+                        if (search_result == -1) {
+                            ncurses_clear_errors();
+                            ncurses_print_error("Пост не найден в треде\n");
+                        }
+                        else {
+                            cur_post = search_result;
+                        }
                     }
                     ncurses_print_post(thread, cur_post);
                     refresh();

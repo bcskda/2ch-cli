@@ -125,7 +125,7 @@ namespace Makaba {
         int update();
         std::string send_post(const Post &post);
         const long long find(const long long &pnum) const;
-        std::vector<Post *> find(const std::string& comment) const;
+        const std::vector<const Post *> find(const std::string& comment) const;
     };
     
     class Captcha_2ch {
