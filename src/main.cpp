@@ -98,8 +98,6 @@ int main (int argc, const char **argv)
     }
 
     ncurses_init();
-    ncurses_print_help();
-    wrefresh(Wlog);
     bool should_exit = false;
     ncurses_print_post(thread, 0);
     wrefresh(Wmain);
@@ -136,7 +134,7 @@ int main (int argc, const char **argv)
                     Sage_on = ! Sage_on;
                     ncurses_clear_errors();
                     dummy_post.email = Sage_on ? "sage" : DEFAULT_EMAIL;
-                    ncurses_print_error(Sage_on ? "Sage: on" : "Sage: off");
+                    ncurses_print_error(Sage_on ? "Sage: on\n" : "Sage: off\n");
                     break;
                 case KEY_ENTER:
                 case '\n':

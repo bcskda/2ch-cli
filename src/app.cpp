@@ -110,24 +110,36 @@ void ncurses_exit() {
 }
 
 void ncurses_print_help() {
+    int height = 15;
+    int width = 60;
+    int starty = (LINES - height) / 2;
+    int startx = (COLS - width) / 2;
     refresh();
-    wprintw(Wlog, "\n"
-        ">>> u - обновить тред\n"
-        ">>> s - вкл/выкл sage\n"
-        ">>> c - изменить текст поста\n"
-        ">>> Enter - отправить пост\n"
-        ">>> f - поиск по подстроке\n"
-        //">>> F - поиск по регулярному выражению\n"
+    WINDOW *Whelp = newwin(starty, startx, height, width);
+    wprintw(Whelp, "\n"
+        "u - обновить тред\n"
+        "s - вкл/выкл sage\n"
+        "c - изменить текст поста\n"
+        "Enter - отправить пост\n"
+        "f - поиск по подстроке\n"
+        //"F - поиск по регулярному выражению\n"
         "\n"
-        ">>> [LEFT] / [UP] предыдущий пост, [RIGHT] / [DOWN] следующий пост\n"
-        ">>> [PageUp] - %d постов назад, [PageDown] - %d постов вперёд\n"
-        ">>> [Home] - первый пост, [End] - последний пост\n"
-        ">>> G - перейти по отн. номеру поста\n"
+        "[LEFT] / [UP] предыдущий пост\n"
+        "[RIGHT] / [DOWN] следующий пост\n"
+        "[PageUp] - %d постов назад\n"
+        "[PageDown] - %d постов вперёд\n"
+        "[Home] - первый пост, [End] - последний пост\n"
+        "g - перейти по номеру на доске\n"
+        "G - перейти по номеру в треде\n"
         "\n"
-        ">>> C - очистить экран\n"
-        ">>> h - помощь, q - выход\n\n",
+        "C - очистить экран\n"
+        "h - помощь, q - выход\n\n",
         Skip_on_PG, Skip_on_PG);
-    wrefresh(Wlog);
+    wrefresh(Whelp);
+    getch();
+    werase(Whelp);
+    wrefresh(Whelp);
+    delwin(Whelp);
 }
 
 void ncurses_print_post(
@@ -160,7 +172,7 @@ void parse_argv(
     bool &verbose, bool &clean_cache)
 {
     int opt;
-    while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:sc:vC") ) != -1) // FIXME
+    while (( opt = getopt(argc, (char * const *)argv, "hp:b:n:vC") ) != -1)
     {
         switch (opt)
         {
@@ -179,31 +191,15 @@ void parse_argv(
             case 'n':
                 thread_number = atoi(optarg);
                 break;
-            /* DEPRECATED
-             * case 'c':
-             *  if (comment.length() == 0) {
-             *      if ( sizeof(optarg) > COMMENT_LEN_MAX ) {
-             *          printf("Комментарий не длиннее 15к символов\n");
-             *          exit(RET_ARGS);
-             *      }
-             *      comment = optarg;
-             *  }
-             *  else {
-             *      printf("Дважды указан комментарий\n");
-             *      exit(RET_ARGS);
-             *  }
-             *  break;
-             *
-             * case 's':
-             * send_post = true;
-             * break;
-             */
             case 'v':
                 verbose = true;
                 break;
             case 'C':
                 clean_cache = true;
                 break;
+            case 'h':
+                pomogite();
+                exit(RET_OK);
             default:
                 printf("Неизвестная опция %c\n", opt);
                 pomogite();
