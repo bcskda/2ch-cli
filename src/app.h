@@ -35,8 +35,10 @@ extern const int Err_pos_y;
 extern WINDOW *Wmain;
 extern WINDOW *Wlog;
 
-extern const char *Headers_pref;
-extern const char *Headers_suff;
+extern const std::string Headers_pref;
+extern const std::string Headers_suff;
+extern const std::string Endl;
+extern const std::string Help;
 
 extern bool Sage_on;
 
@@ -57,6 +59,7 @@ void ncurses_print_help();
 void ncurses_print_post(const Makaba::Thread &thread, const long long num);
 void ncurses_print_error(const char *mesg);
 void ncurses_clear_errors();
+WINDOW *operator<<(WINDOW *win, const std::string &value);
 
 Makaba::Thread *thread_init_wrapper (
     const std::string &vboard,

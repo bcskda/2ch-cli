@@ -18,8 +18,28 @@ const int Err_pos_y = 0;
 WINDOW *Wmain = NULL;
 WINDOW *Wlog = NULL;
 
-const char *Headers_pref = "| ";
-const char *Headers_suff = " |";
+const std::string Headers_pref = "| ";
+const std::string Headers_suff = " |";
+const std::string Endl = "\n";
+const std::string Help =
+    "u - Обновить тред\n"
+    "s - вкл/выкл sage\n"
+    "c - изменить текст поста\n"
+    "Enter - отправить пост\n"
+    "f - поиск по подстроке\n"
+    //"F - поиск по регулярному выражению\n"
+    "\n"
+    "[LEFT] / [UP] предыдущий пост\n"
+    "[RIGHT] / [DOWN] следующий пост\n"
+    "[PageUp] - " + std::to_string(Skip_on_PG) + " постов назад\n"
+    "[PageDown] - " + std::to_string(Skip_on_PG) + " постов вперёд\n"
+    "[Home] - первый пост, [End] - последний пост\n"
+    "g - перейти по номеру на доске\n"
+    "G - перейти по номеру в треде\n"
+    "\n"
+    "C - очистить экран\n"
+    "h - помощь, q - выход\n\n";
+
 
 bool Sage_on = false;
 
@@ -32,9 +52,9 @@ int printThreadHeader(const Makaba::Thread &thread)
 {
     refresh();
     wmove(Wmain, Head_pos_y, Head_pos_x);
-    wprintw(Wmain, "%s", Headers_pref);
-    wprintw(Wmain, "/%s %s, %ld постов\n",
-        thread.board.data(), thread[0].subject.data(), thread.nposts);
+    std::string header = Headers_pref + "/" + thread.board + " " + thread[0].subject
+                         + std::to_string(thread.nposts) + "постов" + Endl;
+    Wmain << header;
     return 0;
 }
 
@@ -50,30 +70,38 @@ int printPost(
         return 1;
     }
 
-    char header_1[150] = "";
-    char header_2[150] = "";
+    std::string header;
     bool sage = false;
     if (show_email == true && post.email.length() > 0) {
-        if (strcmp(post.email.data(), "mailto:sage"))
-            sprintf(header_1, "%s @ %s", post.name.data(), post.email.data());
+        if (post.email == "mailto:sage")
+	    header = post.name + "@" + post.email;
         else {
-            sprintf(header_1, "%s", post.name.data());
+	    header = post.name;
             sage = true;
         }
     }
-    sprintf(header_2, "№%lld (%lld) %s", post.num, post.rel_num, post.date.data());
     // @TODO Выравнивать строки заголовка по ширине
     
-    wprintw(Wmain, "%s", Headers_pref);
+    Wmain << Headers_pref;
     if (sage)
         wattron(Wmain, A_UNDERLINE);
-    wprintw(Wmain, "%s\n", header_1);
+    Wmain << header << Endl; //
     wattroff(Wmain, A_UNDERLINE);
     
-    wprintw(Wmain, "%s", Headers_pref);
-    wprintw(Wmain, "%s\n", header_2);
+    header = "№" + std::to_string(post.num) + " (" + std::to_string(post.rel_num) + ") "  + post.date;
+
+    Wmain << Headers_pref << header << Endl;
+
+    if (show_files && ! post.files.empty()) {
+        for (Json::Value item : post.files) {
+	    Wmain << Headers_pref;
+	    header = "File: \"" + item["displayname"].asString() + "\" "
+	             + BASE_URL + item["path"].asString() + Endl + Endl;
+            Wmain << header;
+        }
+    }
     
-    wprintw(Wmain, "\n%s\n\n", post.comment.data());
+    Wmain << post.comment << Endl << Endl;
 
     return 0;
 }
@@ -116,25 +144,7 @@ void ncurses_print_help() {
     int startx = (COLS - width) / 2;
     refresh();
     WINDOW *Whelp = newwin(starty, startx, height, width);
-    wprintw(Whelp, "\n"
-        "u - обновить тред\n"
-        "s - вкл/выкл sage\n"
-        "c - изменить текст поста\n"
-        "Enter - отправить пост\n"
-        "f - поиск по подстроке\n"
-        //"F - поиск по регулярному выражению\n"
-        "\n"
-        "[LEFT] / [UP] предыдущий пост\n"
-        "[RIGHT] / [DOWN] следующий пост\n"
-        "[PageUp] - %d постов назад\n"
-        "[PageDown] - %d постов вперёд\n"
-        "[Home] - первый пост, [End] - последний пост\n"
-        "g - перейти по номеру на доске\n"
-        "G - перейти по номеру в треде\n"
-        "\n"
-        "C - очистить экран\n"
-        "h - помощь, q - выход\n\n",
-        Skip_on_PG, Skip_on_PG);
+    Whelp << Help;
     wrefresh(Whelp);
     getch();
     werase(Whelp);
@@ -152,9 +162,16 @@ void ncurses_print_post(
     wrefresh(Wmain);
 }
 
+void ncurses_print_error(const std::string &mesg) {
+    wattron(Wlog, A_STANDOUT);
+    Wlog << mesg;
+    wattroff(Wlog, A_STANDOUT);
+    wrefresh(Wlog);
+}
+
 void ncurses_print_error(const char *mesg) {
     wattron(Wlog, A_STANDOUT);
-    wprintw(Wlog, mesg);
+    wprintw(Wlog, "%s", mesg);
     wattroff(Wlog, A_STANDOUT);
     wrefresh(Wlog);
 }
@@ -163,6 +180,12 @@ void ncurses_clear_errors()
 {
     werase(Wlog);
     wrefresh(Wlog);
+}
+
+
+WINDOW *operator<<(WINDOW *win, const std::string &value) {
+    wprintw(win, value.c_str());
+    return win;
 }
 
 void parse_argv(
