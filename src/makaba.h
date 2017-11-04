@@ -65,7 +65,6 @@ namespace Makaba {
         long long timestamp;
         std::string trip;
         std::string trip_type; // enum?
-        long long unique_posters;
         long long rel_num;
         /* === */
         //Post();
@@ -106,7 +105,7 @@ namespace Makaba {
         ~Thread();
         /* === */
         Thread &operator = (const Thread &rhs);
-        Post operator [] (size_t i) const;
+        Post & operator [] (size_t i) const;
         Post & operator [] (size_t i);
         Thread &operator << (const char *rhs);
         /* === */
@@ -116,10 +115,6 @@ namespace Makaba {
             void *userdata,
             void *(*on_update)(void *userdata, const char *raw)
         );
-        /* Нужно ли?
-        * bool autodel_captcha() const;
-        * void autodel_captcha(bool del);
-        */
         /* === */
         int append(const char *raw); // Надо бы ее приватной
         int update();

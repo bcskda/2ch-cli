@@ -80,41 +80,37 @@ Makaba::Post::Post(const std::string &raw):
 
 
 Makaba::Post::Post(Json::Value &val):
-    isNull_       ( false                                          ),
-    banned        ( atoi( val["banned"        ].asString().data()) ),
-    closed        ( atoi( val["closed"        ].asString().data()) ),
-    comment       ( ""                                             ),
-    date          (       val["date"          ].asString()         ),
-    email         (       val["email"         ].asString()         ),
-    files         (       val["files"         ]                    ),
-    lasthit       ( atoi( val["lasthit"       ].asString().data()) ),
-    name          ( ""                                             ),
-    num           ( atoi( val["num"           ].asString().data()) ),
-    op            ( atoi( val["op"            ].asString().data()) ),
-    parent        ( atoi( val["parent"        ].asString().data()) ),
-    sticky        ( atoi( val["sticky"        ].asString().data()) ),
-    subject       (       val["subject"       ].asString()         ),
-    tags          (       val["tags"          ].asString()         ),
-    timestamp     ( atoi( val["timestamp"     ].asString().data()) ),
-    trip          (       val["trip"          ].asString()         ),
-    trip_type     (       val["trip_type"     ].asString()         ),
-    unique_posters( atoi( val["unique_posters"].asString().data()) ),
-    rel_num       ( 0                                              )
+    isNull_       ( false ),
+    banned        ( stoll(val["banned"        ].asString()) ),
+    closed        ( stoll(val["closed"        ].asString()) ),
+    comment       ( "" ),
+    date          (       val["date"          ].asString()  ),
+    email         (       val["email"         ].asString()  ),
+    files         (       val["files"         ]             ),
+    lasthit       ( stoll(val["lasthit"       ].asString()) ),
+    name          ( "" ),
+    num           ( stoll(val["num"           ].asString()) ),
+    op            ( stoll(val["op"            ].asString()) ),
+    parent        ( stoll(val["parent"        ].asString()) ),
+    sticky        ( stoll(val["sticky"        ].asString()) ),
+    subject       (       val["subject"       ].asString()  ),
+    tags          (       val["tags"          ].asString()  ),
+    timestamp     ( stoll(val["timestamp"     ].asString()) ),
+    trip          (       val["trip"          ].asString()  ),
+    trip_type     (       val["trip_type"     ].asString()  ),
+    rel_num       ( 0 )
 {
-    #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
-    #endif // ifdef MAKABA_DEBUG
+    if (email.size())
+        email = email.substr(7);
     const char *comment_raw = val["comment"].asCString();
     char *comment_parsed = parseHTML(comment_raw, strlen(comment_raw), false);
-    this->comment = comment_parsed;
+    comment = comment_parsed;
     free(comment_parsed);
-    const char *name_raw = val["name"].asCString();
-    char *name_parsed = parseHTML(name_raw, strlen(name_raw), false);
-    this->name = name_parsed;
-    free(name_parsed);
-    #ifdef MAKABA_DEBUG
-    fprintf(stderr, "<init (new) post #%10lld>\n", this->num);
-    #endif // ifdef MAKABA_DEBUG
+    name = val["name"].asString();
+    //const char *name_raw = val["name"].asCString();
+    //char *name_parsed = parseHTML(name_raw, strlen(name_raw), false);
+    //name = name_parsed;
+    //free(name_parsed);
 }
 
 
@@ -140,7 +136,6 @@ Makaba::Post &Makaba::Post::operator = (const Makaba::Post &rhs)
     this->timestamp      = rhs.timestamp;
     this->trip           = rhs.trip;
     this->trip_type      = rhs.trip_type;
-    this->unique_posters = rhs.unique_posters;
     this->rel_num        = rhs.rel_num;
     return *this;
 }
@@ -181,27 +176,22 @@ Makaba::Thread::Thread (
     board  (board),
     captcha(NULL)
 {
-    #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
-    #endif // ifdef MAKABA_DEBUG
     Json::CharReaderBuilder rbuilder; // TODO Single global (dup Makaba::Post::Post())
     std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
     std::string errs;
     Json::Value array;
     if (! reader->parse(raw.data(), raw.data() + raw.length(), &array, &errs)) {
-        fprintf(stderr, "[%s] Error:\n"
-                        "Json::CharReader::parse():\n  %s\n",
-                __PRETTY_FUNCTION__, errs.data());
         makaba_errno = ERR_GENERAL_FORMAT;
         return;
     }
     for (auto obj : array) {
-        this->nposts++;
+        nposts++;
+	std::cerr << obj << std::endl;
         Makaba::Post *post = new Makaba::Post(obj);
-        post->rel_num = this->nposts;
-        this->posts_.push_back(post);
+        post->rel_num = nposts;
+	posts_.push_back(post);
     }
-    this->num = this->posts_[0]->num;
+    num = posts_[0]->num;
 }
 
 
@@ -265,7 +255,7 @@ Makaba::Thread &Makaba::Thread::operator = (const Makaba::Thread &rhs)
 }
 
 
-Makaba::Post Makaba::Thread::operator [] (size_t i) const
+Makaba::Post &Makaba::Thread::operator [] (size_t i) const
 {
     #ifdef MAKABA_DEBUG
     std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
@@ -274,7 +264,7 @@ Makaba::Post Makaba::Thread::operator [] (size_t i) const
 }
 
 
-Makaba::Post & Makaba::Thread::operator [] (size_t i)
+Makaba::Post &Makaba::Thread::operator [] (size_t i)
 {
     #ifdef MAKABA_DEBUG
     std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
@@ -340,15 +330,11 @@ int Makaba::Thread::append(const char *raw)
     std::string errs;
     Json::Value array;
     if (! reader->parse(raw, raw + strlen(raw), &array, &errs)) {
-        fprintf(stderr, "[%s] Error:\n"
-                        "Json::CharReader::parse():\n  %s\n",
-                __PRETTY_FUNCTION__, errs.data());
+        std::clog << "Error at JSON parser: " << errs << std::endl;
         makaba_errno = ERR_GENERAL_FORMAT;
         return -1;
     }
     if (! array.isArray()) { // Не массив = объект с ошибкой
-        std::cerr << __PRETTY_FUNCTION__ << " Error: raw json not an array\n:";
-        std::cerr << array << std::endl;
         switch(array["Code"].asInt()) {
             case -404:
                 makaba_errno = ERR_API_THREAD_NOT_FOUND;
@@ -360,7 +346,7 @@ int Makaba::Thread::append(const char *raw)
     }
     for (auto obj : array) {
         this->nposts++;
-        Makaba::Post *post = new Makaba::Post(obj);
+	Makaba::Post *post = new Makaba::Post(obj);
         post->rel_num = this->nposts;
         this->posts_.push_back(post);
     }

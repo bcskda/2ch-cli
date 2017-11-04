@@ -6,22 +6,25 @@
 
 #include "app.h"
 
+
 // Global defs
 
 const int Skip_on_PG = 20;
+const int SCROLL_END = INT_MAX;
 
 const int Head_pos_x = 0;
 const int Head_pos_y = 0;
 const int Err_pos_x = 50;
 const int Err_pos_y = 0;
+const int Header_size = 2;
 
 WINDOW *Wmain = NULL;
 WINDOW *Wlog = NULL;
 
-const std::string Headers_pref = "| ";
-const std::string Headers_suff = " |";
-const std::string Endl = "\n";
-const std::string Help =
+const string Headers_pref = "| ";
+const string Headers_suff = " |";
+const string Endl = "\n";
+const string Help =
     "u - Обновить тред\n"
     "s - вкл/выкл sage\n"
     "c - изменить текст поста\n"
@@ -31,8 +34,8 @@ const std::string Help =
     "\n"
     "[LEFT] / [UP] предыдущий пост\n"
     "[RIGHT] / [DOWN] следующий пост\n"
-    "[PageUp] - " + std::to_string(Skip_on_PG) + " постов назад\n"
-    "[PageDown] - " + std::to_string(Skip_on_PG) + " постов вперёд\n"
+    "[PageUp] - " + to_string(Skip_on_PG) + " постов назад\n"
+    "[PageDown] - " + to_string(Skip_on_PG) + " постов вперёд\n"
     "[Home] - первый пост, [End] - последний пост\n"
     "g - перейти по номеру на доске\n"
     "G - перейти по номеру в треде\n"
@@ -47,13 +50,140 @@ bool Sage_on = false;
 
 // End Global defs
 
+BasicView::BasicView(WINDOW *win):
+  win_(win)
+{}
+
+PostView::PostView(const Makaba::Post &post):
+  BasicView(stdscr),
+  post_(post)
+{}
+
+PostView::PostView(WINDOW *win, const Makaba::Post &post):
+  BasicView(win),
+  post_(post)
+{}
+
+string PostView::print_buf() const {
+    if (post_.date.size() == 0) {
+        clog << "[BUG] Empty date in Post at " << &post_ << endl;;
+        return "";
+    }
+
+    string ret;
+    ret = Headers_pref + post_.name;
+    if (show_email_ && post_.email.size())
+        ret += " (" + post_.email + ")";
+    ret += Endl;
+    
+    ret += Headers_pref;
+    ret += "№" + to_string(post_.num) + " (" + to_string(post_.rel_num) + ") "  + post_.date;
+    ret += Endl;
+
+    if (show_files_ && ! post_.files.empty()) {
+        for (const Json::Value &item : post_.files) {
+	    ret += Headers_pref;
+            ret += "File: \"" + item["displayname"].asString() + "\" "
+	             + BASE_URL + item["path"].asString();
+            ret += Endl;
+        }
+    }
+
+    ret += post_.comment;
+    return ret;
+}
+
+void PostView::print() const {
+    win_ << this->print_buf() << Endl;
+}
+
+
+ThreadView::ThreadView(WINDOW *win, const Makaba::Thread &thread):
+  BasicView(win),
+  thread_(thread),
+  size_(thread.nposts),
+  buffer_(),
+  posts_(thread.nposts),
+  pos_(0)
+{
+    clog << "New ThreadView\n";
+    string post_buf;
+    int maxy, maxx;
+    getmaxyx(win_, maxy, maxx);
+    int l = 0;
+    for (long long i = 0; i < thread.nposts; i++) {
+        post_buf = PostView(thread[i]).print_buf();
+        clog << "Post # " << i << endl << endl;
+        clog << "Text: \"\"\"\n" << post_buf << "\n\"\"\"" << endl;
+        posts_[i].begin = buffer_.size();
+        posts_[i].lines = 1;
+        l = 0;
+        for (string::size_type j = 0; j < post_buf.size(); j++)
+            if (post_buf[j] == '\n' /*|| j - l >= maxx*/) {
+                buffer_.push_back(post_buf.substr(l, j - l));
+                clog << "New entry: " + buffer_.back() << Endl;
+                posts_[i].lines++;
+                l = j + 1;
+            }
+        if (l < int(post_buf.size())) {
+            buffer_.push_back(post_buf.substr(l, post_buf.size() - l));
+            posts_[i].lines++;
+        }
+        buffer_.push_back("");
+        posts_[i].lines++;
+    }
+    buffer_.push_back("");
+    clog << "New ThreadView ready, " << buffer_.size() << " entries for " << size_ << "posts\n";
+}
+
+void ThreadView::print_header() const {
+    wmove(win_, Head_pos_y, Head_pos_x);
+    win_ << Headers_pref
+         << ("/" + thread_.board + " | ")
+         << (thread_[0].subject + " | ")
+         << (to_string(thread_.nposts) + " постов")
+         << Headers_suff
+         << Endl;
+    win_ << ("-------------------------------------------------------" + Endl);
+}
+
+void ThreadView::print() const {
+    this->print_header();
+    int maxy, maxx;
+    getmaxyx(win_, maxy, maxx);
+    wclrtobot(win_);
+    for (int i = pos_; i < int(buffer_.size()) && i - pos_ < maxy - Header_size; i++)
+        win_ << buffer_[i] << Endl;
+    wrefresh(win_);
+}
+
+void ThreadView::scroll(int count) {
+    int maxy, maxx;
+    getmaxyx(win_, maxy, maxx);
+    pos_ += count;
+    if (pos_ < 0)
+        pos_ = 0;
+    if (pos_ > int(buffer_.size()) - maxy + Header_size - 1)
+        pos_ = int(buffer_.size()) - maxy + Header_size - 1;
+}
+
+void ThreadView::scroll_to(int line) {
+    int maxy, maxx;
+    getmaxyx(win_, maxy, maxx);
+    pos_ = line;
+    if (pos_ < 0)
+        pos_ = 0;
+    if (pos_ > int(buffer_.size()) - maxy + Header_size - 1)
+        pos_ = buffer_.size() - maxy + Header_size - 1;
+}
+
 
 int printThreadHeader(const Makaba::Thread &thread)
 {
     refresh();
     wmove(Wmain, Head_pos_y, Head_pos_x);
-    std::string header = Headers_pref + "/" + thread.board + " " + thread[0].subject
-                         + std::to_string(thread.nposts) + "постов" + Endl;
+    string header = Headers_pref+ "/" + thread.board + " " + thread[0].subject
+                         + " " + to_string(thread.nposts) + " постов" + Endl;
     Wmain << header;
     return 0;
 }
@@ -64,13 +194,13 @@ int printPost(
     const bool show_files)
 {
     refresh();
-    if (post.date.length() == 0) {
+    if (post.date.size() == 0) {
         fprintf(stderr, "! ERROR @printPost: Null date in struct post\n");
         makaba_errno = ERR_POST_FORMAT;
         return 1;
     }
 
-    std::string header;
+    string header;
     bool sage = false;
     if (show_email == true && post.email.length() > 0) {
         if (post.email == "mailto:sage")
@@ -88,7 +218,7 @@ int printPost(
     Wmain << header << Endl; //
     wattroff(Wmain, A_UNDERLINE);
     
-    header = "№" + std::to_string(post.num) + " (" + std::to_string(post.rel_num) + ") "  + post.date;
+    header = "№" + to_string(post.num) + " (" + to_string(post.rel_num) + ") "  + post.date;
 
     Wmain << Headers_pref << header << Endl;
 
@@ -96,10 +226,11 @@ int printPost(
         for (Json::Value item : post.files) {
 	    Wmain << Headers_pref;
 	    header = "File: \"" + item["displayname"].asString() + "\" "
-	             + BASE_URL + item["path"].asString() + Endl + Endl;
+	             + BASE_URL + item["path"].asString() + Endl;
             Wmain << header;
         }
     }
+    Wmain << Endl;
     
     Wmain << post.comment << Endl << Endl;
 
@@ -162,7 +293,7 @@ void ncurses_print_post(
     wrefresh(Wmain);
 }
 
-void ncurses_print_error(const std::string &mesg) {
+void ncurses_print_error(const string &mesg) {
     wattron(Wlog, A_STANDOUT);
     Wlog << mesg;
     wattroff(Wlog, A_STANDOUT);
@@ -183,15 +314,15 @@ void ncurses_clear_errors()
 }
 
 
-WINDOW *operator<<(WINDOW *win, const std::string &value) {
+WINDOW *operator<<(WINDOW *win, const string &value) {
     wprintw(win, value.c_str());
     return win;
 }
 
 void parse_argv(
     const int argc, const char **argv,
-    std::string &board, long long &thread_number,
-    std::string &passcode,
+    string &board, long long &thread_number,
+    string &passcode,
     bool &verbose, bool &clean_cache)
 {
     int opt;
@@ -201,18 +332,13 @@ void parse_argv(
         {
             case 'p':
                 passcode = optarg;
-                printf("Разраб ещё не запилил пасскоды\n");
-                printf("Уже что-то могу: %s!\n", passcode.data());
+                printf("Еще не поддерживается\n");
                 break;
             case 'b':
-                if (strlen(optarg) > 20) {
-                    printf("Толсто.\n");
-                    exit(RET_ARGS);
-                }
                 board = optarg;
                 break;
             case 'n':
-                thread_number = atoi(optarg);
+                thread_number = atoll(optarg);
                 break;
             case 'v':
                 verbose = true;
@@ -232,63 +358,33 @@ void parse_argv(
 }
 
 Makaba::Thread *thread_init_wrapper (
-    const std::string &vboard,
+    const string &vboard,
     const long long &vnum)
 {
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Constructing thread\n";
     Makaba::Thread *thread = new Makaba::Thread(vboard, vnum, false);
     thread->set_hook(thread, thread_hook_on_update);
-    bool fallback = false;
-    if (Json_cache_dir == NULL) {
-        if (initJsonCache()) {
-            fprintf(stderr, "[%s] Error @ initJsonCache()\n",
-                    __PRETTY_FUNCTION__);
-            fprintf(stderr, "[%s] Warning: Fallback to getThread()\n",
-                    __PRETTY_FUNCTION__);
-            fallback = true;
-        }
-    }
+    bool need_dload = true;
     long long size;
     char *raw = NULL;
-    std::cerr << "[thread_init_wrapper] Checking this thread in cache...\n";
-    if (fallback == false && checkJsonCache(*thread)) { // Кэш в порядке и тред в нем есть
-        std::cerr << "[thread_init_wrapper] Found in cache!\n";
+    if (checkJsonCache(*thread)) { // Тред в кэше
         raw = readJsonCache(*thread, &size);
-        if (raw == NULL) { // Проблема при чтении треда из кэша
-            fprintf(stderr, "[%s] Warning: Fallback to getThread()\n",
-                    __PRETTY_FUNCTION__);
-            fallback = true;
-        }
+        if (raw != NULL)
+            need_dload = false;
+        else
+            clog << " Error reading cached\n";
     }
-    else {
-        std::cerr << "[thread_init_wrapper] Not found in cache\n";
-        fallback = true;
-    }
-    if (fallback == true) { // По какой-то причине тред нужно качать
-        std::cerr << "[thread_init_wrapper] Downloading thread from server\n";
-        raw = getThread(thread->board.data(), thread->num,
-                        1, &size, false);
+    if (need_dload) {
+        raw = getThread(thread->board.c_str(), thread->num, 1, &size, false);
         if (raw == NULL) {
-            fprintf(stderr, "[%s] Error @ getThread()\n",
-                    __PRETTY_FUNCTION__);
             *thread = Makaba::NullThread;
             return thread;
         }
     }
-    std::cerr << "[thread_init_wrapper] Appending cached posts\n";
     if (thread->append(raw)) {
-        std::cerr << __PRETTY_FUNCTION__ << " Error at append\n";
         *thread = Makaba::NullThread;
         return thread;
     }
-    std::cerr << "[thread_init_wrapper] Caching received posts\n";
     writeJsonCache(*thread, raw);
-    /* Вопрос, нужно ли: долгая загрузка при плохом соединении,
-    * интерфейса в этот момент нет. Индикатор прогресса в get*?
-    * std::cerr << "[thread_init_wrapper] Checking for new posts\n";
-    * thread.update(); // Ошибки обрабатывает main()
-    */
-    std::cerr << "[thread_init_wrapper] Exiting\n";
     return thread;
 }
 
@@ -297,41 +393,38 @@ Makaba::Captcha_2ch *captcha_init_wrapper(const Makaba::Thread &thread)
     Makaba::Captcha_2ch *captcha = new Makaba::Captcha_2ch(thread);
     if (captcha->isNull()) {
         delete captcha;
-        std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Error at captcha constructor\n";
+        clog << "Captcha constructor failed\n";
         return NULL;
     }
     if (captcha->get_png()) {
-        std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Error at captcha.get_png()\n";
+        clog << "get_png() failed\n";
         delete captcha;
         return NULL;
-    };
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Captcha ready at " << captcha << std::endl;
+    }
     return captcha;
 }
 
-std::string thread_send_post_wrapper(
+string thread_send_post_wrapper(
     Makaba::Thread &thread,
     const Makaba::Post &post)
 {
-    if (thread.captcha == NULL) {
-        std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] Error: null thread.captcha\n";
-        return std::string(""); // TODO нормальная передача ошибок
-    }
+    if (thread.captcha == NULL) 
+        return ""; // TODO нормальная передача ошибок
     convert_img(CaptchaPngFilename, CaptchaUtfFilename); // Гонка сигналов etc.
     caca_display_t *display = show_img(CaptchaUtfFilename);
     caca_canvas_t *canvas = caca_get_canvas(display);
     caca_put_str(canvas,
                 1, Converter_height_i + 1,
-                "Ответ на капчу (секурность уровня sudo): ");
+                "Captcha answer (won't be echoed): "); // проблемы с локалью
     caca_refresh_display(display);
-    std::cin >> thread.captcha->value;
+    cin >> thread.captcha->value;
     caca_free_display(display);
     return thread.send_post(post);
 }
 
 void *thread_hook_on_update(void *userdata, const char *raw)
 {
-    std::cerr << "[hook on_update] Called with \"" << raw << "\"\n";
+    clog << "[hook on_update] Called with \"" << raw << "\"\n";
     Makaba::Thread *thread = (Makaba::Thread *)userdata;
     if (writeJsonCache(*thread, raw) == -1) {
         fprintf(stderr, "[%s] Error: writeJsonCache() failed\n",
@@ -346,13 +439,9 @@ void pomogite() // Справка
     printf("2ch-cli " VERSION " - консольный клиент двача\n");
     printf("Использование:\n");
     printf(" -h - помощь\n");
-    printf(" -b - задать борду\n");
-    printf(" -n - задать номер треда\n");
-    /* DEPRECATED
-    * printf(" -s - отправить пост\n");
-    */
-    printf(" -c - задать комментарий\n");
+    printf(" -b [борда]\n");
+    printf(" -n [номер треда]\n");
     printf(" -C - очистить кэш тредов\n");
-    printf(" -v - подробный лог (для разработчиков)\n");
-    printf(" -p - задать пасскод (не поддерживается)\n");
+    printf(" -v - подробный лог\n");
+    printf(" -p [пасскод]  (не поддерживается)\n");
 }

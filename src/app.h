@@ -6,17 +6,73 @@
 
 #pragma once
 
-#include <ncurses.h>
+#include <cursesw.h>
 #include <unistd.h>
-#include <cstring>
+#include <iostream>
+#include <string>
+#include <vector>
 #include <cstdlib>
+#include <utility>
+
+using std::cin;
+using std::clog;
+using std::endl;
+using std::string;
+using std::to_string;
+using std::vector;
 
 #include "error.h"
 #include "external.h"
 #include "makaba.h"
 #include "cache.h"
 
-#define VERSION "v0.4test8"
+#define VERSION "v0.4test9"
+
+class BasicView {
+    private:
+      BasicView();
+    protected:
+      BasicView(WINDOW *win);
+      WINDOW *win_;
+    public:
+      virtual void print() const {};
+};
+
+class PostView : protected BasicView {
+    PostView();
+    const Makaba::Post &post_;
+    protected:
+      bool show_email_;
+      bool show_files_;
+    public:
+      PostView(const Makaba::Post &post);
+      PostView(WINDOW *win, const Makaba::Post &post);
+      void print() const override;
+      string print_buf() const;
+};
+
+struct PostInfo {
+    int begin;
+    int lines;
+};
+
+class ThreadView : protected BasicView {
+    ThreadView();
+    const Makaba::Thread &thread_;
+    long long size_;
+    vector<string> buffer_;
+    vector<struct PostInfo> posts_;
+    long long pos_;
+    public:
+      ThreadView(const Makaba::Thread &thread);
+      ThreadView(WINDOW *win, const Makaba::Thread &thread);
+      void print_header() const;
+      void print() const override;
+      void scroll(int count);
+      void scroll_to(int line);
+      //void update();
+};
+
 
 extern const int RET_OK;
 extern const int RET_ARGS;
@@ -26,11 +82,13 @@ extern const int RET_PARSE;
 extern const int RET_INTERNAL;
 
 extern const int Skip_on_PG;
+extern const int SCROLL_END;
 
 extern const int Head_pos_x;
 extern const int Head_pos_y;
 extern const int Err_pos_x;
 extern const int Err_pos_y;
+extern const int Header_size;
 
 extern WINDOW *Wmain;
 extern WINDOW *Wlog;
