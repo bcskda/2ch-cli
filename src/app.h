@@ -32,19 +32,21 @@ class BasicView {
     protected:
       BasicView(WINDOW *win);
       WINDOW *win_;
+      int maxy_, maxx_;
     public:
       virtual void print() const {};
 };
 
-class PostView : protected BasicView {
+class PostView : public BasicView {
     PostView();
     const Makaba::Post &post_;
     protected:
-      bool show_email_;
       bool show_files_;
+      bool show_email_;
     public:
       PostView(const Makaba::Post &post);
-      PostView(WINDOW *win, const Makaba::Post &post);
+      PostView(WINDOW *win, const Makaba::Post &post,
+               bool show_files = true, bool show_email = true);
       void print() const override;
       string print_buf() const;
 };
@@ -54,8 +56,9 @@ struct PostInfo {
     int lines;
 };
 
-class ThreadView : protected BasicView {
+class ThreadView : public BasicView {
     ThreadView();
+    void append(int from);
     const Makaba::Thread &thread_;
     long long size_;
     vector<string> buffer_;
@@ -70,7 +73,7 @@ class ThreadView : protected BasicView {
       void scroll(long long count);
       void scroll_to_line(long long num);
       void scroll_to_post(long long num);
-      //void update();
+      void update();
 };
 
 

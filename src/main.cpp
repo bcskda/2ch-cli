@@ -108,6 +108,7 @@ int main (int argc, const char **argv)
                 ncurses_exit();
                 edit(dummy_post.comment, Task_comment);
                 ncurses_init();
+                tview.update();
                 tview.print();
                 break;
             case 's':
@@ -119,17 +120,22 @@ int main (int argc, const char **argv)
             case KEY_ENTER:
             case '\n':
                 ncurses_exit();
+                clog << "exited fine" << endl;
                 thread.captcha = captcha_init_wrapper(thread);
+                clog << "captcha constructor exited fine" << endl;
                 if (thread.captcha == NULL) {
+                    clog << "null captcha" << endl;
                     ncurses_init();
-                    tview.print();
+                    tview.update();
                     ncurses_print_error(makaba_strerror(makaba_errno));
                 }
                 else {
                     api_result = thread_send_post_wrapper(thread, dummy_post);
                     clog << "[main] API answer: " << api_result << endl;
                     delete thread.captcha;
+                    thread.captcha = NULL;
                     ncurses_init();
+                    tview.update();
                     tview.print();
                     if (api_result.size())
                        Wlog << ("Запрос выполнен, ответ API: " + api_result);
@@ -210,6 +216,7 @@ int main (int argc, const char **argv)
                 wprintw(Wlog, " готово, %d новых постов\n",
                     thread.nposts - nposts_old);
                 }
+                tview.update();
                 wrefresh(Wlog);
                 break;
             case KEY_RIGHT:

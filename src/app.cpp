@@ -52,17 +52,27 @@ bool Sage_on = false;
 // End Global defs
 
 BasicView::BasicView(WINDOW *win):
-  win_(win)
-{}
+  win_(win),
+  maxy_(0),
+  maxx_(0)
+{
+    getmaxyx(win, maxy_, maxx_);
+}
+
 
 PostView::PostView(const Makaba::Post &post):
   BasicView(stdscr),
-  post_(post)
+  post_(post),
+  show_files_(true),
+  show_email_(true)
 {}
 
-PostView::PostView(WINDOW *win, const Makaba::Post &post):
+PostView::PostView(WINDOW *win, const Makaba::Post &post,
+                   bool show_files, bool show_email):
   BasicView(win),
-  post_(post)
+  post_(post),
+  show_files_(show_files),
+  show_email_(show_email)
 {}
 
 string PostView::print_buf() const {
@@ -107,18 +117,22 @@ ThreadView::ThreadView(WINDOW *win, const Makaba::Thread &thread):
   pos_(0)
 {
     clog << "New ThreadView\n";
-    int maxy, maxx;
-    getmaxyx(win_, maxy, maxx);
+    this->append(0);
+    clog << "New ThreadView ready, " << buffer_.size()
+         << " entries for " << size_ << " posts\n";
+}
+
+void ThreadView::append(int from) {
+    // Разбиваем UnicodeString по концам строк, копируем в другую UnicodeString и конвертим в std::string
     UnicodeString unis, unitmp;
     string stds;
-    // Разбиваем UnicodeString на строки, копируем в другую UnicodeString и конвертим в std::string
-    for (long long i = 0; i < thread.nposts; i++) {
-        unis = UnicodeString::fromUTF8(PostView(thread[i]).print_buf());
+    for (long long i = from; i < thread_.nposts; i++) {
+        unis = UnicodeString::fromUTF8(PostView(thread_[i]).print_buf());
         posts_[i].begin = buffer_.size();
         posts_[i].lines = 1;
         int32_t l = 0;
         for (int32_t j = 0; j < unis.length(); j++)
-            if (unis[j] == '\n' || j - l > maxx - 2) {
+            if (unis[j] == '\n' || j - l > maxx_ - 2) {
                 unis.extractBetween(l, j, unitmp);
                 unitmp.toUTF8String(stds);
                 buffer_.push_back(stds);
@@ -140,9 +154,30 @@ ThreadView::ThreadView(WINDOW *win, const Makaba::Thread &thread):
         buffer_.push_back("");
         posts_[i].lines++;
     }
-    buffer_.push_back("");
-    clog << "New ThreadView ready, " << buffer_.size()
-         << " entries for " << size_ << " posts\n";
+}
+
+void ThreadView::update() {
+    if (win_ != Wmain) {
+        clog << "update win_" << endl;
+        win_ = Wmain;
+    }
+    int y, x;
+    getmaxyx(win_, y, x);
+    if (x != maxx_ || y != maxy_) {
+        clog << "new size (" << y << ";" << x << ")\n";
+        if (x != maxx_) {
+            clog << "rebuilding\n"; // FIXME Работает, но не совсем
+            buffer_.clear();
+            posts_.clear();
+            this->append(0);
+        }
+        maxy_ = y;
+        maxx_ = x;
+    }
+    else {
+        this->append(size_);
+        size_ = thread_.nposts;
+    }
 }
 
 int ThreadView::size() const {
@@ -152,54 +187,46 @@ int ThreadView::size() const {
 void ThreadView::print_header() const {
     wmove(win_, Head_pos_y, Head_pos_x);
     wclrtobot(win_);
-    int maxy, maxx;
-    getmaxyx(win_, maxy, maxx);
     string header = Headers_pref + "/" + thread_.board + " | "
                     + thread_[0].subject + Endl;
-    int cx = (maxx - header.size() + 1) / 2;
+    int cx = (maxx_ - header.size() + 1) / 2;
     mvwprintw(win_, 0, cx, header.c_str());
     header = to_string(thread_.nposts) + " постов |  "
-             + to_string((pos_ + maxy - Header_size) *100 / buffer_.size())
-             + " %" + Endl;
-    cx = (maxx - header.size() + 1) / 2;
+             + to_string((pos_ + maxy_ - Header_size) * 100 / buffer_.size())
+             + "%" + Endl;
+    cx = (maxx_ - header.size() + 1) / 2;
     mvwprintw(win_, 1, cx, header.c_str());
     mvwprintw(win_, 2, 0, "x");
-    for (int i = 1; i < maxx - 1; i++)
+    for (int i = 1; i < maxx_ - 1; i++)
         wprintw(win_, "-");
     wprintw(win_, "x");
 }
 
 void ThreadView::print() const {
     this->print_header();
-    int maxy, maxx;
-    getmaxyx(win_, maxy, maxx);
     wclrtobot(win_);
-    for (int i = pos_; i < int(buffer_.size()) - 1 && i - pos_ < maxy - Header_size - 1; i++)
+    for (int i = pos_; i < int(buffer_.size()) - 1 && i - pos_ < maxy_ - Header_size - 1; i++)
         win_ << buffer_[i] << Endl;
     wprintw(win_, "x");
-    for (int i = 1; i < maxx - 1; i++)
+    for (int i = 1; i < maxx_ - 1; i++)
         wprintw(win_, "-");
     wprintw(win_, "x");
     wrefresh(win_);
 }
 
 void ThreadView::scroll(long long count) {
-    int maxy, maxx;
-    getmaxyx(win_, maxy, maxx);
     pos_ += count;
     if (pos_ < 0)
         pos_ = 0;
-    if (pos_ > int(buffer_.size()) - maxy + Header_size - 1)
-        pos_ = int(buffer_.size()) - maxy + Header_size - 1;
+    if (pos_ > int(buffer_.size()) - maxy_ + Header_size)
+        pos_ = int(buffer_.size()) - maxy_ + Header_size;
 }
 
 void ThreadView::scroll_to_line(long long num) {
-    int maxy, maxx;
-    getmaxyx(win_, maxy, maxx);
     if (num < 0)
         num = 0;
-    if (num > int(buffer_.size()) - maxy + Header_size - 1)
-        num = buffer_.size() - maxy + Header_size - 1;
+    if (num > int(buffer_.size()) - maxy_ + Header_size)
+        num = int(buffer_.size()) - maxy_ + Header_size;
     pos_ = num;
 }
 
