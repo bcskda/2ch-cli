@@ -14,7 +14,11 @@
 
 - libncursesw
 
-- [libcaca и caca-utils](https://github.com/cacalabs/libcaca) с поддержкой ncurses
+- icu
+
+- libcaca с поддержкой ncurses
+
+- caca-utils (```convert```)
 
 ## Установка
 ```

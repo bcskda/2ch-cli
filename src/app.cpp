@@ -10,13 +10,14 @@
 // Global defs
 
 const int Skip_on_PG = 20;
-const int SCROLL_END = INT_MAX;
 
 const int Head_pos_x = 0;
 const int Head_pos_y = 0;
+const int Log_off_x = 0;
+const int Log_off_y = 5;
 const int Err_pos_x = 50;
 const int Err_pos_y = 0;
-const int Header_size = 2;
+const int Header_size = 3;
 
 WINDOW *Wmain = NULL;
 WINDOW *Wlog = NULL;
@@ -42,7 +43,7 @@ const string Help =
     "\n"
     "C - очистить экран\n"
     "h - помощь, q - выход\n\n";
-
+const string Post_delim = "x-------------------------------------------------------";
 
 bool Sage_on = false;
 
@@ -70,15 +71,14 @@ string PostView::print_buf() const {
         return "";
     }
 
-    string ret;
-    ret = Headers_pref + post_.name;
+    string ret = Post_delim + Endl + Headers_pref + post_.name;
     if (show_email_ && post_.email.size())
         ret += " (" + post_.email + ")";
     ret += Endl;
     
     ret += Headers_pref;
-    ret += "№" + to_string(post_.num) + " (" + to_string(post_.rel_num) + ") "  + post_.date;
-    ret += Endl;
+    ret += "№" + to_string(post_.num) + "   #" + to_string(post_.rel_num) + Endl;
+    ret += Headers_pref + post_.date + Endl;
 
     if (show_files_ && ! post_.files.empty()) {
         for (const Json::Value &item : post_.files) {
@@ -89,7 +89,7 @@ string PostView::print_buf() const {
         }
     }
 
-    ret += post_.comment;
+    ret += Post_delim + Endl + post_.comment;
     return ret;
 }
 
@@ -107,44 +107,66 @@ ThreadView::ThreadView(WINDOW *win, const Makaba::Thread &thread):
   pos_(0)
 {
     clog << "New ThreadView\n";
-    string post_buf;
     int maxy, maxx;
     getmaxyx(win_, maxy, maxx);
-    int l = 0;
+    UnicodeString unis, unitmp;
+    string stds;
+    // Разбиваем UnicodeString на строки, копируем в другую UnicodeString и конвертим в std::string
     for (long long i = 0; i < thread.nposts; i++) {
-        post_buf = PostView(thread[i]).print_buf();
-        clog << "Post # " << i << endl << endl;
-        clog << "Text: \"\"\"\n" << post_buf << "\n\"\"\"" << endl;
+        unis = UnicodeString::fromUTF8(PostView(thread[i]).print_buf());
         posts_[i].begin = buffer_.size();
         posts_[i].lines = 1;
-        l = 0;
-        for (string::size_type j = 0; j < post_buf.size(); j++)
-            if (post_buf[j] == '\n' /*|| j - l >= maxx*/) {
-                buffer_.push_back(post_buf.substr(l, j - l));
-                clog << "New entry: " + buffer_.back() << Endl;
+        int32_t l = 0;
+        for (int32_t j = 0; j < unis.length(); j++)
+            if (unis[j] == '\n' || j - l > maxx - 2) {
+                unis.extractBetween(l, j, unitmp);
+                unitmp.toUTF8String(stds);
+                buffer_.push_back(stds);
+                unitmp = "";
+                stds = "";
                 posts_[i].lines++;
-                l = j + 1;
+                l = j;
+                if (unis[j] == '\n')
+                    l++;
             }
-        if (l < int(post_buf.size())) {
-            buffer_.push_back(post_buf.substr(l, post_buf.size() - l));
+        if (l < unis.length()) {
+            unis.extractBetween(l, unis.length(), unitmp);
+            unitmp.toUTF8String(stds);
+            buffer_.push_back(stds);
+            unitmp = "";
+            stds = "";
             posts_[i].lines++;
         }
         buffer_.push_back("");
         posts_[i].lines++;
     }
     buffer_.push_back("");
-    clog << "New ThreadView ready, " << buffer_.size() << " entries for " << size_ << "posts\n";
+    clog << "New ThreadView ready, " << buffer_.size()
+         << " entries for " << size_ << " posts\n";
+}
+
+int ThreadView::size() const {
+    return size_;
 }
 
 void ThreadView::print_header() const {
     wmove(win_, Head_pos_y, Head_pos_x);
-    win_ << Headers_pref
-         << ("/" + thread_.board + " | ")
-         << (thread_[0].subject + " | ")
-         << (to_string(thread_.nposts) + " постов")
-         << Headers_suff
-         << Endl;
-    win_ << ("-------------------------------------------------------" + Endl);
+    wclrtobot(win_);
+    int maxy, maxx;
+    getmaxyx(win_, maxy, maxx);
+    string header = Headers_pref + "/" + thread_.board + " | "
+                    + thread_[0].subject + Endl;
+    int cx = (maxx - header.size() + 1) / 2;
+    mvwprintw(win_, 0, cx, header.c_str());
+    header = to_string(thread_.nposts) + " постов |  "
+             + to_string((pos_ + maxy - Header_size) *100 / buffer_.size())
+             + " %" + Endl;
+    cx = (maxx - header.size() + 1) / 2;
+    mvwprintw(win_, 1, cx, header.c_str());
+    mvwprintw(win_, 2, 0, "x");
+    for (int i = 1; i < maxx - 1; i++)
+        wprintw(win_, "-");
+    wprintw(win_, "x");
 }
 
 void ThreadView::print() const {
@@ -152,12 +174,16 @@ void ThreadView::print() const {
     int maxy, maxx;
     getmaxyx(win_, maxy, maxx);
     wclrtobot(win_);
-    for (int i = pos_; i < int(buffer_.size()) && i - pos_ < maxy - Header_size; i++)
+    for (int i = pos_; i < int(buffer_.size()) - 1 && i - pos_ < maxy - Header_size - 1; i++)
         win_ << buffer_[i] << Endl;
+    wprintw(win_, "x");
+    for (int i = 1; i < maxx - 1; i++)
+        wprintw(win_, "-");
+    wprintw(win_, "x");
     wrefresh(win_);
 }
 
-void ThreadView::scroll(int count) {
+void ThreadView::scroll(long long count) {
     int maxy, maxx;
     getmaxyx(win_, maxy, maxx);
     pos_ += count;
@@ -167,87 +193,35 @@ void ThreadView::scroll(int count) {
         pos_ = int(buffer_.size()) - maxy + Header_size - 1;
 }
 
-void ThreadView::scroll_to(int line) {
+void ThreadView::scroll_to_line(long long num) {
     int maxy, maxx;
     getmaxyx(win_, maxy, maxx);
-    pos_ = line;
-    if (pos_ < 0)
-        pos_ = 0;
-    if (pos_ > int(buffer_.size()) - maxy + Header_size - 1)
-        pos_ = buffer_.size() - maxy + Header_size - 1;
+    if (num < 0)
+        num = 0;
+    if (num > int(buffer_.size()) - maxy + Header_size - 1)
+        num = buffer_.size() - maxy + Header_size - 1;
+    pos_ = num;
 }
 
-
-int printThreadHeader(const Makaba::Thread &thread)
-{
-    refresh();
-    wmove(Wmain, Head_pos_y, Head_pos_x);
-    string header = Headers_pref+ "/" + thread.board + " " + thread[0].subject
-                         + " " + to_string(thread.nposts) + " постов" + Endl;
-    Wmain << header;
-    return 0;
-}
-
-int printPost(
-    const Makaba::Post &post,
-    const bool show_email,
-    const bool show_files)
-{
-    refresh();
-    if (post.date.size() == 0) {
-        fprintf(stderr, "! ERROR @printPost: Null date in struct post\n");
-        makaba_errno = ERR_POST_FORMAT;
-        return 1;
-    }
-
-    string header;
-    bool sage = false;
-    if (show_email == true && post.email.length() > 0) {
-        if (post.email == "mailto:sage")
-	    header = post.name + "@" + post.email;
-        else {
-	    header = post.name;
-            sage = true;
-        }
-    }
-    // @TODO Выравнивать строки заголовка по ширине
-    
-    Wmain << Headers_pref;
-    if (sage)
-        wattron(Wmain, A_UNDERLINE);
-    Wmain << header << Endl; //
-    wattroff(Wmain, A_UNDERLINE);
-    
-    header = "№" + to_string(post.num) + " (" + to_string(post.rel_num) + ") "  + post.date;
-
-    Wmain << Headers_pref << header << Endl;
-
-    if (show_files && ! post.files.empty()) {
-        for (Json::Value item : post.files) {
-	    Wmain << Headers_pref;
-	    header = "File: \"" + item["displayname"].asString() + "\" "
-	             + BASE_URL + item["path"].asString() + Endl;
-            Wmain << header;
-        }
-    }
-    Wmain << Endl;
-    
-    Wmain << post.comment << Endl << Endl;
-
-    return 0;
+void ThreadView::scroll_to_post(long long num) {
+    if (num < 0)
+        num = 0;
+    if (num > size_ - 1)
+        num = size_ - 1;
+    this->scroll_to_line(posts_[num].begin);
 }
 
 void ncurses_init() {
     initscr();
     raw();
-    if (Wmain == NULL) { // Upper, 4/5 height, full width
+    if (Wmain == NULL) {
         refresh();
-        Wmain = newwin(4 * LINES / 5, COLS, 0, 0);
+        Wmain = newwin(LINES - Log_off_y, COLS, 0, 0);
         wrefresh(Wmain);
     }
-    if (Wlog == NULL) { // Lower, 1/5 height, full width
+    if (Wlog == NULL) {
         refresh();
-        Wlog = newwin(LINES / 5, COLS, 4 * LINES / 5, 0);
+        Wlog = newwin(Log_off_y, COLS, LINES - Log_off_y, 0);
         wrefresh(Wlog);
     }
     keypad(stdscr, true);
@@ -283,16 +257,6 @@ void ncurses_print_help() {
     delwin(Whelp);
 }
 
-void ncurses_print_post(
-    const Makaba::Thread &thread,
-    const long long num)
-{
-    werase(Wmain);
-    printThreadHeader(thread);
-    printPost(thread[num], true, true);
-    wrefresh(Wmain);
-}
-
 void ncurses_print_error(const string &mesg) {
     wattron(Wlog, A_STANDOUT);
     Wlog << mesg;
@@ -314,8 +278,14 @@ void ncurses_clear_errors()
 }
 
 
-WINDOW *operator<<(WINDOW *win, const string &value) {
-    wprintw(win, value.c_str());
+WINDOW *operator<<(WINDOW *win, const string &s) {
+    wprintw(win, s.c_str());
+    return win;
+}
+
+WINDOW *operator<<(WINDOW *win, const UnicodeString &s) {
+    string stds = "";
+    wprintw(win, s.toUTF8String(stds).c_str());
     return win;
 }
 

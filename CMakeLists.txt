@@ -47,14 +47,15 @@ pkg_check_modules(ALL_LIBS REQUIRED
         libcurl
         jsoncpp
         ncursesw
-        caca)
+        caca
+        icu-uc)
 
 link_directories(${ALL_LIBS_LIBRARY_DIRS})
 include_directories(${ALL_LIBS_INCLUDE_DIRS})
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_FLAGS "-O2 -fPIC -pipe -Wall -Wno-pointer-arith")
-#set(CMAKE_CXX_FLAGS_DEBUG "-ggdb -DMAKABA_DEBUG")
+#set(CMAKE_CXX_FLAGS_DEBUG "-ggdb")
 
 set(SOURCE_FILES
         src/error.cpp

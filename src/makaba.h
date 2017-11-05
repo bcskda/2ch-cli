@@ -8,7 +8,6 @@
 #include <string>
 #include <vector>
 #include <json/json.h>
-#include <cstdio>
 #include <cstdlib>
 #include <cstddef>
 #include <memory>
@@ -16,6 +15,10 @@
 #include "error.h"
 #pragma once
 
+using std::clog;
+using std::endl;
+using std::string;
+using std::vector;
 
 extern const char *PATTERN_TAG_OPEN;
 extern const char *PATTERN_TAG_CLOSE;
@@ -50,32 +53,32 @@ namespace Makaba {
     public:
         bool banned;
         bool closed;
-        std::string comment;
-        std::string date;
-        std::string email;
+        string comment;
+        string date;
+        string email;
         Json::Value files;
         long long lasthit;
-        std::string name;
+        string name;
         long long num;
         bool op;
         long long parent;
         bool sticky;
-        std::string subject;
-        std::string tags;
+        string subject;
+        string tags;
         long long timestamp;
-        std::string trip;
-        std::string trip_type; // enum?
+        string trip;
+        string trip_type; // enum?
         long long rel_num;
         /* === */
         //Post();
-        Post(const std::string &vcomment, const std::string &vemail,
-            const std::string &vname,    const std::string &vsubject,
-            const std::string &vtags,    const std::string &vtrip);
+        Post(const string &vcomment, const string &vemail,
+             const string &vname,    const string &vsubject,
+             const string &vtags,    const string &vtrip);
         Post(const char *vcomment, const char *vemail,
-            const char *vname,    const char *vsubject,
-            const char *vtags,    const char *vtrip);
+             const char *vname,    const char *vsubject,
+             const char *vtags,    const char *vtrip);
         Post(Json::Value &val);
-        Post(const std::string &raw);
+        Post(const string &raw);
         /* === */
         Post &operator=(const Post &rhs);
         /* === */
@@ -92,16 +95,16 @@ namespace Makaba {
         /* Нужно ли?
         * bool autodel_captcha_;
         */
-        std::vector<Post *> posts_; // (sic)
+        vector<Post *> posts_; // (sic)
     public:
         long long num;
         long long nposts;
-        std::string board;
+        string board;
         Captcha_2ch *captcha;
         /* === */
         Thread();
-        Thread(const std::string &board, const long long &num, const bool inst_dl = true);
-        Thread(const std::string &board, const std::string &raw);
+        Thread(const string &board, const long long &num, const bool inst_dl = true);
+        Thread(const string &board, const string &raw);
         ~Thread();
         /* === */
         Thread &operator = (const Thread &rhs);
@@ -118,32 +121,32 @@ namespace Makaba {
         /* === */
         int append(const char *raw); // Надо бы ее приватной
         int update();
-        std::string send_post(const Post &post);
+        string send_post(const Post &post);
         const long long find(const long long &pnum) const;
-        const std::vector<const Post *> find(const std::string& comment) const;
+        const vector<const Post *> find(const string& comment) const;
     };
     
     class Captcha_2ch {
         bool isNull_;
         bool hasPng_;
-        std::string png_url;
-        std::string error_;
+        string png_url;
+        string error_;
         /* === */
         Captcha_2ch();
         /* === */
-        int get_id(const std::string &board, const long long &threadnum);
+        int get_id(const string &board, const long long &threadnum);
         int form_url();
     public:
-        std::string id;
-        std::string value;
+        string id;
+        string value;
         /* === */
-        Captcha_2ch(const std::string &board, const long long &threadnum);
+        Captcha_2ch(const string &board, const long long &threadnum);
         Captcha_2ch(const Thread &thread);
         /* === */
         bool isNull() const;
         bool hasPng() const;
         int get_png();
-        const std::string &error() const;
+        const string &error() const;
     };
     
     static const Thread NullThread;

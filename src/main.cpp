@@ -4,16 +4,10 @@
 // ========================================
 
 #include <iostream>
-#include <string>
-#include <vector>
-#include <locale.h>
+#include <clocale>
 #include <getopt.h>
 
 using std::cout;
-using std::clog;
-using std::endl;
-using std::string;
-using std::vector;
 
 #include "error.h"
 #include "makaba.h"
@@ -63,7 +57,7 @@ int main (int argc, const char **argv)
         return RET_OK;
     }
     
-    setlocale (LC_ALL, "");
+    setlocale(LC_ALL, "");
     makabaSetup();
     
     Makaba::Thread &thread = * thread_init_wrapper(board, thread_number);
@@ -96,13 +90,14 @@ int main (int argc, const char **argv)
     refresh();
 
     ThreadView tview(Wmain, thread);
+    tview.print();
 
     Makaba::Post dummy_post("", "", "", "", "", ""); // Для постинга
     dummy_post.email = Sage_on ? "sage" : DEFAULT_EMAIL;
     
     string api_result;
     
-    for (int cur_post = 0; should_exit == false; ) {
+    while (should_exit == false) {
         refresh();
         int nposts_old = thread.nposts;
         switch (getch()) {
@@ -135,7 +130,7 @@ int main (int argc, const char **argv)
                     clog << "[main] API answer: " << api_result << endl;
                     delete thread.captcha;
                     ncurses_init();
-                    ncurses_print_post(thread, cur_post);
+                    tview.print();
                     if (api_result.size())
                        Wlog << ("Запрос выполнен, ответ API: " + api_result);
                     else
@@ -180,39 +175,28 @@ int main (int argc, const char **argv)
                     int num;
                     wscanw(Wlog, "%d", &num);
                     noecho();
-                    if (num < 1) {
-                        num = 1;
-                    }
-                    if (num > thread.nposts) {
-                        num = thread.nposts;
-                    }
-                    cur_post = num - 1;
+                    tview.scroll_to_post(num - 1);
                 }
                 tview.print();
-                wrefresh(Wmain);
                 break;
             case 'g':
                 wprintw(Wlog, "Перейти по номеру на доске: ");
                 wrefresh(Wlog);
                 {
                     echo();
-                    int num;
-                    wscanw(Wlog, "%d", &num);
+                    long long num;
+                    wscanw(Wlog, "%lld", &num);
                     noecho();
-                    if (num < 1) {
-                        num = thread[0].num;
-                    }
                     long long search_result = thread.find(num);
                     if (search_result == -1) {
                         ncurses_clear_errors();
                         ncurses_print_error("Пост не найден в треде\n");
                     }
                     else {
-                        cur_post = search_result;
+                        tview.scroll_to_post(search_result);
                     }
                 }
-                ncurses_print_post(thread, cur_post);
-                wrefresh(Wmain);
+                tview.print();
                 break;
             case 'u':
                 wprintw(Wlog, "Обновление треда ...");
@@ -226,8 +210,8 @@ int main (int argc, const char **argv)
                 wprintw(Wlog, " готово, %d новых постов\n",
                     thread.nposts - nposts_old);
                 }
-                    wrefresh(Wlog);
-                    break;
+                wrefresh(Wlog);
+                break;
             case KEY_RIGHT:
             case KEY_DOWN:
                 tview.scroll(1);
@@ -247,11 +231,11 @@ int main (int argc, const char **argv)
                 tview.print();
                 break;
             case KEY_HOME:
-                tview.scroll_to(0);
+                tview.scroll_to_post(0);
                 tview.print();
                 break;
             case KEY_END:
-                tview.scroll_to(SCROLL_END);
+                tview.scroll_to_post(tview.size() - 1);
                 tview.print();
                 break;
         }

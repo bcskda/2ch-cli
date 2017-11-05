@@ -38,35 +38,32 @@ Makaba::Post::Post():
     {}
 
 
-Makaba::Post::Post(const std::string &vcomment, const std::string &vemail,
-                const std::string &vname,    const std::string &vsubject,
-                const std::string &vtags,    const std::string &vtrip):
+Makaba::Post::Post(const string &vcomment, const string &vemail,
+                   const string &vname,    const string &vsubject,
+                   const string &vtags,    const string &vtrip):
     isNull_(false),
-    comment(std::string(vcomment)), email  (std::string(vemail)),
-    name   (std::string(vname)),    subject(std::string(vsubject)),
-    tags   (std::string(vtags)),    trip   (std::string(vtrip))
+    comment(vcomment), email  (vemail),
+    name   (vname),    subject(vsubject),
+    tags   (vtags),    trip   (vtrip)
     {}
 
 
 Makaba::Post::Post(const char *vcomment, const char *vemail,
-                const char *vname,    const char *vsubject,
-                const char *vtags,    const char *vtrip):
-    isNull_(false                      ),
-    comment(vcomment), email  (vemail  ),
-    name   (vname   ), subject(vsubject),
-    tags   (vtags   ), trip   (vtrip   )
+                   const char *vname,    const char *vsubject,
+                   const char *vtags,    const char *vtrip):
+    isNull_(false),
+    comment(vcomment), email  (vemail),
+    name   (vname),    subject(vsubject),
+    tags   (vtags),    trip   (vtrip)
     {}
 
 
-Makaba::Post::Post(const std::string &raw):
+Makaba::Post::Post(const string &raw):
     isNull_(true)
 {
-    #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
-    #endif // ifdef MAKABA_DEBUG
     Json::CharReaderBuilder rbuilder; // TODO Single global
     std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
-    std::string errs;
+    string errs;
     Json::Value jval;
     if (! reader->parse(raw.data(), raw.data() + raw.length(), &jval, &errs)) {
         fprintf(stderr, "[%s] Error:\n"
@@ -117,7 +114,7 @@ Makaba::Post::Post(Json::Value &val):
 Makaba::Post &Makaba::Post::operator = (const Makaba::Post &rhs)
 {
     #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
+    clog << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << endl;
     #endif // ifdef MAKABA_DEBUG
     this->isNull_        = rhs.isNull_;
     this->banned         = rhs.banned;
@@ -155,22 +152,17 @@ bool Makaba::Post::isNull() const
 Makaba::Thread::Thread():
     isNull_(true),
     hook_  ({ NULL, NULL, false }),
-    //autodel_captcha_(false),
     captcha(NULL)
 {
-    #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
-    #endif // ifdef MAKABA_DEBUG
 }
 
 
 Makaba::Thread::Thread (
-    const std::string &board,
-    const std::string &raw
+    const string &board,
+    const string &raw
 ):
     isNull_(true ),
     hook_  ({ NULL, NULL, false }),
-    //autodel_captcha_(false),
     num    (0    ),
     nposts (0    ),
     board  (board),
@@ -178,7 +170,7 @@ Makaba::Thread::Thread (
 {
     Json::CharReaderBuilder rbuilder; // TODO Single global (dup Makaba::Post::Post())
     std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
-    std::string errs;
+    string errs;
     Json::Value array;
     if (! reader->parse(raw.data(), raw.data() + raw.length(), &array, &errs)) {
         makaba_errno = ERR_GENERAL_FORMAT;
@@ -186,7 +178,7 @@ Makaba::Thread::Thread (
     }
     for (auto obj : array) {
         nposts++;
-	std::cerr << obj << std::endl;
+	clog << obj << endl;
         Makaba::Post *post = new Makaba::Post(obj);
         post->rel_num = nposts;
 	posts_.push_back(post);
@@ -196,21 +188,17 @@ Makaba::Thread::Thread (
 
 
 Makaba::Thread::Thread (
-    const std::string &board,
+    const string &board,
     const long long &num,
     const bool inst_dl
 ):
     isNull_(true ),
     hook_  ({ NULL, NULL, false }),
-    //autodel_captcha_(false),
     num    (num  ),
     nposts (0    ),
     board  (board),
     captcha(NULL)
 {
-    #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
-    #endif // ifdef MAKABA_DEBUG
     if (inst_dl == false)
         return;
     char *raw;
@@ -231,9 +219,6 @@ Makaba::Thread::Thread (
 
 Makaba::Thread::~Thread()
 {
-    #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
-    #endif // ifdef MAKABA_DEBUG
     for (auto p : this->posts_)
         delete p;
 }
@@ -241,34 +226,24 @@ Makaba::Thread::~Thread()
 // Копирование
 Makaba::Thread &Makaba::Thread::operator = (const Makaba::Thread &rhs)
 {
-    #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
-    #endif // ifdef MAKABA_DEBUG
     this->isNull_ = rhs.isNull_;
     this->hook_   = rhs.hook_;
     this->num     = rhs.num;
     this->nposts  = rhs.nposts;
     this->board   = rhs.board;
-    this->posts_   = rhs.posts_;
-    fprintf(stderr, "<copy thread #%10lld>\n", this->num);
+    this->posts_  = rhs.posts_;
     return *this;
 }
 
 
 Makaba::Post &Makaba::Thread::operator [] (size_t i) const
 {
-    #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
-    #endif // ifdef MAKABA_DEBUG
     return *(this->posts_.at(i));
 }
 
 
 Makaba::Post &Makaba::Thread::operator [] (size_t i)
 {
-    #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
-    #endif // ifdef MAKABA_DEBUG
     return *(this->posts_.at(i));
 }
 
@@ -276,9 +251,6 @@ Makaba::Post &Makaba::Thread::operator [] (size_t i)
 // Дополнение постами
 Makaba::Thread &Makaba::Thread::operator << (const char *rhs)
 {
-    #ifdef MAKABA_DEBUG
-    std::cerr << "[[ " << __PRETTY_FUNCTION__ << " ]] " << this << std::endl;
-    #endif // ifdef MAKABA_DEBUG
     this->append(rhs);
     return *this;
 }
@@ -299,7 +271,7 @@ bool Makaba::Thread::has_hook() const
 void Makaba::Thread::set_hook(
             void *userdata,
             void *(*on_update)(void *userdata, const char *raw)
-        )
+    )
 {
     this->hook_.userdata = userdata;
     this->hook_.on_update = on_update;
@@ -307,30 +279,14 @@ void Makaba::Thread::set_hook(
 }
 
 
-/*
-* bool Makaba::Thread::autodel_captcha() const
-* {
-* 	return this->autodel_captcha_;
-* }
-*/
-
-
-/*
-* void Makaba::Thread::autodel_captcha(bool del)
-* {
-* 	this->autodel_captcha_ = del;
-* }
-*/
-
-
 int Makaba::Thread::append(const char *raw)
 {
     Json::CharReaderBuilder rbuilder;
     std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
-    std::string errs;
+    string errs;
     Json::Value array;
     if (! reader->parse(raw, raw + strlen(raw), &array, &errs)) {
-        std::clog << "Error at JSON parser: " << errs << std::endl;
+        clog << "Error at JSON parser: " << errs << endl;
         makaba_errno = ERR_GENERAL_FORMAT;
         return -1;
     }
@@ -376,32 +332,21 @@ int Makaba::Thread::update()
 }
 
 
-std::string Makaba::Thread::send_post(const Makaba::Post &post)
+string Makaba::Thread::send_post(const Makaba::Post &post)
 {
     if (this->captcha == NULL) {
         fprintf(stderr, "[%s] Error: null captcha\n",
                         __PRETTY_FUNCTION__);
-        return std::string("");
+        return "";
     }
     if (! captcha->hasPng()) {
         if (captcha->get_png()) {
             fprintf(stderr, "[%s] Error: Makaba::Captcha_2ch::get_png()\n"
                             "  error = %d\n  description = %s\n",
                             __PRETTY_FUNCTION__, makaba_errno, makaba_strerror(makaba_errno));
-            return std::string("");
+            return "";
         }
     }
-    
-    /* Не относится к API напрямую, должно быть в app.cpp
-    * caca_display_t *display = show_img(CaptchaUtfFilename);
-    * caca_canvas_t *canvas = caca_get_canvas(display);
-    * caca_put_str(canvas,
-    * 			 1, Converter_height_i + 1,
-    * 			 "Ответ на капчу (секурность уровня sudo): ");
-    * caca_refresh_display(display);
-    * std::cin >> captcha.value;
-    * caca_free_display(display);
-    */
     
     char *api_result = sendPost(
             this->board.data(), this->num,
@@ -409,12 +354,7 @@ std::string Makaba::Thread::send_post(const Makaba::Post &post)
             this->captcha->id.data(), this->captcha->value.data()
         );
     
-    /*
-    * if (this->autodel_captcha_)
-    * 	delete this->captcha;
-    */
-    
-    return std::string(api_result);
+    return api_result;
 }
 
 
@@ -428,12 +368,12 @@ const long long Makaba::Thread::find(const long long &pnum) const
 }
 
 
-const std::vector<const Makaba::Post *> Makaba::Thread::find(const std::string& comment) const
+const vector<const Makaba::Post *> Makaba::Thread::find(const string& comment) const
 {
-    std::vector<const Post *> results;
+    vector<const Post *> results;
     for (auto post : this->posts_)
     {
-        if (post->comment.find(comment) != std::string::npos)
+        if (post->comment.find(comment) != string::npos)
             results.push_back(post);
     }
     return results;
@@ -460,7 +400,7 @@ bool Makaba::Captcha_2ch::hasPng() const
 Makaba::Captcha_2ch::Captcha_2ch():
     isNull_(true),
     hasPng_(false),
-    id     (std::string())
+    id     ()
     {}
 
 
@@ -468,7 +408,7 @@ Makaba::Captcha_2ch::Captcha_2ch():
 Makaba::Captcha_2ch::Captcha_2ch(const Makaba::Thread &thread):
     isNull_(true),
     hasPng_(false),
-    id     (std::string())
+    id     ()
 {
     if (this->get_id(thread.board, thread.num)) {
         fprintf(stderr, "[%s]: Error: this->get_id() failed\n",
@@ -484,10 +424,10 @@ Makaba::Captcha_2ch::Captcha_2ch(const Makaba::Thread &thread):
 }
 
 
-Makaba::Captcha_2ch::Captcha_2ch(const std::string &board, const long long &threadnum):
+Makaba::Captcha_2ch::Captcha_2ch(const string &board, const long long &threadnum):
     isNull_(true),
     hasPng_(false),
-    id     (std::string())
+    id     ()
 {
     if (this->get_id(board, threadnum)) {
         fprintf(stderr, "[%s]: Error: this->get_id() failed\n",
@@ -503,7 +443,7 @@ Makaba::Captcha_2ch::Captcha_2ch(const std::string &board, const long long &thre
 }
 
 
-int Makaba::Captcha_2ch::get_id(const std::string &board, const long long &threadnum)
+int Makaba::Captcha_2ch::get_id(const string &board, const long long &threadnum)
 {
     if (this->id.length()) {
         fprintf(stderr, "[%s] Note: already has ID\n"
@@ -519,7 +459,7 @@ int Makaba::Captcha_2ch::get_id(const std::string &board, const long long &threa
     }
     Json::CharReaderBuilder rbuilder;
     std::unique_ptr<Json::CharReader> const reader(rbuilder.newCharReader());
-    std::string errs;
+    string errs;
     Json::Value ans;
     if (! reader->parse(id_raw, id_raw + strlen(id_raw), &ans, &errs)) {
         fprintf(stderr, "[%s] Error:\n"
@@ -528,7 +468,7 @@ int Makaba::Captcha_2ch::get_id(const std::string &board, const long long &threa
         makaba_errno = ERR_GENERAL_FORMAT;
         return -1;
     }
-    std::cerr << ans << std::endl;
+    clog << ans << endl;
     if (! ans["error"].isNull()) {
         fprintf(stderr, "[%s] Error: \n"
                         "API returned \"error\":\"%d\"\n",
@@ -584,15 +524,12 @@ int Makaba::Captcha_2ch::get_png() {
     FILE *pic_file = fopen(CaptchaPngFilename, "w");
     fwrite(pic, sizeof(char), pic_size, pic_file);
     fclose(pic_file);
-    /* Не относится к API напрямую, должно быть в app.cpp
-    * convert_img(CaptchaPngFilename, CaptchaUtfFilename, false);
-    */
     this->hasPng_ = true;
     return 0;
 }
 
 
-const std::string &Makaba::Captcha_2ch::error() const
+const string &Makaba::Captcha_2ch::error() const
 {
     return this->error_;
 }
