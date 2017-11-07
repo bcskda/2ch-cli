@@ -24,7 +24,7 @@ using icu::UnicodeString;
 #include "makaba.h"
 #include "cache.h"
 
-#define VERSION "v0.4test9"
+#define VERSION "v0.4.0"
 
 class BasicView {
     private:
