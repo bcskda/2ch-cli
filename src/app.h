@@ -52,13 +52,13 @@ class PostView : public BasicView {
 };
 
 struct PostInfo {
-    int begin;
-    int lines;
+    long long begin;
+    long long lines;
 };
 
 class ThreadView : public BasicView {
     ThreadView();
-    void append(int from);
+    void append(long long from);
     const Makaba::Thread &thread_;
     long long size_;
     vector<string> buffer_;

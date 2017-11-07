@@ -113,7 +113,7 @@ ThreadView::ThreadView(WINDOW *win, const Makaba::Thread &thread):
   thread_(thread),
   size_(thread.nposts),
   buffer_(),
-  posts_(thread.nposts),
+  posts_(),
   pos_(0)
 {
     clog << "New ThreadView\n";
@@ -122,14 +122,14 @@ ThreadView::ThreadView(WINDOW *win, const Makaba::Thread &thread):
          << " entries for " << size_ << " posts\n";
 }
 
-void ThreadView::append(int from) {
+void ThreadView::append(long long from) {
     // Разбиваем UnicodeString по концам строк, копируем в другую UnicodeString и конвертим в std::string
     UnicodeString unis, unitmp;
     string stds;
     for (long long i = from; i < thread_.nposts; i++) {
+        clog << "append Post # " << i << endl;
         unis = UnicodeString::fromUTF8(PostView(thread_[i]).print_buf());
-        posts_[i].begin = buffer_.size();
-        posts_[i].lines = 1;
+        posts_.push_back({ (long long)buffer_.size(), 1 });
         int32_t l = 0;
         for (int32_t j = 0; j < unis.length(); j++)
             if (unis[j] == '\n' || j - l > maxx_ - 2) {
@@ -174,10 +174,8 @@ void ThreadView::update() {
         maxy_ = y;
         maxx_ = x;
     }
-    else {
-        this->append(size_);
-        size_ = thread_.nposts;
-    }
+    this->append(size_);
+    size_ = thread_.nposts;
 }
 
 int ThreadView::size() const {
@@ -421,7 +419,6 @@ string thread_send_post_wrapper(
 
 void *thread_hook_on_update(void *userdata, const char *raw)
 {
-    clog << "[hook on_update] Called with \"" << raw << "\"\n";
     Makaba::Thread *thread = (Makaba::Thread *)userdata;
     if (writeJsonCache(*thread, raw) == -1) {
         fprintf(stderr, "[%s] Error: writeJsonCache() failed\n",
